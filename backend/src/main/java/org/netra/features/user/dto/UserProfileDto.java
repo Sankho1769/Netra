@@ -13,11 +13,16 @@ public class UserProfileDto {
     private Set<String> roles;
     private String status;
     private Instant createdAt;
+    private Instant updatedAt;
 
     public UserProfileDto() {
     }
 
     public UserProfileDto(UUID id, String fullName, String email, String phone, Set<String> roles, String status, Instant createdAt) {
+        this(id, fullName, email, phone, roles, status, createdAt, createdAt);
+    }
+
+    public UserProfileDto(UUID id, String fullName, String email, String phone, Set<String> roles, String status, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.fullName = fullName;
         this.email = email;
@@ -25,6 +30,7 @@ public class UserProfileDto {
         this.roles = roles;
         this.status = status;
         this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     public UUID getId() {
@@ -81,5 +87,13 @@ public class UserProfileDto {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

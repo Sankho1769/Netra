@@ -6,6 +6,7 @@ C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\core\audit\Securi
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\core\config\SecurityConfig.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\core\exception\AccountStatusException.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\core\exception\DuplicateEmailException.java
+C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\core\exception\DuplicateResourceException.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\core\exception\GlobalExceptionHandler.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\core\exception\InvalidAnswerException.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\core\exception\InvalidCredentialsException.java
@@ -14,6 +15,7 @@ C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\core\exception\Re
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\core\exception\SessionExpiredException.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\core\exception\TokenReuseException.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\core\exception\UnauthorizedSessionAccessException.java
+C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\core\exception\ValidationException.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\core\ratelimit\RateLimitExceededException.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\core\ratelimit\RateLimitingService.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\core\security\ClientIpResolver.java
@@ -28,6 +30,18 @@ C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\auth\dto
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\auth\dto\TokenRefreshRequest.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\auth\dto\UserSummaryDto.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\auth\service\AuthService.java
+C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\donor\controller\DonorController.java
+C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\donor\dto\CreateDonorProfileRequest.java
+C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\donor\dto\DonorProfileDto.java
+C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\donor\dto\UpdateDonorProfileRequest.java
+C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\donor\entity\BloodGroup.java
+C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\donor\entity\BloodGroupConverter.java
+C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\donor\entity\BloodGroupVerificationStatus.java
+C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\donor\entity\DonorAvailabilityStatus.java
+C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\donor\entity\DonorProfile.java
+C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\donor\entity\DonorStatus.java
+C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\donor\repository\DonorProfileRepository.java
+C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\donor\service\DonorService.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\eligibility\controller\EligibilityController.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\eligibility\dto\AnswerItemDto.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\eligibility\dto\CheckEligibilityRequest.java
@@ -60,7 +74,9 @@ C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\eligibil
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\eligibility\repository\EligibilitySessionRepository.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\eligibility\service\EligibilityRuleEngine.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\eligibility\service\EligibilityService.java
+C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\user\controller\ProfileController.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\user\controller\UserController.java
+C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\user\dto\UpdateUserProfileRequest.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\user\dto\UserProfileDto.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\user\entity\RefreshSession.java
 C:\Users\SHUBHAM\Desktop\Netra\backend\src\main\java\org\netra\features\user\entity\User.java

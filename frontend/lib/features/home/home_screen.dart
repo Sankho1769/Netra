@@ -8,6 +8,7 @@ import '../eligibility/screens/eligibility_intro_screen.dart';
 import '../bloodbank/screens/nearby_blood_banks_screen.dart';
 import '../auth/state/auth_scope.dart';
 import '../auth/screens/login_screen.dart';
+import '../profile/screens/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -266,6 +267,16 @@ class _HomeScreenState extends State<HomeScreen> {
                         type: user.status == 'ACTIVE' ? NetraChipType.statusSuccess : NetraChipType.neutral,
                       ),
                     ],
+                  ),
+                  NetraSpacing.gapH16,
+                  NetraButton.outlined(
+                    text: "View Full Profile & Donor Settings",
+                    icon: Icons.manage_accounts_outlined,
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                      );
+                    },
                   ),
                 ],
               ),

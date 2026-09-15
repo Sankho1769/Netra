@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="org.netra.features.auth.AuthSecurityIntegrationTest" time="7.35" tests="12" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="org.netra.features.auth.AuthSecurityIntegrationTest" time="8.16" tests="12" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="25"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -16,7 +16,7 @@
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="user.country" value="IN"/>
     <property name="sun.boot.library.path" value="C:\Program Files\Java\jdk-25\bin"/>
-    <property name="sun.java.command" value="C:\Users\SHUBHAM\AppData\Local\Temp\surefire12965241090838330404\surefirebooter-20260914205610867_3.jar C:\Users\SHUBHAM\AppData\Local\Temp\surefire12965241090838330404 2026-09-14T20-56-10_769-jvmRun1 surefire-20260914205610867_1tmp surefire_0-20260914205610867_2tmp"/>
+    <property name="sun.java.command" value="C:\Users\SHUBHAM\AppData\Local\Temp\surefire258578536738404034\surefirebooter-20260915180414891_3.jar C:\Users\SHUBHAM\AppData\Local\Temp\surefire258578536738404034 2026-09-15T18-04-14_771-jvmRun1 surefire-20260915180414891_1tmp surefire_0-20260915180414891_2tmp"/>
     <property name="jdk.debug" value="release"/>
     <property name="surefire.test.class.path" value="C:\Users\SHUBHAM\Desktop\Netra\backend\target\test-classes;C:\Users\SHUBHAM\Desktop\Netra\backend\target\classes;C:\Users\SHUBHAM\.m2\repository\org\springframework\boot\spring-boot-starter-web\3.3.4\spring-boot-starter-web-3.3.4.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\boot\spring-boot-starter\3.3.4\spring-boot-starter-3.3.4.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\boot\spring-boot\3.3.4\spring-boot-3.3.4.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\boot\spring-boot-autoconfigure\3.3.4\spring-boot-autoconfigure-3.3.4.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\boot\spring-boot-starter-logging\3.3.4\spring-boot-starter-logging-3.3.4.jar;C:\Users\SHUBHAM\.m2\repository\ch\qos\logback\logback-classic\1.5.8\logback-classic-1.5.8.jar;C:\Users\SHUBHAM\.m2\repository\ch\qos\logback\logback-core\1.5.8\logback-core-1.5.8.jar;C:\Users\SHUBHAM\.m2\repository\org\apache\logging\log4j\log4j-to-slf4j\2.23.1\log4j-to-slf4j-2.23.1.jar;C:\Users\SHUBHAM\.m2\repository\org\apache\logging\log4j\log4j-api\2.23.1\log4j-api-2.23.1.jar;C:\Users\SHUBHAM\.m2\repository\org\slf4j\jul-to-slf4j\2.0.16\jul-to-slf4j-2.0.16.jar;C:\Users\SHUBHAM\.m2\repository\jakarta\annotation\jakarta.annotation-api\2.1.1\jakarta.annotation-api-2.1.1.jar;C:\Users\SHUBHAM\.m2\repository\org\yaml\snakeyaml\2.2\snakeyaml-2.2.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\boot\spring-boot-starter-json\3.3.4\spring-boot-starter-json-3.3.4.jar;C:\Users\SHUBHAM\.m2\repository\com\fasterxml\jackson\datatype\jackson-datatype-jdk8\2.17.2\jackson-datatype-jdk8-2.17.2.jar;C:\Users\SHUBHAM\.m2\repository\com\fasterxml\jackson\datatype\jackson-datatype-jsr310\2.17.2\jackson-datatype-jsr310-2.17.2.jar;C:\Users\SHUBHAM\.m2\repository\com\fasterxml\jackson\module\jackson-module-parameter-names\2.17.2\jackson-module-parameter-names-2.17.2.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\boot\spring-boot-starter-tomcat\3.3.4\spring-boot-starter-tomcat-3.3.4.jar;C:\Users\SHUBHAM\.m2\repository\org\apache\tomcat\embed\tomcat-embed-core\10.1.30\tomcat-embed-core-10.1.30.jar;C:\Users\SHUBHAM\.m2\repository\org\apache\tomcat\embed\tomcat-embed-websocket\10.1.30\tomcat-embed-websocket-10.1.30.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\spring-web\6.1.13\spring-web-6.1.13.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\spring-beans\6.1.13\spring-beans-6.1.13.jar;C:\Users\SHUBHAM\.m2\repository\io\micrometer\micrometer-observation\1.13.4\micrometer-observation-1.13.4.jar;C:\Users\SHUBHAM\.m2\repository\io\micrometer\micrometer-commons\1.13.4\micrometer-commons-1.13.4.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\spring-webmvc\6.1.13\spring-webmvc-6.1.13.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\spring-context\6.1.13\spring-context-6.1.13.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\spring-expression\6.1.13\spring-expression-6.1.13.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\boot\spring-boot-starter-security\3.3.4\spring-boot-starter-security-3.3.4.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\spring-aop\6.1.13\spring-aop-6.1.13.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\security\spring-security-config\6.3.3\spring-security-config-6.3.3.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\security\spring-security-web\6.3.3\spring-security-web-6.3.3.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\boot\spring-boot-starter-data-jpa\3.3.4\spring-boot-starter-data-jpa-3.3.4.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\boot\spring-boot-starter-aop\3.3.4\spring-boot-starter-aop-3.3.4.jar;C:\Users\SHUBHAM\.m2\repository\org\aspectj\aspectjweaver\1.9.22.1\aspectjweaver-1.9.22.1.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\boot\spring-boot-starter-jdbc\3.3.4\spring-boot-starter-jdbc-3.3.4.jar;C:\Users\SHUBHAM\.m2\repository\com\zaxxer\HikariCP\5.1.0\HikariCP-5.1.0.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\spring-jdbc\6.1.13\spring-jdbc-6.1.13.jar;C:\Users\SHUBHAM\.m2\repository\org\hibernate\orm\hibernate-core\6.5.3.Final\hibernate-core-6.5.3.Final.jar;C:\Users\SHUBHAM\.m2\repository\jakarta\persistence\jakarta.persistence-api\3.1.0\jakarta.persistence-api-3.1.0.jar;C:\Users\SHUBHAM\.m2\repository\jakarta\transaction\jakarta.transaction-api\2.0.1\jakarta.transaction-api-2.0.1.jar;C:\Users\SHUBHAM\.m2\repository\org\jboss\logging\jboss-logging\3.5.3.Final\jboss-logging-3.5.3.Final.jar;C:\Users\SHUBHAM\.m2\repository\org\hibernate\common\hibernate-commons-annotations\6.0.6.Final\hibernate-commons-annotations-6.0.6.Final.jar;C:\Users\SHUBHAM\.m2\repository\io\smallrye\jandex\3.1.2\jandex-3.1.2.jar;C:\Users\SHUBHAM\.m2\repository\com\fasterxml\classmate\1.7.0\classmate-1.7.0.jar;C:\Users\SHUBHAM\.m2\repository\net\bytebuddy\byte-buddy\1.14.19\byte-buddy-1.14.19.jar;C:\Users\SHUBHAM\.m2\repository\org\glassfish\jaxb\jaxb-runtime\4.0.5\jaxb-runtime-4.0.5.jar;C:\Users\SHUBHAM\.m2\repository\org\glassfish\jaxb\jaxb-core\4.0.5\jaxb-core-4.0.5.jar;C:\Users\SHUBHAM\.m2\repository\org\eclipse\angus\angus-activation\2.0.2\angus-activation-2.0.2.jar;C:\Users\SHUBHAM\.m2\repository\org\glassfish\jaxb\txw2\4.0.5\txw2-4.0.5.jar;C:\Users\SHUBHAM\.m2\repository\com\sun\istack\istack-commons-runtime\4.1.2\istack-commons-runtime-4.1.2.jar;C:\Users\SHUBHAM\.m2\repository\jakarta\inject\jakarta.inject-api\2.0.1\jakarta.inject-api-2.0.1.jar;C:\Users\SHUBHAM\.m2\repository\org\antlr\antlr4-runtime\4.13.0\antlr4-runtime-4.13.0.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\data\spring-data-jpa\3.3.4\spring-data-jpa-3.3.4.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\data\spring-data-commons\3.3.4\spring-data-commons-3.3.4.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\spring-orm\6.1.13\spring-orm-6.1.13.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\spring-tx\6.1.13\spring-tx-6.1.13.jar;C:\Users\SHUBHAM\.m2\repository\org\slf4j\slf4j-api\2.0.16\slf4j-api-2.0.16.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\spring-aspects\6.1.13\spring-aspects-6.1.13.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\boot\spring-boot-starter-validation\3.3.4\spring-boot-starter-validation-3.3.4.jar;C:\Users\SHUBHAM\.m2\repository\org\apache\tomcat\embed\tomcat-embed-el\10.1.30\tomcat-embed-el-10.1.30.jar;C:\Users\SHUBHAM\.m2\repository\org\hibernate\validator\hibernate-validator\8.0.1.Final\hibernate-validator-8.0.1.Final.jar;C:\Users\SHUBHAM\.m2\repository\jakarta\validation\jakarta.validation-api\3.0.2\jakarta.validation-api-3.0.2.jar;C:\Users\SHUBHAM\.m2\repository\org\postgresql\postgresql\42.7.4\postgresql-42.7.4.jar;C:\Users\SHUBHAM\.m2\repository\org\checkerframework\checker-qual\3.42.0\checker-qual-3.42.0.jar;C:\Users\SHUBHAM\.m2\repository\com\h2database\h2\2.2.224\h2-2.2.224.jar;C:\Users\SHUBHAM\.m2\repository\org\flywaydb\flyway-core\10.10.0\flyway-core-10.10.0.jar;C:\Users\SHUBHAM\.m2\repository\com\fasterxml\jackson\dataformat\jackson-dataformat-toml\2.17.2\jackson-dataformat-toml-2.17.2.jar;C:\Users\SHUBHAM\.m2\repository\com\fasterxml\jackson\core\jackson-core\2.17.2\jackson-core-2.17.2.jar;C:\Users\SHUBHAM\.m2\repository\com\google\code\gson\gson\2.10.1\gson-2.10.1.jar;C:\Users\SHUBHAM\.m2\repository\org\flywaydb\flyway-database-postgresql\10.10.0\flyway-database-postgresql-10.10.0.jar;C:\Users\SHUBHAM\.m2\repository\io\jsonwebtoken\jjwt-api\0.12.6\jjwt-api-0.12.6.jar;C:\Users\SHUBHAM\.m2\repository\io\jsonwebtoken\jjwt-impl\0.12.6\jjwt-impl-0.12.6.jar;C:\Users\SHUBHAM\.m2\repository\io\jsonwebtoken\jjwt-jackson\0.12.6\jjwt-jackson-0.12.6.jar;C:\Users\SHUBHAM\.m2\repository\com\fasterxml\jackson\core\jackson-databind\2.17.2\jackson-databind-2.17.2.jar;C:\Users\SHUBHAM\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.17.2\jackson-annotations-2.17.2.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\boot\spring-boot-starter-test\3.3.4\spring-boot-starter-test-3.3.4.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\boot\spring-boot-test\3.3.4\spring-boot-test-3.3.4.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\boot\spring-boot-test-autoconfigure\3.3.4\spring-boot-test-autoconfigure-3.3.4.jar;C:\Users\SHUBHAM\.m2\repository\com\jayway\jsonpath\json-path\2.9.0\json-path-2.9.0.jar;C:\Users\SHUBHAM\.m2\repository\jakarta\xml\bind\jakarta.xml.bind-api\4.0.2\jakarta.xml.bind-api-4.0.2.jar;C:\Users\SHUBHAM\.m2\repository\jakarta\activation\jakarta.activation-api\2.1.3\jakarta.activation-api-2.1.3.jar;C:\Users\SHUBHAM\.m2\repository\net\minidev\json-smart\2.5.1\json-smart-2.5.1.jar;C:\Users\SHUBHAM\.m2\repository\net\minidev\accessors-smart\2.5.1\accessors-smart-2.5.1.jar;C:\Users\SHUBHAM\.m2\repository\org\ow2\asm\asm\9.6\asm-9.6.jar;C:\Users\SHUBHAM\.m2\repository\org\assertj\assertj-core\3.25.3\assertj-core-3.25.3.jar;C:\Users\SHUBHAM\.m2\repository\org\awaitility\awaitility\4.2.2\awaitility-4.2.2.jar;C:\Users\SHUBHAM\.m2\repository\org\hamcrest\hamcrest\2.2\hamcrest-2.2.jar;C:\Users\SHUBHAM\.m2\repository\org\junit\jupiter\junit-jupiter\5.10.3\junit-jupiter-5.10.3.jar;C:\Users\SHUBHAM\.m2\repository\org\junit\jupiter\junit-jupiter-api\5.10.3\junit-jupiter-api-5.10.3.jar;C:\Users\SHUBHAM\.m2\repository\org\opentest4j\opentest4j\1.3.0\opentest4j-1.3.0.jar;C:\Users\SHUBHAM\.m2\repository\org\junit\platform\junit-platform-commons\1.10.3\junit-platform-commons-1.10.3.jar;C:\Users\SHUBHAM\.m2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;C:\Users\SHUBHAM\.m2\repository\org\junit\jupiter\junit-jupiter-params\5.10.3\junit-jupiter-params-5.10.3.jar;C:\Users\SHUBHAM\.m2\repository\org\junit\jupiter\junit-jupiter-engine\5.10.3\junit-jupiter-engine-5.10.3.jar;C:\Users\SHUBHAM\.m2\repository\org\junit\platform\junit-platform-engine\1.10.3\junit-platform-engine-1.10.3.jar;C:\Users\SHUBHAM\.m2\repository\org\mockito\mockito-core\5.11.0\mockito-core-5.11.0.jar;C:\Users\SHUBHAM\.m2\repository\net\bytebuddy\byte-buddy-agent\1.14.19\byte-buddy-agent-1.14.19.jar;C:\Users\SHUBHAM\.m2\repository\org\objenesis\objenesis\3.3\objenesis-3.3.jar;C:\Users\SHUBHAM\.m2\repository\org\mockito\mockito-junit-jupiter\5.11.0\mockito-junit-jupiter-5.11.0.jar;C:\Users\SHUBHAM\.m2\repository\org\skyscreamer\jsonassert\1.5.3\jsonassert-1.5.3.jar;C:\Users\SHUBHAM\.m2\repository\com\vaadin\external\google\android-json\0.0.20131108.vaadin1\android-json-0.0.20131108.vaadin1.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\spring-core\6.1.13\spring-core-6.1.13.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\spring-jcl\6.1.13\spring-jcl-6.1.13.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\spring-test\6.1.13\spring-test-6.1.13.jar;C:\Users\SHUBHAM\.m2\repository\org\xmlunit\xmlunit-core\2.9.1\xmlunit-core-2.9.1.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\security\spring-security-test\6.3.3\spring-security-test-6.3.3.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\security\spring-security-core\6.3.3\spring-security-core-6.3.3.jar;C:\Users\SHUBHAM\.m2\repository\org\springframework\security\spring-security-crypto\6.3.3\spring-security-crypto-6.3.3.jar;"/>
     <property name="sun.cpu.endian" value="little"/>
@@ -33,7 +33,7 @@
     <property name="java.specification.name" value="Java Platform API Specification"/>
     <property name="FILE_LOG_CHARSET" value="UTF-8"/>
     <property name="java.awt.headless" value="true"/>
-    <property name="surefire.real.class.path" value="C:\Users\SHUBHAM\AppData\Local\Temp\surefire12965241090838330404\surefirebooter-20260914205610867_3.jar"/>
+    <property name="surefire.real.class.path" value="C:\Users\SHUBHAM\AppData\Local\Temp\surefire258578536738404034\surefirebooter-20260915180414891_3.jar"/>
     <property name="user.script" value=""/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="java.runtime.version" value="25.0.1+8-LTS-27"/>
@@ -52,7 +52,7 @@
     <property name="user.dir" value="C:\Users\SHUBHAM\Desktop\Netra\backend"/>
     <property name="os.arch" value="amd64"/>
     <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
-    <property name="PID" value="14756"/>
+    <property name="PID" value="1864"/>
     <property name="sun.os.patch.level" value=""/>
     <property name="CONSOLE_LOG_CHARSET" value="UTF-8"/>
     <property name="native.encoding" value="Cp1252"/>
@@ -66,9 +66,9 @@
     <property name="java.class.version" value="69.0"/>
     <property name="LOGGED_APPLICATION_NAME" value="[netra-backend] "/>
   </properties>
-  <testcase name="testWeakPasswordRejected" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.443">
-    <system-out><![CDATA[20:56:11.562 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [org.netra.features.auth.AuthSecurityIntegrationTest]: AuthSecurityIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-20:56:11.704 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration org.netra.NetraApplication for test class org.netra.features.auth.AuthSecurityIntegrationTest
+  <testcase name="testWeakPasswordRejected" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.5">
+    <system-out><![CDATA[18:04:15.735 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [org.netra.features.auth.AuthSecurityIntegrationTest]: AuthSecurityIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+18:04:15.870 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration org.netra.NetraApplication for test class org.netra.features.auth.AuthSecurityIntegrationTest
 
   .   ____          _            __ _ _
  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
@@ -79,38 +79,38 @@
 
  :: Spring Boot ::                (v3.3.4)
 
-2026-09-14T20:56:12.056+05:30  INFO 14756 --- [netra-backend] [           main] o.n.f.auth.AuthSecurityIntegrationTest   : Starting AuthSecurityIntegrationTest using Java 25.0.1 with PID 14756 (started by SHUBHAM in C:\Users\SHUBHAM\Desktop\Netra\backend)
-2026-09-14T20:56:12.057+05:30  INFO 14756 --- [netra-backend] [           main] o.n.f.auth.AuthSecurityIntegrationTest   : The following 1 profile is active: "dev"
-2026-09-14T20:56:12.712+05:30  INFO 14756 --- [netra-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2026-09-14T20:56:12.786+05:30  INFO 14756 --- [netra-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 66 ms. Found 9 JPA repository interfaces.
-2026-09-14T20:56:13.355+05:30  INFO 14756 --- [netra-backend] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2026-09-14T20:56:13.406+05:30  INFO 14756 --- [netra-backend] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
-2026-09-14T20:56:13.437+05:30  INFO 14756 --- [netra-backend] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2026-09-14T20:56:13.718+05:30  INFO 14756 --- [netra-backend] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2026-09-14T20:56:13.748+05:30  INFO 14756 --- [netra-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2026-09-14T20:56:13.895+05:30  INFO 14756 --- [netra-backend] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:netradb user=SA
-2026-09-14T20:56:13.897+05:30  INFO 14756 --- [netra-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2026-09-14T20:56:13.915+05:30  WARN 14756 --- [netra-backend] [           main] org.hibernate.orm.deprecation            : HHH90000025: H2Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
-2026-09-14T20:56:14.766+05:30  INFO 14756 --- [netra-backend] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2026-09-14T20:56:14.861+05:30  INFO 14756 --- [netra-backend] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2026-09-14T20:56:15.293+05:30  INFO 14756 --- [netra-backend] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
-2026-09-14T20:56:15.670+05:30  WARN 14756 --- [netra-backend] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
-2026-09-14T20:56:15.688+05:30  WARN 14756 --- [netra-backend] [           main] .s.s.UserDetailsServiceAutoConfiguration : 
+2026-09-15T18:04:16.302+05:30  INFO 1864 --- [netra-backend] [           main] o.n.f.auth.AuthSecurityIntegrationTest   : Starting AuthSecurityIntegrationTest using Java 25.0.1 with PID 1864 (started by SHUBHAM in C:\Users\SHUBHAM\Desktop\Netra\backend)
+2026-09-15T18:04:16.303+05:30  INFO 1864 --- [netra-backend] [           main] o.n.f.auth.AuthSecurityIntegrationTest   : The following 1 profile is active: "dev"
+2026-09-15T18:04:17.074+05:30  INFO 1864 --- [netra-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-15T18:04:17.172+05:30  INFO 1864 --- [netra-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 91 ms. Found 10 JPA repository interfaces.
+2026-09-15T18:04:17.767+05:30  INFO 1864 --- [netra-backend] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-09-15T18:04:17.821+05:30  INFO 1864 --- [netra-backend] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
+2026-09-15T18:04:17.853+05:30  INFO 1864 --- [netra-backend] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-09-15T18:04:18.176+05:30  INFO 1864 --- [netra-backend] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-15T18:04:18.207+05:30  INFO 1864 --- [netra-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-15T18:04:18.356+05:30  INFO 1864 --- [netra-backend] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:netradb user=SA
+2026-09-15T18:04:18.359+05:30  INFO 1864 --- [netra-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-09-15T18:04:18.377+05:30  WARN 1864 --- [netra-backend] [           main] org.hibernate.orm.deprecation            : HHH90000025: H2Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-09-15T18:04:19.373+05:30  INFO 1864 --- [netra-backend] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-15T18:04:19.442+05:30  INFO 1864 --- [netra-backend] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-15T18:04:19.899+05:30  INFO 1864 --- [netra-backend] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-09-15T18:04:20.347+05:30  WARN 1864 --- [netra-backend] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-09-15T18:04:20.370+05:30  WARN 1864 --- [netra-backend] [           main] .s.s.UserDetailsServiceAutoConfiguration : 
 
-Using generated security password: efc6d88b-9760-45ac-bcef-80f170d61a93
+Using generated security password: a1996471-a6d5-4f5d-9bb5-9669a5c66123
 
 This generated password is for development use only. Your security configuration must be updated before running your application in production.
 
-2026-09-14T20:56:15.695+05:30  INFO 14756 --- [netra-backend] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
-2026-09-14T20:56:16.410+05:30  INFO 14756 --- [netra-backend] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
-2026-09-14T20:56:16.411+05:30  INFO 14756 --- [netra-backend] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
-2026-09-14T20:56:16.412+05:30  INFO 14756 --- [netra-backend] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
-2026-09-14T20:56:16.428+05:30  INFO 14756 --- [netra-backend] [           main] o.n.f.auth.AuthSecurityIntegrationTest   : Started AuthSecurityIntegrationTest in 4.618 seconds (process running for 5.459)
-2026-09-14T20:56:16.537+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.NetraApplication               : Seeding baseline eligibility questions for version: INDIA-NBTC-2026-01
-2026-09-14T20:56:16.603+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.NetraApplication               : Seeded 16 questions successfully.
-2026-09-14T20:56:16.631+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.NetraApplication               : Seeding baseline eligibility rules for version: INDIA-NBTC-2026-01
-2026-09-14T20:56:16.655+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.NetraApplication               : Seeded 8 rules successfully.
-2026-09-14T20:56:17.104+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Password policy violation: Password must contain at least one digit.
+2026-09-15T18:04:20.378+05:30  INFO 1864 --- [netra-backend] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-09-15T18:04:21.213+05:30  INFO 1864 --- [netra-backend] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-09-15T18:04:21.214+05:30  INFO 1864 --- [netra-backend] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-09-15T18:04:21.214+05:30  INFO 1864 --- [netra-backend] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+2026-09-15T18:04:21.235+05:30  INFO 1864 --- [netra-backend] [           main] o.n.f.auth.AuthSecurityIntegrationTest   : Started AuthSecurityIntegrationTest in 5.251 seconds (process running for 6.222)
+2026-09-15T18:04:21.343+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.NetraApplication               : Seeding baseline eligibility questions for version: INDIA-NBTC-2026-01
+2026-09-15T18:04:21.399+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.NetraApplication               : Seeded 16 questions successfully.
+2026-09-15T18:04:21.420+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.NetraApplication               : Seeding baseline eligibility rules for version: INDIA-NBTC-2026-01
+2026-09-15T18:04:21.441+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.NetraApplication               : Seeded 8 rules successfully.
+2026-09-15T18:04:21.942+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Password policy violation: Password must contain at least one digit.
 ]]></system-out>
     <system-err><![CDATA[WARNING: A Java agent has been loaded dynamically (C:\Users\SHUBHAM\.m2\repository\net\bytebuddy\byte-buddy-agent\1.14.19\byte-buddy-agent-1.14.19.jar)
 WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
@@ -118,106 +118,106 @@ WARNING: If a serviceability tool is not in use, please run with -Djdk.instrumen
 WARNING: Dynamic loading of agents will be disallowed by default in a future release
 ]]></system-err>
   </testcase>
-  <testcase name="testDuplicateEmailRegistration" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.183">
-    <system-out><![CDATA[2026-09-14T20:56:17.194+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REGISTER, userId=a57eb707-051e-4117-90df-517c109c3231
-2026-09-14T20:56:17.269+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Registration conflict: An account with this email address already exists.
+  <testcase name="testDuplicateEmailRegistration" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.226">
+    <system-out><![CDATA[2026-09-15T18:04:22.047+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REGISTER, userId=db82b011-ec61-44b8-b4aa-511d53cf0d5e
+2026-09-15T18:04:22.148+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Registration conflict: An account with this email address already exists.
 ]]></system-out>
   </testcase>
-  <testcase name="testSuspendedAndDeactivatedUsersBlocked" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.293">
-    <system-out><![CDATA[2026-09-14T20:56:17.439+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_BLOCKED, userId=20ec1dbc-62ea-465e-b32e-0cdfe9fae1d5
-2026-09-14T20:56:17.440+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Account status restriction: Your account has been suspended. Please contact support.
-2026-09-14T20:56:17.591+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_BLOCKED, userId=4ae76157-a2cb-421e-a078-9abdeb6e5bb0
-2026-09-14T20:56:17.593+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Account status restriction: Your account has been deactivated.
+  <testcase name="testSuspendedAndDeactivatedUsersBlocked" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.319">
+    <system-out><![CDATA[2026-09-15T18:04:22.329+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_BLOCKED, userId=f43c4347-ce8d-48a8-bd80-42acbf37fe5f
+2026-09-15T18:04:22.330+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Account status restriction: Your account has been suspended. Please contact support.
+2026-09-15T18:04:22.497+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_BLOCKED, userId=012282fc-c04d-4e9e-b50c-0ba9ba36cd29
+2026-09-15T18:04:22.499+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Account status restriction: Your account has been deactivated.
 ]]></system-out>
   </testcase>
-  <testcase name="testAccessTokenValidationAndRejection" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.073">
-    <system-out><![CDATA[2026-09-14T20:56:17.667+05:30  WARN 14756 --- [netra-backend] [           main] o.netra.core.security.JwtTokenProvider   : Invalid JWT token: JWT signature does not match locally computed signature. JWT validity cannot be asserted and should not be trusted.
+  <testcase name="testAccessTokenValidationAndRejection" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.084">
+    <system-out><![CDATA[2026-09-15T18:04:22.587+05:30  WARN 1864 --- [netra-backend] [           main] o.netra.core.security.JwtTokenProvider   : Invalid JWT token: JWT signature does not match locally computed signature. JWT validity cannot be asserted and should not be trusted.
 ]]></system-out>
   </testcase>
-  <testcase name="testIdorProfileProtection" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.193">
-    <system-out><![CDATA[2026-09-14T20:56:17.854+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Unauthorized session access attempt: Access denied. You do not have permission to access another user's profile.
+  <testcase name="testIdorProfileProtection" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.212">
+    <system-out><![CDATA[2026-09-15T18:04:22.790+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Unauthorized session access attempt: Access denied. You do not have permission to access another user's profile.
 ]]></system-out>
   </testcase>
-  <testcase name="testAuthRateLimiting" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.122">
-    <system-out><![CDATA[2026-09-14T20:56:17.871+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.872+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.876+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.878+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.882+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.884+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.888+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.890+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.895+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.896+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.899+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.900+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.905+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.906+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.911+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.913+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.920+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.921+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.926+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.927+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.932+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.933+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.937+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.938+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.942+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.943+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.948+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.949+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.953+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.954+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.958+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.959+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.963+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.964+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.969+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.970+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.975+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.976+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.979+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:17.980+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:17.983+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Rate limit exceeded: Too many eligibility requests. Please wait a moment before trying again.
+  <testcase name="testAuthRateLimiting" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.151">
+    <system-out><![CDATA[2026-09-15T18:04:22.810+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.812+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.819+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.821+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.826+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.828+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.835+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.837+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.842+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.844+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.848+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.850+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.855+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.857+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.862+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.863+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.868+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.869+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.874+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.875+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.880+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.881+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.888+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.889+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.895+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.897+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.904+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.905+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.912+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.914+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.922+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.923+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.928+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.929+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.934+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.935+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.940+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.941+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.945+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:22.946+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:22.949+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Rate limit exceeded: Too many eligibility requests. Please wait a moment before trying again.
 ]]></system-out>
   </testcase>
-  <testcase name="testLogoutAndLogoutAll" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.206">
-    <system-out><![CDATA[2026-09-14T20:56:18.049+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REGISTER, userId=1002e0e6-1d83-49e2-a6f2-7490aac3244f
-2026-09-14T20:56:18.075+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGOUT, userId=1002e0e6-1d83-49e2-a6f2-7490aac3244f
-2026-09-14T20:56:18.095+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REFRESH_REUSE_DETECTED, userId=1002e0e6-1d83-49e2-a6f2-7490aac3244f
-2026-09-14T20:56:18.105+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Security alert - Token reuse detected: Revoked refresh token reuse detected. All sessions terminated. Please sign in again.
-2026-09-14T20:56:18.169+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_SUCCESS, userId=1002e0e6-1d83-49e2-a6f2-7490aac3244f
-2026-09-14T20:56:18.184+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGOUT_ALL, userId=1002e0e6-1d83-49e2-a6f2-7490aac3244f
-2026-09-14T20:56:18.190+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REFRESH_REUSE_DETECTED, userId=1002e0e6-1d83-49e2-a6f2-7490aac3244f
-2026-09-14T20:56:18.193+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Security alert - Token reuse detected: Revoked refresh token reuse detected. All sessions terminated. Please sign in again.
+  <testcase name="testLogoutAndLogoutAll" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.217">
+    <system-out><![CDATA[2026-09-15T18:04:23.023+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REGISTER, userId=829cdc3c-4d72-4b66-bb51-87d845f99ac3
+2026-09-15T18:04:23.047+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGOUT, userId=829cdc3c-4d72-4b66-bb51-87d845f99ac3
+2026-09-15T18:04:23.066+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REFRESH_REUSE_DETECTED, userId=829cdc3c-4d72-4b66-bb51-87d845f99ac3
+2026-09-15T18:04:23.076+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Security alert - Token reuse detected: Revoked refresh token reuse detected. All sessions terminated. Please sign in again.
+2026-09-15T18:04:23.146+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_SUCCESS, userId=829cdc3c-4d72-4b66-bb51-87d845f99ac3
+2026-09-15T18:04:23.160+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGOUT_ALL, userId=829cdc3c-4d72-4b66-bb51-87d845f99ac3
+2026-09-15T18:04:23.167+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REFRESH_REUSE_DETECTED, userId=829cdc3c-4d72-4b66-bb51-87d845f99ac3
+2026-09-15T18:04:23.170+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Security alert - Token reuse detected: Revoked refresh token reuse detected. All sessions terminated. Please sign in again.
 ]]></system-out>
   </testcase>
-  <testcase name="testSensitiveDataNotLeakedInProfile" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.069"/>
-  <testcase name="testRoleEscalationBlocked" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.076">
-    <system-out><![CDATA[2026-09-14T20:56:18.331+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REGISTER, userId=0e9a9405-3b3e-4847-90a0-ec1f3c25d8fa
+  <testcase name="testSensitiveDataNotLeakedInProfile" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.075"/>
+  <testcase name="testRoleEscalationBlocked" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.078">
+    <system-out><![CDATA[2026-09-15T18:04:23.316+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REGISTER, userId=d0cb691c-448a-437f-9525-d9af1d8590ec
 ]]></system-out>
   </testcase>
-  <testcase name="testLoginScenarios" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.204">
-    <system-out><![CDATA[2026-09-14T20:56:18.407+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REGISTER, userId=c5e2a1ae-b46c-42e2-ab80-d90d24e4d04b
-2026-09-14T20:56:18.472+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_SUCCESS, userId=c5e2a1ae-b46c-42e2-ab80-d90d24e4d04b
-2026-09-14T20:56:18.539+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=c5e2a1ae-b46c-42e2-ab80-d90d24e4d04b
-2026-09-14T20:56:18.540+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
-2026-09-14T20:56:18.545+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
-2026-09-14T20:56:18.546+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+  <testcase name="testLoginScenarios" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.21">
+    <system-out><![CDATA[2026-09-15T18:04:23.396+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REGISTER, userId=06ad4ec6-83cd-44cb-bfb6-1940db586688
+2026-09-15T18:04:23.463+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_SUCCESS, userId=06ad4ec6-83cd-44cb-bfb6-1940db586688
+2026-09-15T18:04:23.531+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=06ad4ec6-83cd-44cb-bfb6-1940db586688
+2026-09-15T18:04:23.532+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
+2026-09-15T18:04:23.537+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=LOGIN_FAILURE, userId=null
+2026-09-15T18:04:23.538+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Authentication failed: Invalid email or password
 ]]></system-out>
   </testcase>
-  <testcase name="testRefreshRotationAndReuseAnomalyDetection" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.102">
-    <system-out><![CDATA[2026-09-14T20:56:18.614+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REGISTER, userId=7f99eed7-dead-45f4-9fe6-ed650f86909b
-2026-09-14T20:56:18.626+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REFRESH, userId=7f99eed7-dead-45f4-9fe6-ed650f86909b
-2026-09-14T20:56:18.637+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REFRESH_REUSE_DETECTED, userId=7f99eed7-dead-45f4-9fe6-ed650f86909b
-2026-09-14T20:56:18.640+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Security alert - Token reuse detected: Revoked refresh token reuse detected. All sessions terminated. Please sign in again.
-2026-09-14T20:56:18.646+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REFRESH_REUSE_DETECTED, userId=7f99eed7-dead-45f4-9fe6-ed650f86909b
-2026-09-14T20:56:18.649+05:30  WARN 14756 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Security alert - Token reuse detected: Revoked refresh token reuse detected. All sessions terminated. Please sign in again.
+  <testcase name="testRefreshRotationAndReuseAnomalyDetection" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.101">
+    <system-out><![CDATA[2026-09-15T18:04:23.607+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REGISTER, userId=35cd47e5-a5fb-4d33-aaf8-aa5bfedc35b8
+2026-09-15T18:04:23.619+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REFRESH, userId=35cd47e5-a5fb-4d33-aaf8-aa5bfedc35b8
+2026-09-15T18:04:23.629+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REFRESH_REUSE_DETECTED, userId=35cd47e5-a5fb-4d33-aaf8-aa5bfedc35b8
+2026-09-15T18:04:23.631+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Security alert - Token reuse detected: Revoked refresh token reuse detected. All sessions terminated. Please sign in again.
+2026-09-15T18:04:23.637+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REFRESH_REUSE_DETECTED, userId=35cd47e5-a5fb-4d33-aaf8-aa5bfedc35b8
+2026-09-15T18:04:23.640+05:30  WARN 1864 --- [netra-backend] [           main] o.n.c.exception.GlobalExceptionHandler   : Security alert - Token reuse detected: Revoked refresh token reuse detected. All sessions terminated. Please sign in again.
 ]]></system-out>
   </testcase>
-  <testcase name="testRegistrationSuccessAndPasswordHashing" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.143">
-    <system-out><![CDATA[2026-09-14T20:56:18.719+05:30  INFO 14756 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REGISTER, userId=c35f765e-2bed-4dee-80a2-f7b38ec8a7ca
+  <testcase name="testRegistrationSuccessAndPasswordHashing" classname="org.netra.features.auth.AuthSecurityIntegrationTest" time="0.131">
+    <system-out><![CDATA[2026-09-15T18:04:23.710+05:30  INFO 1864 --- [netra-backend] [           main] org.netra.core.audit.AuditService        : Security audit event: type=REGISTER, userId=178ebee2-8c3b-4a83-a2fb-2615f2cadc56
 ]]></system-out>
   </testcase>
 </testsuite>

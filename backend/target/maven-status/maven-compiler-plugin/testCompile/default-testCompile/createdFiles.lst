@@ -1,2 +1,3 @@
-org\netra\features\eligibility\EligibilityRuleEngineTest.class
 org\netra\features\eligibility\EligibilityControllerIntegrationTest.class
+org\netra\features\donor\DonorProfileIntegrationTest.class
+org\netra\features\eligibility\EligibilityRuleEngineTest.class

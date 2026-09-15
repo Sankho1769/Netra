@@ -82,6 +82,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout-all").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/auth/me").authenticated()
                 .requestMatchers("/api/v1/users/**").authenticated()
+                .requestMatchers("/api/v1/profile/**").authenticated()
+                .requestMatchers("/api/v1/donor/**").authenticated()
 
                 .requestMatchers("/error").permitAll()
                 .anyRequest().authenticated()
