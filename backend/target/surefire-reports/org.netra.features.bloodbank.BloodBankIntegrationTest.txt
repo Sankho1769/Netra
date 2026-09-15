@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: org.netra.features.bloodbank.BloodBankIntegrationTest
+-------------------------------------------------------------------------------
+Tests run: 27, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.554 s -- in org.netra.features.bloodbank.BloodBankIntegrationTest

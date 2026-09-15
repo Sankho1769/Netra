@@ -77,6 +77,21 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/eligibility/sessions/*/check").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/eligibility/sessions/*/result").permitAll()
 
+                // Blood Bank Discovery (Public GET)
+                .requestMatchers(HttpMethod.GET, "/api/v1/bloodbanks").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/bloodbanks/**").permitAll()
+
+                // Blood Bank Admin Actions
+                .requestMatchers(HttpMethod.POST, "/api/v1/bloodbanks").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/v1/bloodbanks/*/verification").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/bloodbanks/*/accounts/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/v1/bloodbanks/*/accounts/**").hasRole("ADMIN")
+
+                // Blood Bank Management (Coarse transport check; Service layer strictly enforces Resource Ownership)
+                .requestMatchers(HttpMethod.PUT, "/api/v1/bloodbanks/*/inventory").hasAnyRole("ADMIN", "BLOODBANK")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/bloodbanks/**").hasAnyRole("ADMIN", "BLOODBANK")
+                .requestMatchers(HttpMethod.PATCH, "/api/v1/bloodbanks/*/status").hasAnyRole("ADMIN", "BLOODBANK")
+
                 // Protected Auth and User Endpoints
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout-all").authenticated()
@@ -96,9 +111,33 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(allowedOrigins);
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "X-Capability-Token", "X-Session-Token"));
+
+        if (allowedOrigins != null && !allowedOrigins.isEmpty()) {
+            boolean hasWildcard = allowedOrigins.stream()
+                    .map(String::trim)
+                    .anyMatch(origin -> origin.equals("*"));
+            if (hasWildcard) {
+                throw new IllegalStateException("CORS configuration error: Wildcard origin '*' cannot be used with allowCredentials=true.");
+            }
+            List<String> sanitizedOrigins = allowedOrigins.stream()
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .toList();
+            configuration.setAllowedOrigins(sanitizedOrigins);
+        }
+
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
+        configuration.setAllowedHeaders(Arrays.asList(
+                "Authorization",
+                "Content-Type",
+                "X-Requested-With",
+                "Accept",
+                "X-Capability-Token",
+                "X-Session-Token",
+                "Origin",
+                "Access-Control-Request-Method",
+                "Access-Control-Request-Headers"
+        ));
         configuration.setExposedHeaders(Arrays.asList("X-Capability-Token", "X-Session-Token"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);

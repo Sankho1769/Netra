@@ -1,3 +1,6 @@
-org\netra\features\eligibility\EligibilityControllerIntegrationTest.class
+org\netra\features\bloodbank\BloodInventoryConcurrencyTest.class
 org\netra\features\donor\DonorProfileIntegrationTest.class
+org\netra\core\security\SecurityUtilsTest.class
+org\netra\features\bloodbank\BloodBankIntegrationTest.class
+org\netra\features\eligibility\EligibilityControllerIntegrationTest.class
 org\netra\features\eligibility\EligibilityRuleEngineTest.class

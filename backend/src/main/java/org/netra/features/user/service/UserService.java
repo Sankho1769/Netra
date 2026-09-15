@@ -83,8 +83,7 @@ public class UserService {
         UUID currentUserId = SecurityUtils.getCurrentUserId()
                 .orElseThrow(() -> new UnauthorizedSessionAccessException("User is not authenticated."));
 
-        Optional<String> currentUserRole = SecurityUtils.getCurrentUserRole();
-        boolean isAdmin = currentUserRole.isPresent() && UserRole.ROLE_ADMIN.name().equalsIgnoreCase(currentUserRole.get());
+        boolean isAdmin = SecurityUtils.hasRole("ROLE_ADMIN");
 
         // IDOR / BOLA Protection:
         // A user can ONLY access their own profile unless they have ROLE_ADMIN

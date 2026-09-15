@@ -4,8 +4,12 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public final class SecurityUtils {
 
@@ -25,14 +29,45 @@ public final class SecurityUtils {
         }
     }
 
-    public static Optional<String> getCurrentUserRole() {
+    public static Set<String> getCurrentUserAuthorities() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
-            return Optional.empty();
+            return Collections.emptySet();
         }
         return authentication.getAuthorities().stream()
-                .findFirst()
-                .map(grantedAuthority -> grantedAuthority.getAuthority());
+                .map(org.springframework.security.core.GrantedAuthority::getAuthority)
+                .collect(Collectors.toSet());
+    }
+
+    public static boolean hasRole(String role) {
+        if (role == null || role.isBlank()) {
+            return false;
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
+            return false;
+        }
+        String normalized = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+        return authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equalsIgnoreCase(role) || a.getAuthority().equalsIgnoreCase(normalized));
+    }
+
+    public static boolean hasAnyRole(String... roles) {
+        if (roles == null || roles.length == 0) {
+            return false;
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
+            return false;
+        }
+        Set<String> targetRoles = Arrays.stream(roles)
+                .filter(r -> r != null && !r.isBlank())
+                .flatMap(r -> java.util.stream.Stream.of(r, r.startsWith("ROLE_") ? r : "ROLE_" + r))
+                .map(String::toUpperCase)
+                .collect(Collectors.toSet());
+
+        return authentication.getAuthorities().stream()
+                .anyMatch(a -> targetRoles.contains(a.getAuthority().toUpperCase()));
     }
 
     public static String generateSecureToken() {

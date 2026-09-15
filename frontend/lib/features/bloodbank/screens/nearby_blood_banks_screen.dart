@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import '../../../common/widgets/common_widgets.dart';
+import '../../../core/location/location_models.dart';
+import '../../../core/location/location_service.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/netra_colors.dart';
 import '../../../core/theme/netra_spacing.dart';
 import '../../../core/theme/netra_typography.dart';
-import '../../../common/widgets/common_widgets.dart';
-import '../../../core/location/location_service.dart';
-import '../../../core/location/location_models.dart';
+import '../models/blood_bank.dart';
+import '../services/bloodbank_api_service.dart';
+import '../widgets/bloodbank_card.dart';
+import 'bloodbank_details_screen.dart';
 
 class NearbyBloodBanksScreen extends StatefulWidget {
   const NearbyBloodBanksScreen({super.key});
@@ -16,46 +20,101 @@ class NearbyBloodBanksScreen extends StatefulWidget {
 
 class _NearbyBloodBanksScreenState extends State<NearbyBloodBanksScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final BloodBankApiService _apiService = BloodBankApiService();
+  final LocationService _locationService = DefaultLocationService();
 
-  final List<Map<String, String>> _bloodBanks = [
-    {
-      "name": "Tata Memorial Hospital Blood Centre",
-      "address": "Dr. E Borges Road, Parel, Mumbai",
-      "distance": "2.4 km away",
-      "hours": "Open 24/7",
-      "phone": "+91 22 2417 7000",
-      "verified": "Govt Authorized / NBTC Certified"
-    },
-    {
-      "name": "KEM Hospital Regional Blood Transfusion Centre",
-      "address": "Acharya Donde Marg, Parel, Mumbai",
-      "distance": "3.1 km away",
-      "hours": "Open 24/7",
-      "phone": "+91 22 2410 7000",
-      "verified": "Govt Authorized / NBTC Certified"
-    },
-    {
-      "name": "Red Cross Society Blood Centre",
-      "address": "141 Shahid Bhagat Singh Road, Fort, Mumbai",
-      "distance": "6.8 km away",
-      "hours": "9:00 AM - 8:00 PM",
-      "phone": "+91 22 2266 1524",
-      "verified": "Govt Authorized / NBTC Certified"
-    },
-    {
-      "name": "Lilavati Hospital & Research Centre Blood Bank",
-      "address": "A-791 Bandra Reclamation, Bandra West, Mumbai",
-      "distance": "8.2 km away",
-      "hours": "Open 24/7",
-      "phone": "+91 22 2675 1000",
-      "verified": "Govt Authorized / NBTC Certified"
-    }
-  ];
+  List<BloodBankSummary> _bloodBanks = [];
+  bool _isLoading = false;
+  String? _errorMessage;
+  double? _currentLat;
+  double? _currentLon;
+  String? _selectedBloodGroup;
+
+  final List<String> _bloodGroups = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDefaultOrNearby();
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchDefaultOrNearby() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final loc = await _locationService.getCurrentLocation(approximateOnly: true);
+      if (loc != null) {
+        _currentLat = loc.latitude;
+        _currentLon = loc.longitude;
+        _searchController.text = loc.displayName;
+        final list = await _apiService.getNearbyBloodBanks(
+          latitude: loc.latitude,
+          longitude: loc.longitude,
+          radiusKm: 25.0,
+        );
+        if (mounted) {
+          setState(() {
+            _bloodBanks = list;
+            _isLoading = false;
+          });
+        }
+      } else {
+        // Fallback to general discovery
+        final list = await _apiService.discoverBloodBanks(
+          bloodGroup: _selectedBloodGroup,
+        );
+        if (mounted) {
+          setState(() {
+            _bloodBanks = list;
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _search() async {
+    final query = _searchController.text.trim();
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final list = await _apiService.discoverBloodBanks(
+        city: query.isNotEmpty ? query : null,
+        bloodGroup: _selectedBloodGroup,
+      );
+      if (mounted) {
+        setState(() {
+          _bloodBanks = list;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -70,38 +129,97 @@ class _NearbyBloodBanksScreenState extends State<NearbyBloodBanksScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Search & privacy banner
+            // Search & Privacy Banner
             Container(
               color: NetraColors.surfaceWhite,
               child: ResponsiveContainer.wide(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Column(
                   children: [
-                    TextField(
-                      controller: _searchController,
-                      style: NetraTypography.bodyLarge,
-                      decoration: InputDecoration(
-                        hintText: "Enter city, district, or PIN code",
-                        prefixIcon: const Icon(Icons.search_rounded, color: NetraColors.textSecondary),
-                        suffixIcon: IconButton(
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            style: NetraTypography.bodyLarge,
+                            onSubmitted: (_) => _search(),
+                            decoration: InputDecoration(
+                              hintText: "Enter city or region to search",
+                              prefixIcon: const Icon(Icons.search_rounded, color: NetraColors.textSecondary),
+                              suffixIcon: _searchController.text.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear_rounded, size: 20),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        _search();
+                                      },
+                                    )
+                                  : null,
+                            ),
+                          ),
+                        ),
+                        NetraSpacing.gapW8,
+                        IconButton(
                           icon: const Icon(Icons.my_location_rounded, color: NetraColors.primaryRed),
                           tooltip: "Use approximate device location",
                           onPressed: () async {
-                            final locationService = DefaultLocationService();
-                            final loc = await locationService.getCurrentLocation(approximateOnly: true);
+                            final loc = await _locationService.getCurrentLocation(approximateOnly: true);
                             if (mounted && loc != null) {
+                              _currentLat = loc.latitude;
+                              _currentLon = loc.longitude;
                               _searchController.text = loc.displayName;
+                              _fetchDefaultOrNearby();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text("Approximate location used: ${loc.displayName}. Exact coordinates are not stored."),
+                                  content: Text("Approximate location used: ${loc.displayName}. Exact coordinates are not recorded."),
                                 ),
                               );
                             }
                           },
                         ),
+                      ],
+                    ),
+
+                    NetraSpacing.gapH8,
+
+                    // Blood Group Filter Chips
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          ChoiceChip(
+                            label: const Text('All Blood Groups'),
+                            selected: _selectedBloodGroup == null,
+                            onSelected: (selected) {
+                              if (selected) {
+                                setState(() => _selectedBloodGroup = null);
+                                _search();
+                              }
+                            },
+                          ),
+                          NetraSpacing.gapW8,
+                          ..._bloodGroups.map((bg) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: ChoiceChip(
+                                label: Text(bg),
+                                selected: _selectedBloodGroup == bg,
+                                onSelected: (selected) {
+                                  setState(() {
+                                    _selectedBloodGroup = selected ? bg : null;
+                                  });
+                                  _search();
+                                },
+                              ),
+                            );
+                          }),
+                        ],
                       ),
                     ),
+
                     NetraSpacing.gapH8,
+
+                    // Location Privacy Notice
                     Row(
                       children: [
                         const Icon(Icons.shield_outlined, size: 14, color: NetraColors.textMuted),
@@ -120,26 +238,84 @@ class _NearbyBloodBanksScreenState extends State<NearbyBloodBanksScreen> {
             ),
             const Divider(height: 1, color: NetraColors.borderGray),
 
-            // Responsive Blood Banks Content
+            // Content Area
             Expanded(
-              child: ResponsiveContainer.wide(
-                child: isDesktopOrTablet
-                    ? GridView.builder(
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          mainAxisExtent: 148,
-                        ),
-                        itemCount: _bloodBanks.length,
-                        itemBuilder: (context, index) => _buildBloodBankCard(_bloodBanks[index]),
-                      )
-                    : ListView.separated(
-                        itemCount: _bloodBanks.length,
-                        separatorBuilder: (context, index) => NetraSpacing.gapH12,
-                        itemBuilder: (context, index) => _buildBloodBankCard(_bloodBanks[index]),
-                      ),
-              ),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: NetraColors.primaryRed))
+                  : _errorMessage != null
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.error_outline_rounded, size: 48, color: NetraColors.ineligibleRed),
+                                NetraSpacing.gapH12,
+                                Text(_errorMessage!, style: NetraTypography.bodyLarge, textAlign: TextAlign.center),
+                                NetraSpacing.gapH16,
+                                NetraButton.primary(
+                                  text: "Retry",
+                                  onPressed: _search,
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : _bloodBanks.isEmpty
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(24.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.search_off_rounded, size: 48, color: NetraColors.textMuted),
+                                    NetraSpacing.gapH12,
+                                    Text(
+                                      "No authorized blood centres found matching your query.",
+                                      style: NetraTypography.titleMedium.copyWith(color: NetraColors.textSecondary),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    NetraSpacing.gapH8,
+                                    Text(
+                                      "Try expanding your search radius or selecting 'All Blood Groups'.",
+                                      style: NetraTypography.bodySmall.copyWith(color: NetraColors.textMuted),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : ResponsiveContainer.wide(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              child: isDesktopOrTablet
+                                  ? GridView.builder(
+                                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 2,
+                                        crossAxisSpacing: 16,
+                                        mainAxisSpacing: 16,
+                                        mainAxisExtent: 148,
+                                      ),
+                                      itemCount: _bloodBanks.length,
+                                      itemBuilder: (context, index) {
+                                        final bank = _bloodBanks[index];
+                                        return BloodBankCard(
+                                          bank: bank,
+                                          onTap: () => _navigateToDetails(bank),
+                                        );
+                                      },
+                                    )
+                                  : ListView.separated(
+                                      itemCount: _bloodBanks.length,
+                                      separatorBuilder: (context, index) => NetraSpacing.gapH12,
+                                      itemBuilder: (context, index) {
+                                        final bank = _bloodBanks[index];
+                                        return BloodBankCard(
+                                          bank: bank,
+                                          onTap: () => _navigateToDetails(bank),
+                                        );
+                                      },
+                                    ),
+                            ),
             ),
           ],
         ),
@@ -147,85 +323,14 @@ class _NearbyBloodBanksScreenState extends State<NearbyBloodBanksScreen> {
     );
   }
 
-  Widget _buildBloodBankCard(Map<String, String> bank) {
-    return NetraCard.outlined(
-      padding: NetraSpacing.cardPadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: NetraSpacing.paddingSm,
-                decoration: BoxDecoration(
-                  color: NetraColors.backgroundRed,
-                  borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
-                ),
-                child: const Icon(Icons.local_hospital_rounded, color: NetraColors.primaryRed, size: 22),
-              ),
-              NetraSpacing.gapW12,
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      bank['name']!,
-                      style: NetraTypography.titleMedium,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    NetraSpacing.gapH4,
-                    Text(
-                      bank['address']!,
-                      style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: NetraColors.backgroundGray,
-                  borderRadius: BorderRadius.circular(NetraSpacing.radiusXs),
-                  border: Border.all(color: NetraColors.borderSubtle),
-                ),
-                child: Text(
-                  bank['distance']!,
-                  style: NetraTypography.labelSmall.copyWith(color: NetraColors.textPrimary),
-                ),
-              ),
-              NetraSpacing.gapW8,
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: NetraColors.eligibleGreenBg,
-                  borderRadius: BorderRadius.circular(NetraSpacing.radiusXs),
-                ),
-                child: Text(
-                  bank['hours']!,
-                  style: NetraTypography.labelSmall.copyWith(color: NetraColors.eligibleGreen),
-                ),
-              ),
-              const Spacer(),
-              Text(
-                bank['verified']!,
-                style: NetraTypography.bodySmall.copyWith(
-                  color: NetraColors.primaryRed,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-        ],
+  void _navigateToDetails(BloodBankSummary bank) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => BloodBankDetailsScreen(
+          bloodBankId: bank.id,
+          userLat: _currentLat,
+          userLon: _currentLon,
+        ),
       ),
     );
   }
