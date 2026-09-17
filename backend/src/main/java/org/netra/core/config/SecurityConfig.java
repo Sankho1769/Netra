@@ -111,6 +111,15 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/donation-events/nearby").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/donation-events/*").permitAll()
 
+                // Blood Requests Endpoints
+                .requestMatchers(HttpMethod.GET, "/api/v1/blood-requests/me").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/v1/blood-requests").authenticated()
+                .requestMatchers(HttpMethod.PATCH, "/api/v1/blood-requests/*").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/v1/blood-requests/*/cancel").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/blood-requests").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/blood-requests/nearby").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/blood-requests/*").permitAll()
+
                 // Protected Auth and User Endpoints
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout-all").authenticated()

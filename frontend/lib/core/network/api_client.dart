@@ -83,6 +83,30 @@ class ApiClient {
     }
   }
 
+  /// Perform a PATCH request.
+  Future<dynamic> patch(
+    String path, {
+    Map<String, String>? headers,
+    Object? body,
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    final uri = _buildUri(path, queryParameters);
+    try {
+      final response = await _client
+          .patch(
+            uri,
+            headers: _buildHeaders(headers),
+            body: body != null ? jsonEncode(body) : null,
+          )
+          .timeout(timeout);
+      return _processResponse(response);
+    } on SocketException {
+      throw const ConnectionException();
+    } on http.ClientException catch (e) {
+      throw ConnectionException(e.message);
+    }
+  }
+
   /// Perform a DELETE request.
   Future<dynamic> delete(
     String path, {

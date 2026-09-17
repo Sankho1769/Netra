@@ -7,6 +7,7 @@ import '../../common/widgets/common_widgets.dart';
 import '../eligibility/screens/eligibility_intro_screen.dart';
 import '../bloodbank/screens/nearby_blood_banks_screen.dart';
 import '../events/screens/donation_event_list_screen.dart';
+import '../blood_request/screens/blood_request_list_screen.dart';
 import '../auth/state/auth_scope.dart';
 import '../auth/screens/login_screen.dart';
 import '../profile/screens/profile_screen.dart';
@@ -185,6 +186,25 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               NetraSpacing.gapW12,
+              Expanded(
+                child: _buildQuickActionCard(
+                  icon: Icons.bloodtype_outlined,
+                  title: "Blood Requests",
+                  subtitle: "Find & request blood",
+                  bgColor: const Color(0xFFFEF2F2),
+                  iconColor: const Color(0xFFDC2626),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const BloodRequestListScreen()),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+          NetraSpacing.gapH12,
+          Row(
+            children: [
               Expanded(
                 child: _buildQuickActionCard(
                   icon: Icons.location_on_outlined,
