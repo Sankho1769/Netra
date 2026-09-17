@@ -156,6 +156,42 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
+    @ExceptionHandler(DuplicateRegistrationException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateRegistration(DuplicateRegistrationException ex, HttpServletRequest request) {
+        log.warn("Duplicate event registration attempt: {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "ALREADY_REGISTERED",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(EventFullException.class)
+    public ResponseEntity<ErrorResponse> handleEventFull(EventFullException ex, HttpServletRequest request) {
+        log.warn("Event registration full: {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "EVENT_FULL",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(EventRegistrationClosedException.class)
+    public ResponseEntity<ErrorResponse> handleEventRegistrationClosed(EventRegistrationClosedException ex, HttpServletRequest request) {
+        log.warn("Event registration closed or unavailable: {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "REGISTRATION_CLOSED",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
 
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<ErrorResponse> handleValidation(ValidationException ex, HttpServletRequest request) {

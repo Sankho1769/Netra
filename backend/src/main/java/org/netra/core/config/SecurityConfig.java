@@ -92,6 +92,25 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/v1/bloodbanks/**").hasAnyRole("ADMIN", "BLOODBANK")
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/bloodbanks/*/status").hasAnyRole("ADMIN", "BLOODBANK")
 
+                // Donation Events Registration & Private Endpoints
+                .requestMatchers(HttpMethod.GET, "/api/v1/donation-events/my-registrations").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/donation-events/*/registration").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/donation-events/*/registrations").hasAnyRole("ADMIN", "BLOODBANK")
+                .requestMatchers(HttpMethod.POST, "/api/v1/donation-events/*/register").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/donation-events/*/registration").authenticated()
+
+                // Donation Events Staff / Admin Endpoints
+                .requestMatchers(HttpMethod.PATCH, "/api/v1/donation-events/*/approval").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/donation-events").hasAnyRole("ADMIN", "BLOODBANK")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/donation-events/*").hasAnyRole("ADMIN", "BLOODBANK")
+                .requestMatchers(HttpMethod.POST, "/api/v1/donation-events/*/submit").hasAnyRole("ADMIN", "BLOODBANK")
+                .requestMatchers(HttpMethod.POST, "/api/v1/donation-events/*/cancel").hasAnyRole("ADMIN", "BLOODBANK")
+
+                // Donation Events Discovery (Public GET)
+                .requestMatchers(HttpMethod.GET, "/api/v1/donation-events").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/donation-events/nearby").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/donation-events/*").permitAll()
+
                 // Protected Auth and User Endpoints
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout-all").authenticated()

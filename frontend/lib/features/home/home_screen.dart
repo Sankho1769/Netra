@@ -6,6 +6,7 @@ import '../../core/theme/netra_typography.dart';
 import '../../common/widgets/common_widgets.dart';
 import '../eligibility/screens/eligibility_intro_screen.dart';
 import '../bloodbank/screens/nearby_blood_banks_screen.dart';
+import '../events/screens/donation_event_list_screen.dart';
 import '../auth/state/auth_scope.dart';
 import '../auth/screens/login_screen.dart';
 import '../profile/screens/profile_screen.dart';
@@ -171,12 +172,16 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Expanded(
                 child: _buildQuickActionCard(
-                  icon: Icons.bloodtype_outlined,
-                  title: "Emergency Need",
-                  subtitle: "O+ & B- urgent",
+                  icon: Icons.event_available_rounded,
+                  title: "Donation Camps",
+                  subtitle: "Find & register",
                   bgColor: NetraColors.backgroundRed,
                   iconColor: NetraColors.primaryRed,
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const DonationEventListScreen()),
+                    );
+                  },
                 ),
               ),
               NetraSpacing.gapW12,

@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: org.netra.features.donor.DonorProfileIntegrationTest
--------------------------------------------------------------------------------
-Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.346 s -- in org.netra.features.donor.DonorProfileIntegrationTest

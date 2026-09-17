@@ -1,0 +1,29 @@
+﻿# Backend build artifacts
+**/target/
+*.class
+**/*.class
+backend/apache-maven-*/
+apache-maven-*/
+
+# Frontend build artifacts
+**/build/
+**/.dart_tool/
+frontend/.packages
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+
+# IDE metadata
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.settings/
+.classpath
+.project
+
+# OS and temporary files
+.DS_Store
+Thumbs.db
+*.log
+scratch/

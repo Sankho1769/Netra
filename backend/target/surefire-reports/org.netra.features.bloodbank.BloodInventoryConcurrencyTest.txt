@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: org.netra.features.bloodbank.BloodInventoryConcurrencyTest
--------------------------------------------------------------------------------
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.665 s -- in org.netra.features.bloodbank.BloodInventoryConcurrencyTest
