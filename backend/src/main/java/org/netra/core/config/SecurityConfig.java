@@ -120,6 +120,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/blood-requests/nearby").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/blood-requests/*").permitAll()
 
+                // Emergency Mode Endpoints
+                .requestMatchers(HttpMethod.POST, "/api/v1/emergency/blood-requests").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/v1/emergency/blood-requests/*/cancel").authenticated()
+
                 // Protected Auth and User Endpoints
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout-all").authenticated()
@@ -162,6 +166,7 @@ public class SecurityConfig {
                 "Accept",
                 "X-Capability-Token",
                 "X-Session-Token",
+                "Idempotency-Key",
                 "Origin",
                 "Access-Control-Request-Method",
                 "Access-Control-Request-Headers"

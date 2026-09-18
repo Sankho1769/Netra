@@ -55,6 +55,31 @@ public class BloodRequestService {
 
         validateCreation(request);
 
+        if (request.getUrgency() == BloodRequestUrgency.CRITICAL) {
+            throw new ValidationException("Critical urgency requests must be created through Emergency Mode.");
+        }
+
+        return persistAndLogRequest(request, currentUserId, clientIp, userAgent);
+    }
+
+    @Transactional
+    public BloodRequestDetailDto createEmergencyBloodRequest(CreateBloodRequestRequest request, String clientIp, String userAgent) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new UnauthorizedSessionAccessException("Authentication is required to create an emergency blood request."));
+
+        authorizationService.verifyActiveUser(currentUserId);
+
+        validateCreation(request);
+
+        if (request.getUrgency() != BloodRequestUrgency.CRITICAL) {
+            throw new ValidationException("Emergency blood requests must have CRITICAL urgency.");
+        }
+
+        return persistAndLogRequest(request, currentUserId, clientIp, userAgent);
+    }
+
+    private BloodRequestDetailDto persistAndLogRequest(
+            CreateBloodRequestRequest request, UUID currentUserId, String clientIp, String userAgent) {
         BloodRequest bloodRequest = new BloodRequest();
         bloodRequest.setRequesterUserId(currentUserId);
         bloodRequest.setBloodGroup(request.getBloodGroup());
@@ -196,6 +221,15 @@ public class BloodRequestService {
         }
 
         if (request.getUrgency() != null) {
+            if (bloodRequest.getUrgency() == BloodRequestUrgency.CRITICAL) {
+                if (request.getUrgency() != BloodRequestUrgency.CRITICAL) {
+                    throw new ValidationException("Emergency requests must remain CRITICAL.");
+                }
+            } else {
+                if (request.getUrgency() == BloodRequestUrgency.CRITICAL) {
+                    throw new ValidationException("Critical urgency requests must be created through Emergency Mode.");
+                }
+            }
             bloodRequest.setUrgency(request.getUrgency());
         }
 
@@ -281,6 +315,57 @@ public class BloodRequestService {
 
         auditService.logAuthEvent(
                 "BLOOD_REQUEST_CANCELLED",
+                currentUserId,
+                clientIp,
+                userAgent,
+                "{\"requestId\":\"" + saved.getId() + "\"}"
+        );
+
+        boolean isOwner = bloodRequest.getRequesterUserId().equals(currentUserId);
+        return mapToDetailDto(saved, isOwner, true, null);
+    }
+
+    @Transactional
+    public BloodRequestDetailDto cancelEmergencyRequest(UUID id, CancelBloodRequestRequest request, String clientIp, String userAgent) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new UnauthorizedSessionAccessException("Authentication is required to cancel an emergency blood request."));
+
+        BloodRequest bloodRequest = bloodRequestRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Blood request not found: " + id));
+
+        // 1. Verify owner/admin authorization FIRST to avoid leaking urgency information
+        authorizationService.verifyCanManageRequest(currentUserId, bloodRequest);
+
+        // 2. Enforce Emergency invariant: target request must have CRITICAL urgency
+        if (bloodRequest.getUrgency() != BloodRequestUrgency.CRITICAL) {
+            throw new ValidationException("Only emergency requests with CRITICAL urgency can be cancelled through the emergency endpoint.");
+        }
+
+        if (bloodRequest.getStatus().isTerminal()) {
+            throw new ValidationException("Cannot cancel a blood request that is already " + bloodRequest.getStatus() + ".");
+        }
+
+        Instant now = Instant.now();
+        bloodRequest.setStatus(BloodRequestStatus.CANCELLED);
+        bloodRequest.setCancelledAt(now);
+        bloodRequest.setCancelledBy(currentUserId);
+        if (request != null && request.getReason() != null && !request.getReason().isBlank()) {
+            bloodRequest.setCancellationReason(request.getReason().trim());
+        }
+        bloodRequest.setUpdatedAt(now);
+
+        BloodRequest saved = bloodRequestRepository.save(bloodRequest);
+
+        auditService.logAuthEvent(
+                "BLOOD_REQUEST_CANCELLED",
+                currentUserId,
+                clientIp,
+                userAgent,
+                "{\"requestId\":\"" + saved.getId() + "\"}"
+        );
+
+        auditService.logAuthEvent(
+                "EMERGENCY_REQUEST_CANCELLED",
                 currentUserId,
                 clientIp,
                 userAgent,

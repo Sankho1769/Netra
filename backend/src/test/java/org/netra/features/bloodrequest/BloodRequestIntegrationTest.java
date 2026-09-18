@@ -245,9 +245,10 @@ class BloodRequestIntegrationTest {
     }
 
     @Test
-    @DisplayName("Update Blood Request - Owner can update mutable operational fields")
-    void testUpdateBloodRequest_OwnerSuccess() throws Exception {
+    @DisplayName("Update Blood Request - Owner can update mutable operational fields (NORMAL -> URGENT)")
+    void testUpdateBloodRequest_NormalToUrgent_Success() throws Exception {
         CreateBloodRequestRequest createReq = createSampleCreateRequest();
+        createReq.setUrgency(BloodRequestUrgency.NORMAL);
         MvcResult createResult = mockMvc.perform(post("/api/v1/blood-requests")
                         .header("Authorization", "Bearer " + getAccessToken(user1))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -259,7 +260,7 @@ class BloodRequestIntegrationTest {
 
         UpdateBloodRequestRequest updateReq = new UpdateBloodRequestRequest();
         updateReq.setUnitsRequired(5);
-        updateReq.setUrgency(BloodRequestUrgency.CRITICAL);
+        updateReq.setUrgency(BloodRequestUrgency.URGENT);
         updateReq.setHospitalName("Apollo Multi-Specialty");
 
         mockMvc.perform(patch("/api/v1/blood-requests/" + requestId)
@@ -268,12 +269,252 @@ class BloodRequestIntegrationTest {
                         .content(objectMapper.writeValueAsString(updateReq)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.unitsRequired").value(5))
-                .andExpect(jsonPath("$.urgency").value("CRITICAL"))
+                .andExpect(jsonPath("$.urgency").value("URGENT"))
                 .andExpect(jsonPath("$.hospitalName").value("Apollo Multi-Specialty"));
 
         BloodRequest updated = bloodRequestRepository.findById(requestId).orElseThrow();
         assertEquals(5, updated.getUnitsRequired());
+        assertEquals(BloodRequestUrgency.URGENT, updated.getUrgency());
+    }
+
+    @Test
+    @DisplayName("Update Blood Request - URGENT -> NORMAL succeeds")
+    void testUpdateBloodRequest_UrgentToNormal_Success() throws Exception {
+        CreateBloodRequestRequest createReq = createSampleCreateRequest();
+        createReq.setUrgency(BloodRequestUrgency.URGENT);
+        MvcResult createResult = mockMvc.perform(post("/api/v1/blood-requests")
+                        .header("Authorization", "Bearer " + getAccessToken(user1))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        UUID requestId = UUID.fromString(objectMapper.readTree(createResult.getResponse().getContentAsString()).get("id").asText());
+
+        UpdateBloodRequestRequest updateReq = new UpdateBloodRequestRequest();
+        updateReq.setUrgency(BloodRequestUrgency.NORMAL);
+
+        mockMvc.perform(patch("/api/v1/blood-requests/" + requestId)
+                        .header("Authorization", "Bearer " + getAccessToken(user1))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.urgency").value("NORMAL"));
+
+        BloodRequest updated = bloodRequestRepository.findById(requestId).orElseThrow();
+        assertEquals(BloodRequestUrgency.NORMAL, updated.getUrgency());
+    }
+
+    @Test
+    @DisplayName("Update Blood Request - NORMAL -> CRITICAL returns 400 VALIDATION_ERROR")
+    void testUpdateBloodRequest_NormalToCritical_Rejected() throws Exception {
+        CreateBloodRequestRequest createReq = createSampleCreateRequest();
+        createReq.setUrgency(BloodRequestUrgency.NORMAL);
+        MvcResult createResult = mockMvc.perform(post("/api/v1/blood-requests")
+                        .header("Authorization", "Bearer " + getAccessToken(user1))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        UUID requestId = UUID.fromString(objectMapper.readTree(createResult.getResponse().getContentAsString()).get("id").asText());
+
+        UpdateBloodRequestRequest updateReq = new UpdateBloodRequestRequest();
+        updateReq.setUrgency(BloodRequestUrgency.CRITICAL);
+
+        mockMvc.perform(patch("/api/v1/blood-requests/" + requestId)
+                        .header("Authorization", "Bearer " + getAccessToken(user1))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message", containsString("Critical urgency requests must be created through Emergency Mode.")));
+
+        BloodRequest unchanged = bloodRequestRepository.findById(requestId).orElseThrow();
+        assertEquals(BloodRequestUrgency.NORMAL, unchanged.getUrgency());
+    }
+
+    @Test
+    @DisplayName("Update Blood Request - URGENT -> CRITICAL returns 400 VALIDATION_ERROR")
+    void testUpdateBloodRequest_UrgentToCritical_Rejected() throws Exception {
+        CreateBloodRequestRequest createReq = createSampleCreateRequest();
+        createReq.setUrgency(BloodRequestUrgency.URGENT);
+        MvcResult createResult = mockMvc.perform(post("/api/v1/blood-requests")
+                        .header("Authorization", "Bearer " + getAccessToken(user1))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        UUID requestId = UUID.fromString(objectMapper.readTree(createResult.getResponse().getContentAsString()).get("id").asText());
+
+        UpdateBloodRequestRequest updateReq = new UpdateBloodRequestRequest();
+        updateReq.setUrgency(BloodRequestUrgency.CRITICAL);
+
+        mockMvc.perform(patch("/api/v1/blood-requests/" + requestId)
+                        .header("Authorization", "Bearer " + getAccessToken(user1))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message", containsString("Critical urgency requests must be created through Emergency Mode.")));
+
+        BloodRequest unchanged = bloodRequestRepository.findById(requestId).orElseThrow();
+        assertEquals(BloodRequestUrgency.URGENT, unchanged.getUrgency());
+    }
+
+    @Test
+    @DisplayName("Update Blood Request - Existing CRITICAL emergency request remains CRITICAL")
+    void testUpdateBloodRequest_CriticalRemainsCritical_Success() throws Exception {
+        BloodRequest criticalReq = new BloodRequest();
+        criticalReq.setRequesterUserId(user1.getId());
+        criticalReq.setBloodGroup(BloodGroup.O_POSITIVE);
+        criticalReq.setUnitsRequired(3);
+        criticalReq.setUrgency(BloodRequestUrgency.CRITICAL);
+        criticalReq.setStatus(BloodRequestStatus.OPEN);
+        criticalReq.setHospitalName("Lilavati Hospital");
+        criticalReq.setHospitalAddress("A-791, Bandra Reclamation");
+        criticalReq.setCity("Mumbai");
+        criticalReq.setState("Maharashtra");
+        criticalReq.setPostalCode("400050");
+        criticalReq.setLatitude(19.0522);
+        criticalReq.setLongitude(72.8295);
+        criticalReq.setRequiredBy(Instant.now().plus(6, ChronoUnit.HOURS));
+        criticalReq.setCreatedAt(Instant.now());
+        criticalReq.setUpdatedAt(Instant.now());
+        criticalReq = bloodRequestRepository.save(criticalReq);
+
+        UpdateBloodRequestRequest updateReq = new UpdateBloodRequestRequest();
+        updateReq.setUrgency(BloodRequestUrgency.CRITICAL);
+        updateReq.setHospitalName("Lilavati Hospital & Research Centre");
+
+        mockMvc.perform(patch("/api/v1/blood-requests/" + criticalReq.getId())
+                        .header("Authorization", "Bearer " + getAccessToken(user1))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.urgency").value("CRITICAL"))
+                .andExpect(jsonPath("$.hospitalName").value("Lilavati Hospital & Research Centre"));
+
+        BloodRequest updated = bloodRequestRepository.findById(criticalReq.getId()).orElseThrow();
         assertEquals(BloodRequestUrgency.CRITICAL, updated.getUrgency());
+        assertEquals("Lilavati Hospital & Research Centre", updated.getHospitalName());
+    }
+
+    @Test
+    @DisplayName("Update Blood Request - CRITICAL -> NORMAL returns 400 VALIDATION_ERROR")
+    void testUpdateBloodRequest_CriticalToNormal_Rejected() throws Exception {
+        BloodRequest criticalReq = new BloodRequest();
+        criticalReq.setRequesterUserId(user1.getId());
+        criticalReq.setBloodGroup(BloodGroup.O_POSITIVE);
+        criticalReq.setUnitsRequired(3);
+        criticalReq.setUrgency(BloodRequestUrgency.CRITICAL);
+        criticalReq.setStatus(BloodRequestStatus.OPEN);
+        criticalReq.setHospitalName("Lilavati Hospital");
+        criticalReq.setHospitalAddress("A-791, Bandra Reclamation");
+        criticalReq.setCity("Mumbai");
+        criticalReq.setState("Maharashtra");
+        criticalReq.setPostalCode("400050");
+        criticalReq.setLatitude(19.0522);
+        criticalReq.setLongitude(72.8295);
+        criticalReq.setRequiredBy(Instant.now().plus(6, ChronoUnit.HOURS));
+        criticalReq.setCreatedAt(Instant.now());
+        criticalReq.setUpdatedAt(Instant.now());
+        criticalReq = bloodRequestRepository.save(criticalReq);
+
+        UpdateBloodRequestRequest updateReq = new UpdateBloodRequestRequest();
+        updateReq.setUrgency(BloodRequestUrgency.NORMAL);
+
+        mockMvc.perform(patch("/api/v1/blood-requests/" + criticalReq.getId())
+                        .header("Authorization", "Bearer " + getAccessToken(user1))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message", containsString("Emergency requests must remain CRITICAL.")));
+
+        BloodRequest unchanged = bloodRequestRepository.findById(criticalReq.getId()).orElseThrow();
+        assertEquals(BloodRequestUrgency.CRITICAL, unchanged.getUrgency());
+    }
+
+    @Test
+    @DisplayName("Update Blood Request - CRITICAL -> URGENT returns 400 VALIDATION_ERROR")
+    void testUpdateBloodRequest_CriticalToUrgent_Rejected() throws Exception {
+        BloodRequest criticalReq = new BloodRequest();
+        criticalReq.setRequesterUserId(user1.getId());
+        criticalReq.setBloodGroup(BloodGroup.O_POSITIVE);
+        criticalReq.setUnitsRequired(3);
+        criticalReq.setUrgency(BloodRequestUrgency.CRITICAL);
+        criticalReq.setStatus(BloodRequestStatus.OPEN);
+        criticalReq.setHospitalName("Lilavati Hospital");
+        criticalReq.setHospitalAddress("A-791, Bandra Reclamation");
+        criticalReq.setCity("Mumbai");
+        criticalReq.setState("Maharashtra");
+        criticalReq.setPostalCode("400050");
+        criticalReq.setLatitude(19.0522);
+        criticalReq.setLongitude(72.8295);
+        criticalReq.setRequiredBy(Instant.now().plus(6, ChronoUnit.HOURS));
+        criticalReq.setCreatedAt(Instant.now());
+        criticalReq.setUpdatedAt(Instant.now());
+        criticalReq = bloodRequestRepository.save(criticalReq);
+
+        UpdateBloodRequestRequest updateReq = new UpdateBloodRequestRequest();
+        updateReq.setUrgency(BloodRequestUrgency.URGENT);
+
+        mockMvc.perform(patch("/api/v1/blood-requests/" + criticalReq.getId())
+                        .header("Authorization", "Bearer " + getAccessToken(user1))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message", containsString("Emergency requests must remain CRITICAL.")));
+
+        BloodRequest unchanged = bloodRequestRepository.findById(criticalReq.getId()).orElseThrow();
+        assertEquals(BloodRequestUrgency.CRITICAL, unchanged.getUrgency());
+    }
+
+    @Test
+    @DisplayName("Update Blood Request - ADMIN cannot convert normal request to CRITICAL (400 VALIDATION_ERROR)")
+    void testUpdateBloodRequest_AdminCannotConvertToCritical() throws Exception {
+        CreateBloodRequestRequest createReq = createSampleCreateRequest();
+        createReq.setUrgency(BloodRequestUrgency.NORMAL);
+        MvcResult createResult = mockMvc.perform(post("/api/v1/blood-requests")
+                        .header("Authorization", "Bearer " + getAccessToken(user1))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        UUID requestId = UUID.fromString(objectMapper.readTree(createResult.getResponse().getContentAsString()).get("id").asText());
+
+        UpdateBloodRequestRequest updateReq = new UpdateBloodRequestRequest();
+        updateReq.setUrgency(BloodRequestUrgency.CRITICAL);
+
+        mockMvc.perform(patch("/api/v1/blood-requests/" + requestId)
+                        .header("Authorization", "Bearer " + getAccessToken(adminUser))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message", containsString("Critical urgency requests must be created through Emergency Mode.")));
+
+        BloodRequest unchanged = bloodRequestRepository.findById(requestId).orElseThrow();
+        assertEquals(BloodRequestUrgency.NORMAL, unchanged.getUrgency());
+    }
+
+    @Test
+    @DisplayName("Create Blood Request - ADMIN cannot bypass CRITICAL urgency restriction via normal endpoint (400 VALIDATION_ERROR)")
+    void testCreateBloodRequest_AdminCannotCreateCriticalViaNormalEndpoint() throws Exception {
+        CreateBloodRequestRequest createReq = createSampleCreateRequest();
+        createReq.setUrgency(BloodRequestUrgency.CRITICAL);
+
+        mockMvc.perform(post("/api/v1/blood-requests")
+                        .header("Authorization", "Bearer " + getAccessToken(adminUser))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message", containsString("Critical urgency requests must be created through Emergency Mode.")));
     }
 
     @Test

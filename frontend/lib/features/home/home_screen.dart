@@ -8,6 +8,7 @@ import '../eligibility/screens/eligibility_intro_screen.dart';
 import '../bloodbank/screens/nearby_blood_banks_screen.dart';
 import '../events/screens/donation_event_list_screen.dart';
 import '../blood_request/screens/blood_request_list_screen.dart';
+import '../emergency/screens/emergency_mode_screen.dart';
 import '../auth/state/auth_scope.dart';
 import '../auth/screens/login_screen.dart';
 import '../profile/screens/profile_screen.dart';
@@ -159,6 +160,91 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+          NetraSpacing.gapH16,
+
+          // Emergency Mode Urgent Action Card
+          InkWell(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const EmergencyModeScreen()),
+              );
+            },
+            borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
+            child: Container(
+              padding: NetraSpacing.cardPaddingStandard,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
+                border: Border.all(color: const Color(0xFFFCA5A5), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFDC2626).withOpacity(0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDC2626),
+                      borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+                    ),
+                    child: const Icon(
+                      Icons.emergency_outlined,
+                      color: NetraColors.surfaceWhite,
+                      size: 26,
+                    ),
+                  ),
+                  NetraSpacing.gapW16,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              "Emergency Mode",
+                              style: NetraTypography.titleMedium.copyWith(
+                                color: const Color(0xFF991B1B),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            NetraSpacing.gapW8,
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFDC2626),
+                                borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
+                              ),
+                              child: Text(
+                                "CRITICAL",
+                                style: NetraTypography.labelSmall.copyWith(
+                                  color: NetraColors.surfaceWhite,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        NetraSpacing.gapH4,
+                        Text(
+                          "Immediate blood assistance & rapid nearby centre lookup",
+                          style: NetraTypography.bodySmall.copyWith(
+                            color: const Color(0xFF7F1D1D),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFFDC2626), size: 16),
+                ],
+              ),
             ),
           ),
           NetraSpacing.gapH24,
