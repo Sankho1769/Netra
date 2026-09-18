@@ -120,6 +120,88 @@ class RateLimitingServiceTest {
         assertEquals(1, rateLimitingService.getEmergencyCount(userId, window2));
     }
 
+    @Test
+    @DisplayName("Matching Rate-limit: current-minute counter works and enforces 30 requests per minute")
+    void testMatchingRateLimit_CurrentMinuteCounterWorks() {
+        String userId = "matching-user-1";
+        long currentMinute = testClock.millis() / 60000;
+
+        // 30 valid requests
+        for (int i = 1; i <= 30; i++) {
+            rateLimitingService.checkMatchingRateLimit(userId);
+            assertEquals(i, rateLimitingService.getMatchingCount(userId, currentMinute));
+        }
+
+        // 31st request in same minute must throw RateLimitExceededException
+        RateLimitExceededException ex = assertThrows(
+                RateLimitExceededException.class,
+                () -> rateLimitingService.checkMatchingRateLimit(userId)
+        );
+        assertTrue(ex.getMessage().contains("Too many matching requests"));
+    }
+
+    @Test
+    @DisplayName("Matching Rate-limit: next-minute counter is independent")
+    void testMatchingRateLimit_NextMinuteCounterIsIndependent() {
+        String userId = "matching-user-2";
+        long minute1 = testClock.millis() / 60000;
+
+        // Exhaust quota in minute 1
+        for (int i = 0; i < 30; i++) {
+            rateLimitingService.checkMatchingRateLimit(userId);
+        }
+        assertEquals(30, rateLimitingService.getMatchingCount(userId, minute1));
+        assertThrows(RateLimitExceededException.class, () -> rateLimitingService.checkMatchingRateLimit(userId));
+
+        // Advance clock by 1 minute
+        testClock.advance(Duration.ofMinutes(1));
+        long minute2 = testClock.millis() / 60000;
+        assertNotEquals(minute1, minute2);
+
+        // Next minute has fresh quota
+        assertEquals(0, rateLimitingService.getMatchingCount(userId, minute2));
+        assertDoesNotThrow(() -> rateLimitingService.checkMatchingRateLimit(userId));
+        assertEquals(1, rateLimitingService.getMatchingCount(userId, minute2));
+    }
+
+    @Test
+    @DisplayName("Matching Rate-limit: old matching keys are cleaned when cleanup threshold is reached")
+    void testMatchingRateLimit_OldKeysCleanedWhenCleanupThresholdReached() {
+        // Create service with cleanup threshold of 5
+        RateLimitingService customService = new RateLimitingService(20, 5, 30, testClock, 5);
+
+        long minute1 = testClock.millis() / 60000;
+
+        // Populate 4 keys in minute 1
+        customService.checkMatchingRateLimit("user-A");
+        customService.checkMatchingRateLimit("user-B");
+        customService.checkMatchingRateLimit("user-C");
+        customService.checkMatchingRateLimit("user-D");
+
+        assertTrue(customService.containsKey("matching:user-A:" + minute1));
+        assertTrue(customService.containsKey("matching:user-B:" + minute1));
+        assertTrue(customService.containsKey("matching:user-C:" + minute1));
+        assertTrue(customService.containsKey("matching:user-D:" + minute1));
+
+        // Advance clock by 2 minutes to minute 3 (so minute 1 is < prevMinute)
+        testClock.advance(Duration.ofMinutes(2));
+        long minute3 = testClock.millis() / 60000;
+
+        // Add 2 more keys in minute 3 to push total keys to 6 (exceeding threshold of 5)
+        customService.checkMatchingRateLimit("user-E");
+        customService.checkMatchingRateLimit("user-F");
+
+        // The cleanup triggers when size > threshold, evicting minute 1 keys
+        assertFalse(customService.containsKey("matching:user-A:" + minute1), "Old matching key from minute 1 must be cleaned");
+        assertFalse(customService.containsKey("matching:user-B:" + minute1), "Old matching key from minute 1 must be cleaned");
+        assertFalse(customService.containsKey("matching:user-C:" + minute1), "Old matching key from minute 1 must be cleaned");
+        assertFalse(customService.containsKey("matching:user-D:" + minute1), "Old matching key from minute 1 must be cleaned");
+
+        // New keys in minute 3 must remain intact
+        assertTrue(customService.containsKey("matching:user-E:" + minute3), "Current minute matching key must be retained");
+        assertTrue(customService.containsKey("matching:user-F:" + minute3), "Current minute matching key must be retained");
+    }
+
     private static class MutableClock extends Clock {
         private Instant instant;
         private final ZoneId zone;

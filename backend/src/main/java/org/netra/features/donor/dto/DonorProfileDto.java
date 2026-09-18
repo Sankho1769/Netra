@@ -17,6 +17,8 @@ public class DonorProfileDto {
     private DonorAvailabilityStatus availabilityStatus;
     private DonorStatus donorStatus;
     private LocalDate lastDonationDate;
+    private Double latitude;
+    private Double longitude;
     private Instant createdAt;
     private Instant updatedAt;
 
@@ -32,12 +34,28 @@ public class DonorProfileDto {
             LocalDate lastDonationDate,
             Instant createdAt,
             Instant updatedAt) {
+        this(id, bloodGroup, bloodGroupVerificationStatus, availabilityStatus, donorStatus, lastDonationDate, null, null, createdAt, updatedAt);
+    }
+
+    public DonorProfileDto(
+            UUID id,
+            BloodGroup bloodGroup,
+            BloodGroupVerificationStatus bloodGroupVerificationStatus,
+            DonorAvailabilityStatus availabilityStatus,
+            DonorStatus donorStatus,
+            LocalDate lastDonationDate,
+            Double latitude,
+            Double longitude,
+            Instant createdAt,
+            Instant updatedAt) {
         this.id = id;
         this.bloodGroup = bloodGroup;
         this.bloodGroupVerificationStatus = bloodGroupVerificationStatus;
         this.availabilityStatus = availabilityStatus;
         this.donorStatus = donorStatus;
         this.lastDonationDate = lastDonationDate;
+        this.latitude = latitude;
+        this.longitude = longitude;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -88,6 +106,22 @@ public class DonorProfileDto {
 
     public void setLastDonationDate(LocalDate lastDonationDate) {
         this.lastDonationDate = lastDonationDate;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
     }
 
     public Instant getCreatedAt() {

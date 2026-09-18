@@ -116,6 +116,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/blood-requests").authenticated()
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/blood-requests/*").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/v1/blood-requests/*/cancel").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/blood-requests/*/matches").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/blood-requests").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/blood-requests/nearby").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/blood-requests/*").permitAll()

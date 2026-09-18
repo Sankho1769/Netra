@@ -4,67 +4,78 @@ NETRA is a production-grade digital blood donation ecosystem engineered with zer
 
 ---
 
-## Feature: Blood Donation Eligibility Self-Check
+## Implemented Modules & Capabilities
 
-The **"Check Donation Eligibility"** feature enables prospective donors to complete a confidential, progressive 6-step pre-screening questionnaire and receive an authoritative preliminary determination.
+### 1. Authentication & Role-Based Access Control (RBAC)
+- **Stateless Authentication**: Signed JWT access tokens with secure refresh token rotation (`/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/refresh`, `/api/v1/auth/logout`).
+- **Granular RBAC**: Role enforcement supporting `ROLE_DONOR`, `ROLE_RECEIVER`, `ROLE_ORGANIZATION`, `ROLE_ADMIN`, and `ROLE_BLOODBANK`.
+- **Security Audit Logging**: Comprehensive audit trail with SHA-256 IP hashing, client metadata capture, and zero sensitive credential leakage.
 
-### Core Medical Safety Tenet
-> **Pre-Screening Result Only**: Final eligibility is determined strictly by the blood bank or qualified medical staff after physical examination (temperature, pulse, blood pressure) and mandatory laboratory screening (hemoglobin, infectious markers: HIV, Hepatitis B/C, Syphilis, Malaria). This feature acts as a preliminary screening assistant and **never** claims to medically certify or clear a donor.
+### 2. User & Donor Profiles
+- **User Account Management**: User profile inspection and updates (`/api/v1/profile/me`).
+- **Donor Profile Lifecycle**: Donor profiles (`/api/v1/donor/profile`) with blood group, verification status (`SELF_REPORTED` by default, `VERIFIED` upon clinical confirmation), availability status (`AVAILABLE`, `BUSY`, `UNAVAILABLE`, `PAUSED`), and geographic coordinates.
+- **Coordinate Validation & Privacy**: Optional latitude (-90.0 to 90.0) and longitude (-180.0 to 180.0) paired validation (both must be supplied or both omitted). Coordinates remain private to the donor and internal matching logic, never exposed through public donor endpoints.
+
+### 3. Donation Eligibility Self-Screening
+- **Clinical Rule Engine (`INDIA-NBTC-2026-01`)**: Server-side pre-screening modeled on National Blood Transfusion Council (NBTC) India and Drugs & Cosmetics Rules statutory guidelines.
+- **Progressive 6-Step Questionnaire**: Evaluates age, weight, recovery interval (90-day male, 120-day female), recent illnesses, active medications, surgical/dental procedures, and chronic conditions.
+- **Authoritative Preliminary Results**: Returns `LIKELY_ELIGIBLE`, `TEMPORARY_DEFERRAL` (with estimated return date), `MEDICAL_REVIEW_REQUIRED`, or `INSUFFICIENT_INFORMATION`.
+- **Core Medical Safety Tenet**: Acts strictly as a preliminary self-screening assistant for decision support. Final medical clearance is performed by blood bank and clinical staff prior to collection.
+- **Rate Limiting**: Fixed-window rate limiting of 20 requests per minute.
+
+### 4. Blood Bank Registry
+- **Directory & Verification**: Directory of licensed blood banks (`/api/v1/blood-banks`) with verification status, 24/7 emergency service indicators, contact details, and location coordinates.
+- **Spatial Discovery**: Geographic bounding-box and distance filtering for discovering nearby blood banks.
+
+### 5. Blood Inventory Management
+- **Component-Level Tracking**: Inventory management (`/api/v1/blood-banks/{id}/inventory`) tracking units across Whole Blood, Packed Red Blood Cells (PRBC), Platelet Concentrates, Fresh Frozen Plasma (FFP), and Cryoprecipitate.
+- **Concurrency Protection**: Optimistic locking (`@Version`) preventing race conditions and double-allocation during concurrent inventory operations.
+
+### 6. Donation Events & Drives
+- **Public & Blood Bank Drives**: Donation camp scheduling (`/api/v1/donation-events`) with venue information, date/time boundaries, and donor capacity limits.
+- **Participant Registration**: Registration management with duplicate registration prevention and capacity controls.
+
+### 7. Blood Requests
+- **Patient & Hospital Requests**: Blood requests (`/api/v1/blood-requests`) specifying ABO/Rh group, units needed, hospital details, location coordinates, deadline (`requiredBy`), and urgency (`NORMAL`, `URGENT`, `CRITICAL`).
+- **Lifecycle Management**: Strict state transitions across `OPEN`, `FULFILLED`, `CANCELLED`, and `EXPIRED`.
+- **BOLA / IDOR Defense**: Broken Object Level Authorization enforcement ensuring requests can only be managed by verified owners or administrators.
+
+### 8. Emergency Mode V1
+- **Rapid Emergency Broadcast**: Dedicated endpoint (`/api/v1/emergency/blood-requests`) for high-urgency blood requests with `CRITICAL` urgency.
+- **Strict Rate Limiting**: Max 5 new requests per fixed 10-minute window per authenticated user, with counter rollback on downstream creation failures.
+- **Idempotency Protection**: Idempotency-Key validation and request fingerprinting preventing duplicate emergency broadcasts.
+- **Audited Cancellation**: Secure cancellation endpoint (`/api/v1/emergency/blood-requests/{id}/cancel`) with authorization-first validation order.
+
+### 9. Donor Matching Engine V1
+- **Decision-Support Matching**: On-demand matching endpoint (`GET /api/v1/blood-requests/{requestId}/matches`) finding compatible donors for open blood requests.
+- **Blood Compatibility Matrix**: Centralized compatibility rule set for preliminary donor candidate matching (scoped strictly to Red Blood Cell and Whole Blood transfusions; decision-support only; final compatibility, screening, and crossmatching are determined by qualified blood-bank and clinical staff).
+- **Verified-Only Donor Pool**: Hard server-side filtering ensuring only donors with `VERIFIED` blood group status are included; unverified and self-reported donors are strictly excluded.
+- **Two-Stage Spatial Filtering**: Database-level bounding box hard filtering followed by exact spherical Haversine distance calculation within configurable search radii (10km, 25km, 50km, 100km).
+- **Overdue Protection**: Rejects matching requests for overdue blood requests (`requiredBy <= now`).
+- **Batch Eligibility Loading**: Single-query batch session retrieval to prevent N+1 queries.
+- **Deterministic 3-Tier Ranking**:
+  1. `EXACT` compatibility before `COMPATIBLE`
+  2. Proximity ascending (`distanceKm`)
+  3. Internal `donorProfileId` tie-breaker
+- **Data Minimization & Privacy**: Masked donor display names (e.g. "John D."), distance in km, zero donor contact details, zero exact coordinates, and zero medical questionnaire answers in responses.
+- **Bounded Rate Limiting**: 30 matching requests per minute per authenticated user with bounded in-memory key cleanup preventing memory accumulation.
+- **Pure Read Operation**: Zero matching-side state mutations; no persistent `donor_matches` table.
 
 ---
 
-## 1. Clinical Rule Engine (`INDIA-NBTC-2026-01`)
+## Security & Architecture Principles
 
-The server-side rule engine implements statutory donor-selection standards modeled on the **National Blood Transfusion Council (NBTC) India / Drugs and Cosmetics Rules (Schedule F, Part XII-B)**:
-
-| Category | Evaluation Criteria | Official Standard / Rule Outcome |
-| :--- | :--- | :--- |
-| **Age** | Minimum & Maximum limits | **18 to 65 years** (`TEMPORARY_DEFERRAL` if outside) |
-| **Weight** | Minimum whole-blood threshold | **$\ge$ 45 kg** for 350 ml whole-blood (`TEMPORARY_DEFERRAL` if $< 45$ kg) |
-| **Recovery Interval** | Male vs. Female donor interval | **90 days** for males; **120 days** for females (`TEMPORARY_DEFERRAL` with calculated next date) |
-| **Recent Illness** | Fever or viral symptoms | **14-day symptom-free deferral** post recovery |
-| **Active Medications**| Antibiotics / Blood thinners | `MEDICAL_REVIEW_REQUIRED` (Clinical evaluation by medical officer) |
-| **Procedures** | Tattoos, piercings, acupuncture | **6-month deferral** |
-| **Surgeries** | Major / Minor surgical interventions| **12-month deferral** (major) / **6-month** (minor) |
-| **Dental Surgery** | Tooth extraction / oral surgery | **72-hour deferral** |
-| **Chronic Conditions**| Cardiac, epilepsy, bleeding disorders | `MEDICAL_REVIEW_REQUIRED` (Specialist clearance needed) |
-| **Day-of Readiness** | Sleep & meal self-check | Sleep $\ge 4$h, Meal within 4h (`INSUFFICIENT_INFORMATION` / preparation advisory) |
+1. **Server Authority**: The server deterministically computes eligibility, compatibility, ranking, and authorization. Client-supplied status claims are rejected.
+2. **Data Minimization**: Donor coordinates and medical screening answers are never exposed through public discovery or matching APIs.
+3. **Defense in Depth**: Database-level hard filtering, service-level business validation, and Jakarta Bean Validation on DTO inputs.
+4. **Rate Limiting**: Fixed-window rate limiting with deterministic Clock testing and bounded in-memory cleanup:
+   - Eligibility: 20 requests/minute
+   - Emergency: 5 new requests per fixed 10-minute window per authenticated user (with counter rollback on downstream failure)
+   - Matching: 30 requests/minute per authenticated user (with bounded in-memory key cleanup)
 
 ---
 
-## 2. Exactly Four High-Level Results
-
-1. **`LIKELY_ELIGIBLE`**:
-   - Status text: *"Based on your answers, you appear eligible for donation."*
-   - Mandatory disclaimer: *"Final eligibility will be confirmed by the blood bank after their screening and required tests."*
-   - Actions: **[ Find Nearby Blood Banks ]**, **[ Find Donation Events ]**, **[ Register for Donation ]**.
-2. **`TEMPORARY_DEFERRAL`**:
-   - Status text: *"You may need to wait before donating."*
-   - Displays reason, estimated next eligible date (safely calculated), and recommended next steps.
-   - Actions: **[ Set Reminder ]**, **[ Find Blood Banks ]**.
-3. **`MEDICAL_REVIEW_REQUIRED`**:
-   - Status text: *"We can't determine your eligibility from the app alone. Please speak with the blood bank or qualified medical staff before donating."*
-   - Non-diagnostic clinical guidance.
-4. **`INSUFFICIENT_INFORMATION`**:
-   - Explicitly displays what information or pre-donation readiness steps are needed.
-
----
-
-## 3. Security & Zero-Trust Architecture
-
-NETRA adheres to the 10 Critical Engineering Rules:
-1. **Server Authority**: The client cannot override server decisions. Requests containing forged results (e.g. `{"result": "LIKELY_ELIGIBLE"}`) are discarded; the server deterministically calculates the result.
-2. **Authorization & IDOR Defense**: User identity is derived strictly from `SecurityContextHolder`. Multi-tenant ownership checks prevent any donor from modifying or accessing another donor's session.
-3. **Data Minimization & Health Privacy**:
-   - Questionnaire answers are stored separately from user profile data.
-   - Zero health answers in application logs, error messages, push notifications, or public DTOs.
-   - IP addresses are hashed using SHA-256 in audit logs.
-4. **Rate Limiting**: Sliding window token-bucket rate limiter prevents repeated hammering and rule-probing.
-5. **Session Expiry**: Sessions automatically expire after 60 minutes.
-
----
-
-## 4. Project Structure
+## Project Structure
 
 ```
 Netra/
@@ -72,29 +83,45 @@ Netra/
 │   ├── pom.xml
 │   ├── mvnw.cmd / mvnw
 │   ├── src/main/java/org/netra/
-│   │   ├── config/ (SecurityConfig, RateLimiting)
-│   │   ├── controller/ (EligibilityController)
-│   │   ├── dto/ (Safe public request & response DTOs)
-│   │   ├── entity/ (Sessions, Answers, Questions, Rules, AuditLog)
-│   │   ├── exception/ (GlobalExceptionHandler, sanitizing errors)
-│   │   ├── repository/ (Spring Data JPA Repositories)
-│   │   ├── security/ (JwtTokenProvider, SecurityUtils)
-│   │   └── service/ (EligibilityRuleEngine, EligibilityService, AuditService)
+│   │   ├── NetraApplication.java
+│   │   ├── core/
+│   │   │   ├── audit/          (Security audit logging, event publisher)
+│   │   │   ├── config/         (SecurityConfig, PasswordConfig, RateLimitingConfig)
+│   │   │   ├── exception/      (GlobalExceptionHandler, domain exceptions)
+│   │   │   ├── ratelimit/      (RateLimitingService, fixed-window counters, bounded in-memory cleanup)
+│   │   │   └── security/       (JwtTokenProvider, JwtAuthenticationFilter, SecurityUtils)
+│   │   └── features/
+│   │       ├── auth/           (Authentication, login, register, token refresh)
+│   │       ├── bloodbank/      (Blood banks, inventory components, concurrency control)
+│   │       ├── bloodrequest/   (Blood requests, lifecycle, BOLA authorization)
+│   │       ├── donor/          (Donor profiles, availability, coordinates, coordinate validation)
+│   │       ├── eligibility/    (INDIA-NBTC-2026-01 rule engine, 6-step self-screening)
+│   │       ├── emergency/      (Emergency Mode V1, idempotency records, rate limit rollback)
+│   │       ├── events/         (Donation events, drives, participant registration)
+│   │       ├── matching/       (Donor Matching V1 engine, compatibility matrix, deterministic ranking)
+│   │       └── user/           (User accounts, roles, profile management)
 │   ├── src/main/resources/
 │   │   ├── application.yml
-│   │   └── db/migration/ (V1 Schema, V2 Seed Rules)
+│   │   └── db/migration/       (Flyway V1 - V11 migrations)
 │   └── src/test/java/org/netra/
-│       ├── controller/EligibilityControllerIntegrationTest.java
-│       └── engine/EligibilityRuleEngineTest.java
+│       ├── core/               (Security, audit, and rate-limiting tests)
+│       └── features/           (Feature-specific integration, security, and rule tests)
 ├── frontend/
 │   ├── pubspec.yaml
 │   └── lib/
 │       ├── main.dart
-│       ├── core/ (Theme, API Client, Disclaimer Banner, Progress Bar)
+│       ├── core/               (Theme, API clients, shared widgets, disclaimers)
 │       └── features/
-│           ├── eligibility/ (Intro, Flow Stepper, 6 Steps, Result Screen)
-│           ├── home/ (HomeScreen with both required entry points)
-│           └── location/ (NearbyBloodBanksScreen with approximate discovery)
+│           ├── auth/           (Login, registration, token storage)
+│           ├── blood_request/  (Blood request creation, list, details)
+│           ├── bloodbank/      (Blood bank discovery, inventory views)
+│           ├── donor/          (Donor profile setup, status toggles)
+│           ├── eligibility/    (6-step self-check flow, deferral calculator)
+│           ├── emergency/      (Emergency request broadcast, confirmation)
+│           ├── events/         (Event schedules, drive registration)
+│           ├── home/           (Dashboard, navigation, quick actions)
+│           ├── matching/       (Donor matches screen, candidate cards, radius filters)
+│           └── profile/        (User profile, settings)
 └── docs/
     ├── SECURITY_THREAT_MODEL.md
     ├── DATA_FLOW_DIAGRAM.md
@@ -104,9 +131,10 @@ Netra/
 
 ---
 
-## 5. Running the Backend & Tests
+## Running the Backend & Tests
 
-### Execute Automated Test Suite (26 Tests)
+### Execute Automated Test Suite
+Run the backend test suite with:
 ```powershell
 cd backend
 .\mvnw.cmd test
@@ -117,4 +145,4 @@ cd backend
 cd backend
 .\mvnw.cmd spring-boot:run
 ```
-The API is available at `http://localhost:8080/api/v1/eligibility`.
+The backend API server starts at `http://localhost:8080`.

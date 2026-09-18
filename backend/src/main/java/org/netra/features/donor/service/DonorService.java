@@ -5,6 +5,7 @@ import org.netra.core.exception.AccountStatusException;
 import org.netra.core.exception.DuplicateResourceException;
 import org.netra.core.exception.ResourceNotFoundException;
 import org.netra.core.exception.UnauthorizedSessionAccessException;
+import org.netra.core.exception.ValidationException;
 import org.netra.core.security.SecurityUtils;
 import org.netra.features.donor.dto.CreateDonorProfileRequest;
 import org.netra.features.donor.dto.DonorProfileDto;
@@ -57,6 +58,7 @@ public class DonorService {
                 .orElseThrow(() -> new UnauthorizedSessionAccessException("User is not authenticated."));
 
         validateUserActive(currentUserId);
+        validateCoordinates(request.getLatitude(), request.getLongitude());
 
         if (donorProfileRepository.existsByUserId(currentUserId)) {
             throw new DuplicateResourceException("Donor profile already exists for this user.");
@@ -75,6 +77,10 @@ public class DonorService {
         profile.setBloodGroupVerificationStatus(BloodGroupVerificationStatus.SELF_REPORTED);
         profile.setDonorStatus(DonorStatus.ACTIVE);
         profile.setLastDonationDate(null);
+        if (request.getLatitude() != null && request.getLongitude() != null) {
+            profile.setLatitude(request.getLatitude());
+            profile.setLongitude(request.getLongitude());
+        }
         profile.setCreatedAt(Instant.now());
         profile.setUpdatedAt(Instant.now());
 
@@ -97,6 +103,7 @@ public class DonorService {
                 .orElseThrow(() -> new UnauthorizedSessionAccessException("User is not authenticated."));
 
         validateUserActive(currentUserId);
+        validateCoordinates(request.getLatitude(), request.getLongitude());
 
         DonorProfile profile = donorProfileRepository.findByUserId(currentUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Donor profile not found for authenticated user."));
@@ -131,6 +138,18 @@ public class DonorService {
             modified = true;
         }
 
+        // 3. Location coordinates change
+        if (request.getLatitude() != null && request.getLongitude() != null) {
+            if (!request.getLatitude().equals(profile.getLatitude())) {
+                profile.setLatitude(request.getLatitude());
+                modified = true;
+            }
+            if (!request.getLongitude().equals(profile.getLongitude())) {
+                profile.setLongitude(request.getLongitude());
+                modified = true;
+            }
+        }
+
         if (modified) {
             profile.setUpdatedAt(Instant.now());
             profile = donorProfileRepository.save(profile);
@@ -155,6 +174,18 @@ public class DonorService {
         }
     }
 
+    private void validateCoordinates(Double latitude, Double longitude) {
+        if ((latitude == null && longitude != null) || (latitude != null && longitude == null)) {
+            throw new ValidationException("Latitude and longitude must either both be supplied or both be omitted.");
+        }
+        if (latitude != null && (latitude < -90.0 || latitude > 90.0)) {
+            throw new ValidationException("Latitude must be between -90.0 and 90.0.");
+        }
+        if (longitude != null && (longitude < -180.0 || longitude > 180.0)) {
+            throw new ValidationException("Longitude must be between -180.0 and 180.0.");
+        }
+    }
+
     private DonorProfileDto mapToDto(DonorProfile profile) {
         return new DonorProfileDto(
                 profile.getId(),
@@ -163,6 +194,8 @@ public class DonorService {
                 profile.getAvailabilityStatus(),
                 profile.getDonorStatus(),
                 profile.getLastDonationDate(),
+                profile.getLatitude(),
+                profile.getLongitude(),
                 profile.getCreatedAt(),
                 profile.getUpdatedAt()
         );

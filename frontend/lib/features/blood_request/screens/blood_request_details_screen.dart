@@ -3,6 +3,7 @@ import '../models/blood_request.dart';
 import '../state/blood_request_controller.dart';
 import '../widgets/urgency_badge.dart';
 import '../widgets/request_status_badge.dart';
+import '../../matching/screens/donor_matches_screen.dart';
 
 class BloodRequestDetailsScreen extends StatefulWidget {
   final String requestId;
@@ -415,6 +416,35 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
                       ),
                     ],
                   ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFDC2626),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  icon: const Icon(Icons.person_search),
+                  label: const Text(
+                    'Find Matching Donors',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => DonorMatchesScreen(
+                          requestId: d.id,
+                          targetBloodGroup: d.bloodGroup,
+                          hospitalName: d.hospitalName,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 20),

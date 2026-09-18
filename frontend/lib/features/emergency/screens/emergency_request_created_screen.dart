@@ -7,6 +7,7 @@ import '../../../core/theme/netra_spacing.dart';
 import '../../../core/theme/netra_typography.dart';
 import '../../blood_request/models/blood_request.dart';
 import '../../blood_request/screens/blood_request_details_screen.dart';
+import '../../matching/screens/donor_matches_screen.dart';
 import 'emergency_nearby_screen.dart';
 
 class EmergencyRequestCreatedScreen extends StatelessWidget {
@@ -167,6 +168,33 @@ class EmergencyRequestCreatedScreen extends StatelessWidget {
                 },
                 icon: const Icon(Icons.visibility_outlined, size: 20),
                 label: const Text("View Request Details & Status"),
+              ),
+            ),
+            NetraSpacing.gapH12,
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFB91C1C),
+                  foregroundColor: NetraColors.surfaceWhite,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => DonorMatchesScreen(
+                        requestId: request.id,
+                        targetBloodGroup: request.bloodGroup,
+                        hospitalName: request.hospitalName,
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.person_search_rounded, size: 20),
+                label: const Text("View Matching Donors"),
               ),
             ),
             NetraSpacing.gapH12,

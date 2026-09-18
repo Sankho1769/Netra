@@ -452,4 +452,161 @@ class DonorProfileIntegrationTest {
             assertFalse(auditLog.getMetadata() != null && auditLog.getMetadata().contains(token), "Audit log must never contain raw tokens");
         }
     }
+
+    @Test
+    @DisplayName("Coordinates: create profile with invalid latitude returns 400")
+    void testCreateDonorProfile_InvalidLatitude_Rejected400() throws Exception {
+        User user = createTestUser("InvalidLatUser", UserStatus.ACTIVE, Set.of(UserRole.ROLE_DONOR));
+        String token = getAccessToken(user);
+
+        // latitude < -90
+        CreateDonorProfileRequest reqTooLow = new CreateDonorProfileRequest(
+                BloodGroup.O_POSITIVE, DonorAvailabilityStatus.AVAILABLE, -95.0, 72.8);
+        mockMvc.perform(post("/api/v1/donor/profile")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(reqTooLow)))
+                .andExpect(status().isBadRequest());
+
+        // latitude > 90
+        CreateDonorProfileRequest reqTooHigh = new CreateDonorProfileRequest(
+                BloodGroup.O_POSITIVE, DonorAvailabilityStatus.AVAILABLE, 95.0, 72.8);
+        mockMvc.perform(post("/api/v1/donor/profile")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(reqTooHigh)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Coordinates: create profile with invalid longitude returns 400")
+    void testCreateDonorProfile_InvalidLongitude_Rejected400() throws Exception {
+        User user = createTestUser("InvalidLngUser", UserStatus.ACTIVE, Set.of(UserRole.ROLE_DONOR));
+        String token = getAccessToken(user);
+
+        // longitude < -180
+        CreateDonorProfileRequest reqTooLow = new CreateDonorProfileRequest(
+                BloodGroup.O_POSITIVE, DonorAvailabilityStatus.AVAILABLE, 18.9, -195.0);
+        mockMvc.perform(post("/api/v1/donor/profile")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(reqTooLow)))
+                .andExpect(status().isBadRequest());
+
+        // longitude > 180
+        CreateDonorProfileRequest reqTooHigh = new CreateDonorProfileRequest(
+                BloodGroup.O_POSITIVE, DonorAvailabilityStatus.AVAILABLE, 18.9, 195.0);
+        mockMvc.perform(post("/api/v1/donor/profile")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(reqTooHigh)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Coordinates: create profile with latitude without longitude returns 400")
+    void testCreateDonorProfile_LatitudeWithoutLongitude_Rejected400() throws Exception {
+        User user = createTestUser("LatOnlyUser", UserStatus.ACTIVE, Set.of(UserRole.ROLE_DONOR));
+        String token = getAccessToken(user);
+
+        CreateDonorProfileRequest req = new CreateDonorProfileRequest(
+                BloodGroup.O_POSITIVE, DonorAvailabilityStatus.AVAILABLE, 18.9450, null);
+        mockMvc.perform(post("/api/v1/donor/profile")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Coordinates: create profile with longitude without latitude returns 400")
+    void testCreateDonorProfile_LongitudeWithoutLatitude_Rejected400() throws Exception {
+        User user = createTestUser("LngOnlyUser", UserStatus.ACTIVE, Set.of(UserRole.ROLE_DONOR));
+        String token = getAccessToken(user);
+
+        CreateDonorProfileRequest req = new CreateDonorProfileRequest(
+                BloodGroup.O_POSITIVE, DonorAvailabilityStatus.AVAILABLE, null, 72.8380);
+        mockMvc.perform(post("/api/v1/donor/profile")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Coordinates: create and update profile with valid coordinate pair is accepted")
+    void testDonorProfile_ValidCoordinatePair_Accepted() throws Exception {
+        User user = createTestUser("ValidCoordsUser", UserStatus.ACTIVE, Set.of(UserRole.ROLE_DONOR));
+        String token = getAccessToken(user);
+
+        // 1. Create with valid coordinates
+        CreateDonorProfileRequest createReq = new CreateDonorProfileRequest(
+                BloodGroup.A_POSITIVE, DonorAvailabilityStatus.AVAILABLE, 18.9450, 72.8380);
+        mockMvc.perform(post("/api/v1/donor/profile")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.latitude").value(18.9450))
+                .andExpect(jsonPath("$.longitude").value(72.8380));
+
+        // 2. Update with invalid latitude -> 400
+        UpdateDonorProfileRequest invalidLatReq = new UpdateDonorProfileRequest(
+                BloodGroup.A_POSITIVE, DonorAvailabilityStatus.AVAILABLE, 95.0, 72.8380);
+        mockMvc.perform(put("/api/v1/donor/profile")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidLatReq)))
+                .andExpect(status().isBadRequest());
+
+        // 3. Update with invalid longitude -> 400
+        UpdateDonorProfileRequest invalidLngReq = new UpdateDonorProfileRequest(
+                BloodGroup.A_POSITIVE, DonorAvailabilityStatus.AVAILABLE, 18.9450, 200.0);
+        mockMvc.perform(put("/api/v1/donor/profile")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidLngReq)))
+                .andExpect(status().isBadRequest());
+
+        // 4. Update with latitude only -> 400
+        UpdateDonorProfileRequest latOnlyReq = new UpdateDonorProfileRequest(
+                BloodGroup.A_POSITIVE, DonorAvailabilityStatus.AVAILABLE, 19.0000, null);
+        mockMvc.perform(put("/api/v1/donor/profile")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(latOnlyReq)))
+                .andExpect(status().isBadRequest());
+
+        // 5. Update with longitude only -> 400
+        UpdateDonorProfileRequest lngOnlyReq = new UpdateDonorProfileRequest(
+                BloodGroup.A_POSITIVE, DonorAvailabilityStatus.AVAILABLE, null, 73.0000);
+        mockMvc.perform(put("/api/v1/donor/profile")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(lngOnlyReq)))
+                .andExpect(status().isBadRequest());
+
+        // 6. Update with valid pair -> 200 accepted
+        UpdateDonorProfileRequest validUpdate = new UpdateDonorProfileRequest(
+                BloodGroup.A_POSITIVE, DonorAvailabilityStatus.AVAILABLE, 19.0500, 73.0100);
+        mockMvc.perform(put("/api/v1/donor/profile")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validUpdate)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.latitude").value(19.0500))
+                .andExpect(jsonPath("$.longitude").value(73.0100));
+
+        // 7. Update omitting coordinates (both null) preserves existing coordinates
+        UpdateDonorProfileRequest omitCoords = new UpdateDonorProfileRequest(
+                BloodGroup.A_POSITIVE, DonorAvailabilityStatus.PAUSED, null, null);
+        mockMvc.perform(put("/api/v1/donor/profile")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(omitCoords)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.availabilityStatus").value("PAUSED"))
+                .andExpect(jsonPath("$.latitude").value(19.0500))
+                .andExpect(jsonPath("$.longitude").value(73.0100));
+    }
 }

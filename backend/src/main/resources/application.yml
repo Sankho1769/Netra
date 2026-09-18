@@ -41,3 +41,11 @@ netra:
     active-rule-version: "INDIA-NBTC-2026-01"
     session-ttl-minutes: 60
     max-requests-per-minute: 20
+
+  matching:
+    default-radius-km: 25.0
+    max-radius-km: 100.0
+    default-limit: 20
+    max-limit: 50
+    min-donation-interval-days: 90
+    max-requests-per-minute: 30

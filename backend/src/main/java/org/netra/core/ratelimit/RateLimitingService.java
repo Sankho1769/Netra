@@ -11,43 +11,67 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 public class RateLimitingService {
 
+    public static final int DEFAULT_CLEANUP_THRESHOLD = 10000;
+
     private final int maxRequestsPerMinute;
     private final int maxEmergencyRequests;
+    private final int maxMatchingRequestsPerMinute;
+    private final int cleanupThreshold;
     private final Clock clock;
     private final Map<String, RequestCounter> requestCounts = new ConcurrentHashMap<>();
 
     @org.springframework.beans.factory.annotation.Autowired
     public RateLimitingService(
             @Value("${netra.eligibility.max-requests-per-minute:20}") int maxRequestsPerMinute,
-            @Value("${netra.emergency.max-requests-per-10-minutes:5}") int maxEmergencyRequests) {
-        this(maxRequestsPerMinute, maxEmergencyRequests, Clock.systemUTC());
+            @Value("${netra.emergency.max-requests-per-10-minutes:5}") int maxEmergencyRequests,
+            @Value("${netra.matching.max-requests-per-minute:30}") int maxMatchingRequestsPerMinute) {
+        this(maxRequestsPerMinute, maxEmergencyRequests, maxMatchingRequestsPerMinute, Clock.systemUTC(), DEFAULT_CLEANUP_THRESHOLD);
     }
 
     public RateLimitingService(
             int maxRequestsPerMinute,
             int maxEmergencyRequests,
             Clock clock) {
+        this(maxRequestsPerMinute, maxEmergencyRequests, 30, clock, DEFAULT_CLEANUP_THRESHOLD);
+    }
+
+    public RateLimitingService(
+            int maxRequestsPerMinute,
+            int maxEmergencyRequests,
+            int maxMatchingRequestsPerMinute,
+            Clock clock) {
+        this(maxRequestsPerMinute, maxEmergencyRequests, maxMatchingRequestsPerMinute, clock, DEFAULT_CLEANUP_THRESHOLD);
+    }
+
+    public RateLimitingService(
+            int maxRequestsPerMinute,
+            int maxEmergencyRequests,
+            int maxMatchingRequestsPerMinute,
+            Clock clock,
+            int cleanupThreshold) {
         this.maxRequestsPerMinute = maxRequestsPerMinute;
         this.maxEmergencyRequests = maxEmergencyRequests;
+        this.maxMatchingRequestsPerMinute = maxMatchingRequestsPerMinute;
         this.clock = clock != null ? clock : Clock.systemUTC();
+        this.cleanupThreshold = cleanupThreshold > 0 ? cleanupThreshold : DEFAULT_CLEANUP_THRESHOLD;
     }
 
     public void checkRateLimit(String clientIdentifier) {
         long currentMinute = clock.millis() / 60000;
         String key = clientIdentifier + ":" + currentMinute;
 
-        if (requestCounts.size() > 10000) {
+        if (requestCounts.size() >= cleanupThreshold) {
             long prevMinute = currentMinute - 1;
             requestCounts.keySet().removeIf(k -> {
                 String[] parts = k.split(":");
-                if (parts.length > 1) {
+                if (parts.length == 2 && !parts[0].equals("matching") && !parts[0].equals("emergency")) {
                     try {
                         return Long.parseLong(parts[1]) < prevMinute;
                     } catch (NumberFormatException e) {
                         return true;
                     }
                 }
-                return true;
+                return false;
             });
         }
 
@@ -59,11 +83,38 @@ public class RateLimitingService {
         }
     }
 
+    public void checkMatchingRateLimit(String clientIdentifier) {
+        long currentMinute = clock.millis() / 60000;
+        String key = "matching:" + clientIdentifier + ":" + currentMinute;
+
+        if (requestCounts.size() >= cleanupThreshold) {
+            long prevMinute = currentMinute - 1;
+            requestCounts.keySet().removeIf(k -> {
+                String[] parts = k.split(":");
+                if (parts.length > 2 && parts[0].equals("matching")) {
+                    try {
+                        return Long.parseLong(parts[2]) < prevMinute;
+                    } catch (NumberFormatException e) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+        }
+
+        RequestCounter counter = requestCounts.computeIfAbsent(key, k -> new RequestCounter());
+        int count = counter.incrementAndGet();
+
+        if (count > maxMatchingRequestsPerMinute) {
+            throw new RateLimitExceededException("Too many matching requests. Please wait a moment before trying again.");
+        }
+    }
+
     public String checkEmergencyRateLimit(String clientIdentifier) {
         long currentWindow = getEmergencyWindow();
         String windowKey = computeEmergencyWindowKey(clientIdentifier, currentWindow);
 
-        if (requestCounts.size() > 10000) {
+        if (requestCounts.size() >= cleanupThreshold) {
             long prevWindow = currentWindow - 1;
             requestCounts.keySet().removeIf(k -> {
                 String[] parts = k.split(":");
@@ -126,6 +177,25 @@ public class RateLimitingService {
     public int getEmergencyCountForKey(String windowKey) {
         RequestCounter counter = requestCounts.get(windowKey);
         return counter != null ? counter.getCount() : 0;
+    }
+
+    public int getMatchingCount(String clientIdentifier) {
+        long currentMinute = clock.millis() / 60000;
+        return getMatchingCount(clientIdentifier, currentMinute);
+    }
+
+    public int getMatchingCount(String clientIdentifier, long minute) {
+        String key = "matching:" + clientIdentifier + ":" + minute;
+        RequestCounter counter = requestCounts.get(key);
+        return counter != null ? counter.getCount() : 0;
+    }
+
+    public boolean containsKey(String key) {
+        return requestCounts.containsKey(key);
+    }
+
+    public int getStoredKeyCount() {
+        return requestCounts.size();
     }
 
     public void reset() {

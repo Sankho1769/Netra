@@ -13,5 +13,6 @@ import java.util.UUID;
 public interface EligibilitySessionRepository extends JpaRepository<EligibilitySession, UUID> {
     Optional<EligibilitySession> findByIdAndUserId(UUID id, UUID userId);
     List<EligibilitySession> findByUserIdOrderByStartedAtDesc(UUID userId);
+    List<EligibilitySession> findByUserIdInOrderByStartedAtDesc(java.util.Collection<UUID> userIds);
     List<EligibilitySession> findByExpiresAtBeforeAndCompletedAtIsNull(Instant cutoff);
 }
