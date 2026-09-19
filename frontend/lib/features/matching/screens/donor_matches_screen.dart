@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/donor_match_model.dart';
 import '../services/matching_api_service.dart';
 import '../widgets/donor_match_card.dart';
+import '../../donor_response/screens/requester_match_list_screen.dart';
+import '../../donor_response/services/donor_response_api_service.dart';
 
 /// Screen displaying ranked compatible donor candidates for an open blood request.
 ///
@@ -34,6 +36,8 @@ class _DonorMatchesScreenState extends State<DonorMatchesScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   DonorMatchResponse? _response;
+  final Set<String> _matchedCandidateRefs = {};
+  String? _processingCandidateRef;
 
   double _selectedRadiusKm = 25.0;
 
@@ -82,6 +86,20 @@ class _DonorMatchesScreenState extends State<DonorMatchesScreen> {
         backgroundColor: const Color(0xFFDC2626),
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.playlist_add_check),
+            tooltip: 'View Persistent Responses',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => RequesterMatchListScreen(
+                    requestId: widget.requestId,
+                    bloodGroup: widget.targetBloodGroup,
+                  ),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh Matches',
@@ -289,15 +307,93 @@ class _DonorMatchesScreenState extends State<DonorMatchesScreen> {
           physics: const NeverScrollableScrollPhysics(),
           itemCount: matches.length,
           itemBuilder: (ctx, index) {
+            final match = matches[index];
+            final isMatched = _matchedCandidateRefs.contains(match.candidateReference);
+            final isProcessing = _processingCandidateRef == match.candidateReference;
             return DonorMatchCard(
-              match: matches[index],
+              match: match,
               rank: index + 1,
+              isMatched: isMatched,
+              isProcessing: isProcessing,
+              onSelectDonor: () => _handleSelectDonor(match),
             );
           },
         ),
         const SizedBox(height: 32),
       ],
     );
+  }
+
+  Future<void> _handleSelectDonor(DonorMatch candidate) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Create Donor Match?'),
+        content: Text(
+          'Assign blood request to ${candidate.donorDisplayName} (${candidate.bloodGroup})?\n\n'
+          'The candidate will receive this match assignment to review, accept, or decline.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Confirm Match'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _processingCandidateRef = candidate.candidateReference);
+
+    try {
+      final responseService = DonorResponseApiService();
+      await responseService.createMatch(widget.requestId, candidate.candidateReference);
+      if (mounted) {
+        setState(() {
+          _matchedCandidateRefs.add(candidate.candidateReference);
+          _processingCandidateRef = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Persistent match created for ${candidate.donorDisplayName}!'),
+            backgroundColor: const Color(0xFF16A34A),
+            action: SnackBarAction(
+              label: 'View Responses',
+              textColor: Colors.white,
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => RequesterMatchListScreen(
+                      requestId: widget.requestId,
+                      bloodGroup: widget.targetBloodGroup,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _processingCandidateRef = null);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('ValidationException: ', '')),
+            backgroundColor: const Color(0xFFDC2626),
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildEmptyState() {

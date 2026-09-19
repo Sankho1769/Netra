@@ -292,10 +292,10 @@ public class DonorMatchingService {
 
             // Mask name safely (e.g. "John D.")
             String maskedName = maskDisplayName(candidate.getFullName());
-            UUID matchId = UUID.randomUUID();
+            UUID candidateReference = candidate.getDonorProfileId();
 
             DonorMatchDto dto = new DonorMatchDto(
-                    matchId,
+                    candidateReference,
                     maskedName,
                     candidate.getBloodGroup(),
                     candidate.getBloodGroupVerificationStatus(),

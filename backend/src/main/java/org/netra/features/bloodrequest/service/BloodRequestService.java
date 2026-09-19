@@ -36,14 +36,25 @@ public class BloodRequestService {
     private final BloodRequestRepository bloodRequestRepository;
     private final BloodRequestAuthorizationService authorizationService;
     private final AuditService auditService;
+    private final org.netra.features.matching.service.DonorMatchLifecycleService donorMatchLifecycleService;
 
     public BloodRequestService(
             BloodRequestRepository bloodRequestRepository,
             BloodRequestAuthorizationService authorizationService,
             AuditService auditService) {
+        this(bloodRequestRepository, authorizationService, auditService, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public BloodRequestService(
+            BloodRequestRepository bloodRequestRepository,
+            BloodRequestAuthorizationService authorizationService,
+            AuditService auditService,
+            org.netra.features.matching.service.DonorMatchLifecycleService donorMatchLifecycleService) {
         this.bloodRequestRepository = bloodRequestRepository;
         this.authorizationService = authorizationService;
         this.auditService = auditService;
+        this.donorMatchLifecycleService = donorMatchLifecycleService;
     }
 
     @Transactional
@@ -313,6 +324,10 @@ public class BloodRequestService {
 
         BloodRequest saved = bloodRequestRepository.save(bloodRequest);
 
+        if (donorMatchLifecycleService != null) {
+            donorMatchLifecycleService.cancelActiveMatchesForRequest(saved.getId(), currentUserId, clientIp, userAgent);
+        }
+
         auditService.logAuthEvent(
                 "BLOOD_REQUEST_CANCELLED",
                 currentUserId,
@@ -355,6 +370,10 @@ public class BloodRequestService {
         bloodRequest.setUpdatedAt(now);
 
         BloodRequest saved = bloodRequestRepository.save(bloodRequest);
+
+        if (donorMatchLifecycleService != null) {
+            donorMatchLifecycleService.cancelActiveMatchesForRequest(saved.getId(), currentUserId, clientIp, userAgent);
+        }
 
         auditService.logAuthEvent(
                 "BLOOD_REQUEST_CANCELLED",

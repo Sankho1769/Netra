@@ -13,7 +13,7 @@ NETRA is a production-grade digital blood donation ecosystem engineered with zer
 
 ### 2. User & Donor Profiles
 - **User Account Management**: User profile inspection and updates (`/api/v1/profile/me`).
-- **Donor Profile Lifecycle**: Donor profiles (`/api/v1/donor/profile`) with blood group, verification status (`SELF_REPORTED` by default, `VERIFIED` upon clinical confirmation), availability status (`AVAILABLE`, `BUSY`, `UNAVAILABLE`, `PAUSED`), and geographic coordinates.
+- **Donor Profile Lifecycle**: Donor profiles (`/api/v1/donor/profile`) with blood group, verification status (`SELF_REPORTED` by default, `VERIFIED` upon clinical confirmation), availability status (`AVAILABLE`, `UNAVAILABLE`, `PAUSED`), and geographic coordinates.
 - **Coordinate Validation & Privacy**: Optional latitude (-90.0 to 90.0) and longitude (-180.0 to 180.0) paired validation (both must be supplied or both omitted). Coordinates remain private to the donor and internal matching logic, never exposed through public donor endpoints.
 
 ### 3. Donation Eligibility Self-Screening
@@ -41,25 +41,38 @@ NETRA is a production-grade digital blood donation ecosystem engineered with zer
 - **BOLA / IDOR Defense**: Broken Object Level Authorization enforcement ensuring requests can only be managed by verified owners or administrators.
 
 ### 8. Emergency Mode V1
-- **Rapid Emergency Broadcast**: Dedicated endpoint (`/api/v1/emergency/blood-requests`) for high-urgency blood requests with `CRITICAL` urgency.
+- **Emergency Blood Request Fast-Path**: Dedicated endpoint (`/api/v1/emergency/blood-requests`) for expedited creation of high-urgency blood requests with `CRITICAL` urgency (record creation only; zero automated external notifications, SMS, or broadcast messaging).
 - **Strict Rate Limiting**: Max 5 new requests per fixed 10-minute window per authenticated user, with counter rollback on downstream creation failures.
-- **Idempotency Protection**: Idempotency-Key validation and request fingerprinting preventing duplicate emergency broadcasts.
+- **Idempotency Protection**: Idempotency-Key validation and request fingerprinting preventing duplicate emergency request submissions.
 - **Audited Cancellation**: Secure cancellation endpoint (`/api/v1/emergency/blood-requests/{id}/cancel`) with authorization-first validation order.
 
 ### 9. Donor Matching Engine V1
-- **Decision-Support Matching**: On-demand matching endpoint (`GET /api/v1/blood-requests/{requestId}/matches`) finding compatible donors for open blood requests.
+- **Computed Candidate Discovery**: On-demand candidate matching endpoint (`GET /api/v1/blood-requests/{requestId}/matches`) finding compatible, available, and eligible verified donors for open blood requests.
 - **Blood Compatibility Matrix**: Centralized compatibility rule set for preliminary donor candidate matching (scoped strictly to Red Blood Cell and Whole Blood transfusions; decision-support only; final compatibility, screening, and crossmatching are determined by qualified blood-bank and clinical staff).
-- **Verified-Only Donor Pool**: Hard server-side filtering ensuring only donors with `VERIFIED` blood group status are included; unverified and self-reported donors are strictly excluded.
+- **Verified-Only Donor Pool**: Hard server-side filtering ensuring only donors with `VERIFIED` blood group status participate in candidate discovery; unverified and self-reported donors are strictly excluded.
 - **Two-Stage Spatial Filtering**: Database-level bounding box hard filtering followed by exact spherical Haversine distance calculation within configurable search radii (10km, 25km, 50km, 100km).
-- **Overdue Protection**: Rejects matching requests for overdue blood requests (`requiredBy <= now`).
-- **Batch Eligibility Loading**: Single-query batch session retrieval to prevent N+1 queries.
 - **Deterministic 3-Tier Ranking**:
   1. `EXACT` compatibility before `COMPATIBLE`
   2. Proximity ascending (`distanceKm`)
   3. Internal `donorProfileId` tie-breaker
-- **Data Minimization & Privacy**: Masked donor display names (e.g. "John D."), distance in km, zero donor contact details, zero exact coordinates, and zero medical questionnaire answers in responses.
-- **Bounded Rate Limiting**: 30 matching requests per minute per authenticated user with bounded in-memory key cleanup preventing memory accumulation.
-- **Pure Read Operation**: Zero matching-side state mutations; no persistent `donor_matches` table.
+- **Authorized Internal Selection Reference**: Exposes `candidateReference` (the donor profile reference, not a secret token) to decouple requester selection from internal user account identifiers (`users.id`).
+- **Bounded Rate Limiting**: 30 matching requests per minute per authenticated user.
+
+### 10. Donor Response V1
+- **Persistent Match Workflow**: Stateful link between Blood Requests and matched donors backed by the `donor_matches` table.
+- **Endpoints**:
+  - `GET /api/v1/donor/matches`: Authenticated donors inspect incoming match requests for their profile.
+  - `GET /api/v1/donor/matches/{matchId}`: Authenticated donors inspect match and request details.
+  - `POST /api/v1/donor/matches/{matchId}/accept`: Donors accept an active match request.
+  - `POST /api/v1/donor/matches/{matchId}/decline`: Donors decline an active match request.
+  - `POST /api/v1/blood-requests/{requestId}/matches`: Authorized requesters create persistent matches with candidate revalidation and row locking.
+  - `GET /api/v1/blood-requests/{requestId}/match-responses`: Requesters view persistent match responses for their request.
+- **Strict Active Match Cap**: Max 10 active `MATCHED` records per blood request to prevent request spam.
+- **State Machine Transitions**: Controlled lifecycle across `MATCHED`, `ACCEPTED`, `DECLINED`, `EXPIRED`, and `CANCELLED`. Terminal states (`ACCEPTED`, `DECLINED`, `EXPIRED`, `CANCELLED`) are strictly immutable with optimistic concurrency locking (`@Version`).
+- **Cascading Lifecycle Management**: Automatic expiration and cancellation propagation when parent blood requests expire or are cancelled.
+- **Zero Involuntary Side-Effects**: Accepting/declining a match is strictly a response recording operation. It does **not** fulfill the blood request, does **not** modify blood inventory, does **not** alter `lastDonationDate`, does **not** generate verified donation records, and does **not** grant clinical clearance.
+- **Zero Automated Notifications**: No automated SMS, push notifications, emails, robocalls, or in-app messaging. Communication is entirely user-driven through dashboards and clinical staff.
+- **Rate Limiting**: 20 match creation requests per minute per authenticated user.
 
 ---
 
@@ -71,7 +84,8 @@ NETRA is a production-grade digital blood donation ecosystem engineered with zer
 4. **Rate Limiting**: Fixed-window rate limiting with deterministic Clock testing and bounded in-memory cleanup:
    - Eligibility: 20 requests/minute
    - Emergency: 5 new requests per fixed 10-minute window per authenticated user (with counter rollback on downstream failure)
-   - Matching: 30 requests/minute per authenticated user (with bounded in-memory key cleanup)
+   - Matching Discovery: 30 requests/minute per authenticated user (with bounded in-memory key cleanup)
+   - Match Creation: 20 requests/minute per authenticated user
 
 ---
 
@@ -98,11 +112,11 @@ Netra/
 │   │       ├── eligibility/    (INDIA-NBTC-2026-01 rule engine, 6-step self-screening)
 │   │       ├── emergency/      (Emergency Mode V1, idempotency records, rate limit rollback)
 │   │       ├── events/         (Donation events, drives, participant registration)
-│   │       ├── matching/       (Donor Matching V1 engine, compatibility matrix, deterministic ranking)
+│   │       ├── matching/       (Donor Matching candidate engine, Donor Response persistent lifecycle, compatibility matrix)
 │   │       └── user/           (User accounts, roles, profile management)
 │   ├── src/main/resources/
 │   │   ├── application.yml
-│   │   └── db/migration/       (Flyway V1 - V11 migrations)
+│   │   └── db/migration/       (Flyway V1 - V12 migrations)
 │   └── src/test/java/org/netra/
 │       ├── core/               (Security, audit, and rate-limiting tests)
 │       └── features/           (Feature-specific integration, security, and rule tests)
@@ -116,8 +130,9 @@ Netra/
 │           ├── blood_request/  (Blood request creation, list, details)
 │           ├── bloodbank/      (Blood bank discovery, inventory views)
 │           ├── donor/          (Donor profile setup, status toggles)
+│           ├── donor_response/ (Incoming matches, detail screen, accept/decline flows, requester match lists)
 │           ├── eligibility/    (6-step self-check flow, deferral calculator)
-│           ├── emergency/      (Emergency request broadcast, confirmation)
+│           ├── emergency/      (Emergency request creation, confirmation)
 │           ├── events/         (Event schedules, drive registration)
 │           ├── home/           (Dashboard, navigation, quick actions)
 │           ├── matching/       (Donor matches screen, candidate cards, radius filters)

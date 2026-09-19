@@ -189,7 +189,7 @@ class DonorMatchingRulesTest {
         Comparator<DonorMatchDto> rankingComparator = Comparator
                 .comparingInt((DonorMatchDto m) -> m.getCompatibilityType() == CompatibilityType.EXACT ? 0 : 1)
                 .thenComparingDouble(DonorMatchDto::getDistanceKm)
-                .thenComparing(m -> m.getMatchId().toString());
+                .thenComparing(m -> m.getCandidateReference().toString());
 
         list.sort(rankingComparator);
 
@@ -199,10 +199,10 @@ class DonorMatchingRulesTest {
         // 3rd: d3 (Compatible, Verified, 2.0 km)
         // 4th: d4 (Compatible, Verified, 10.0 km, id4 < id5)
         // 5th: d5 (Compatible, Verified, 10.0 km, id5 > id4)
-        assertEquals(d2.getMatchId(), list.get(0).getMatchId());
-        assertEquals(d1.getMatchId(), list.get(1).getMatchId());
-        assertEquals(d3.getMatchId(), list.get(2).getMatchId());
-        assertEquals(d4.getMatchId(), list.get(3).getMatchId());
-        assertEquals(d5.getMatchId(), list.get(4).getMatchId());
+        assertEquals(d2.getCandidateReference(), list.get(0).getCandidateReference());
+        assertEquals(d1.getCandidateReference(), list.get(1).getCandidateReference());
+        assertEquals(d3.getCandidateReference(), list.get(2).getCandidateReference());
+        assertEquals(d4.getCandidateReference(), list.get(3).getCandidateReference());
+        assertEquals(d5.getCandidateReference(), list.get(4).getCandidateReference());
     }
 }

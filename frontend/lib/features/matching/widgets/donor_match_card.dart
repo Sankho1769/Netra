@@ -8,11 +8,17 @@ import '../models/donor_match_model.dart';
 class DonorMatchCard extends StatelessWidget {
   final DonorMatch match;
   final int rank;
+  final bool isMatched;
+  final bool isProcessing;
+  final VoidCallback? onSelectDonor;
 
   const DonorMatchCard({
     super.key,
     required this.match,
     required this.rank,
+    this.isMatched = false,
+    this.isProcessing = false,
+    this.onSelectDonor,
   });
 
   @override
@@ -105,19 +111,68 @@ class DonorMatchCard extends StatelessWidget {
             const Divider(height: 1),
             const SizedBox(height: 10),
 
-            // Bottom Row: Haversine Distance
+            // Bottom Row: Haversine Distance & Action
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Icon(Icons.near_me, size: 16, color: Color(0xFF4B5563)),
-                const SizedBox(width: 4),
-                Text(
-                  '${match.distanceKm.toStringAsFixed(1)} km away',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF374151),
-                  ),
+                Row(
+                  children: [
+                    const Icon(Icons.near_me, size: 16, color: Color(0xFF4B5563)),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${match.distanceKm.toStringAsFixed(1)} km away',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF374151),
+                      ),
+                    ),
+                  ],
                 ),
+                if (isMatched)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDCFCE7),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFF16A34A)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.check, size: 14, color: Color(0xFF16A34A)),
+                        SizedBox(width: 4),
+                        Text(
+                          'Match Created',
+                          style: TextStyle(
+                            color: Color(0xFF15803D),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else if (onSelectDonor != null)
+                  ElevatedButton(
+                    onPressed: isProcessing ? null : onSelectDonor,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFDC2626),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    ),
+                    child: isProcessing
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text(
+                            'Select Donor',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                  ),
               ],
             ),
           ],

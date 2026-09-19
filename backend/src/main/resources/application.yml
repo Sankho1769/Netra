@@ -10,10 +10,13 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE:dev}
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:netradb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL}
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:netradb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL;DEFAULT_LOCK_TIMEOUT=30000}
     driver-class-name: ${SPRING_DATASOURCE_DRIVER:org.h2.Driver}
     username: ${SPRING_DATASOURCE_USERNAME:sa}
     password: ${SPRING_DATASOURCE_PASSWORD:}
+    hikari:
+      maximum-pool-size: 30
+      minimum-idle: 5
 
   jpa:
     database-platform: ${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.H2Dialect}
@@ -49,3 +52,9 @@ netra:
     max-limit: 50
     min-donation-interval-days: 90
     max-requests-per-minute: 30
+    max-creation-requests-per-minute: 20
+
+  donor-matching:
+    match-response-ttl: 24h
+    match-expiration-interval-ms: 60000
+    max-active-matches-per-request: 10

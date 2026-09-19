@@ -10,6 +10,14 @@ import java.util.UUID;
 /**
  * Privacy-preserving DTO representing a matched donor candidate.
  *
+ * Candidate Identity Design:
+ * - Donor candidate matches computed by Donor Matching are transient decision-support results.
+ * - They do NOT represent persistent database records and therefore do NOT have a {@code matchId}.
+ * - {@code candidateReference} is currently the DonorProfile UUID: an authorized internal donor-selection reference. Not a secret.
+ * - It allows the authorized requester to select a candidate and create a persistent match without leaking the donor's internal
+ *   user account identifier ({@code users.id}).
+ * - The persistent {@code DonorMatch.id} remains a distinct, server-generated random UUID upon match creation.
+ *
  * Privacy Guarantees:
  * - Exact home address, GPS coordinates, personal phone number, and email are strictly omitted.
  * - Donor name is masked to protect anonymity prior to formal consent.
@@ -17,7 +25,7 @@ import java.util.UUID;
  */
 public class DonorMatchDto {
 
-    private UUID matchId;
+    private UUID candidateReference;
     private String donorDisplayName;
     private BloodGroup bloodGroup;
     private BloodGroupVerificationStatus bloodGroupVerificationStatus;
@@ -30,7 +38,7 @@ public class DonorMatchDto {
     }
 
     public DonorMatchDto(
-            UUID matchId,
+            UUID candidateReference,
             String donorDisplayName,
             BloodGroup bloodGroup,
             BloodGroupVerificationStatus bloodGroupVerificationStatus,
@@ -38,7 +46,7 @@ public class DonorMatchDto {
             Double distanceKm,
             CompatibilityType compatibilityType,
             MatchQuality matchQuality) {
-        this.matchId = matchId;
+        this.candidateReference = candidateReference;
         this.donorDisplayName = donorDisplayName;
         this.bloodGroup = bloodGroup;
         this.bloodGroupVerificationStatus = bloodGroupVerificationStatus;
@@ -48,12 +56,12 @@ public class DonorMatchDto {
         this.matchQuality = matchQuality;
     }
 
-    public UUID getMatchId() {
-        return matchId;
+    public UUID getCandidateReference() {
+        return candidateReference;
     }
 
-    public void setMatchId(UUID matchId) {
-        this.matchId = matchId;
+    public void setCandidateReference(UUID candidateReference) {
+        this.candidateReference = candidateReference;
     }
 
     public String getDonorDisplayName() {

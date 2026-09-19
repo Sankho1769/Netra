@@ -16,6 +16,7 @@ public class RateLimitingService {
     private final int maxRequestsPerMinute;
     private final int maxEmergencyRequests;
     private final int maxMatchingRequestsPerMinute;
+    private final int maxMatchCreationRequestsPerMinute;
     private final int cleanupThreshold;
     private final Clock clock;
     private final Map<String, RequestCounter> requestCounts = new ConcurrentHashMap<>();
@@ -24,15 +25,16 @@ public class RateLimitingService {
     public RateLimitingService(
             @Value("${netra.eligibility.max-requests-per-minute:20}") int maxRequestsPerMinute,
             @Value("${netra.emergency.max-requests-per-10-minutes:5}") int maxEmergencyRequests,
-            @Value("${netra.matching.max-requests-per-minute:30}") int maxMatchingRequestsPerMinute) {
-        this(maxRequestsPerMinute, maxEmergencyRequests, maxMatchingRequestsPerMinute, Clock.systemUTC(), DEFAULT_CLEANUP_THRESHOLD);
+            @Value("${netra.matching.max-requests-per-minute:30}") int maxMatchingRequestsPerMinute,
+            @Value("${netra.matching.max-creation-requests-per-minute:20}") int maxMatchCreationRequestsPerMinute) {
+        this(maxRequestsPerMinute, maxEmergencyRequests, maxMatchingRequestsPerMinute, maxMatchCreationRequestsPerMinute, Clock.systemUTC(), DEFAULT_CLEANUP_THRESHOLD);
     }
 
     public RateLimitingService(
             int maxRequestsPerMinute,
             int maxEmergencyRequests,
             Clock clock) {
-        this(maxRequestsPerMinute, maxEmergencyRequests, 30, clock, DEFAULT_CLEANUP_THRESHOLD);
+        this(maxRequestsPerMinute, maxEmergencyRequests, 30, 20, clock, DEFAULT_CLEANUP_THRESHOLD);
     }
 
     public RateLimitingService(
@@ -40,7 +42,7 @@ public class RateLimitingService {
             int maxEmergencyRequests,
             int maxMatchingRequestsPerMinute,
             Clock clock) {
-        this(maxRequestsPerMinute, maxEmergencyRequests, maxMatchingRequestsPerMinute, clock, DEFAULT_CLEANUP_THRESHOLD);
+        this(maxRequestsPerMinute, maxEmergencyRequests, maxMatchingRequestsPerMinute, 20, clock, DEFAULT_CLEANUP_THRESHOLD);
     }
 
     public RateLimitingService(
@@ -49,9 +51,20 @@ public class RateLimitingService {
             int maxMatchingRequestsPerMinute,
             Clock clock,
             int cleanupThreshold) {
+        this(maxRequestsPerMinute, maxEmergencyRequests, maxMatchingRequestsPerMinute, 20, clock, cleanupThreshold);
+    }
+
+    public RateLimitingService(
+            int maxRequestsPerMinute,
+            int maxEmergencyRequests,
+            int maxMatchingRequestsPerMinute,
+            int maxMatchCreationRequestsPerMinute,
+            Clock clock,
+            int cleanupThreshold) {
         this.maxRequestsPerMinute = maxRequestsPerMinute;
         this.maxEmergencyRequests = maxEmergencyRequests;
         this.maxMatchingRequestsPerMinute = maxMatchingRequestsPerMinute;
+        this.maxMatchCreationRequestsPerMinute = maxMatchCreationRequestsPerMinute;
         this.clock = clock != null ? clock : Clock.systemUTC();
         this.cleanupThreshold = cleanupThreshold > 0 ? cleanupThreshold : DEFAULT_CLEANUP_THRESHOLD;
     }
@@ -107,6 +120,33 @@ public class RateLimitingService {
 
         if (count > maxMatchingRequestsPerMinute) {
             throw new RateLimitExceededException("Too many matching requests. Please wait a moment before trying again.");
+        }
+    }
+
+    public void checkMatchCreationRateLimit(String clientIdentifier) {
+        long currentMinute = clock.millis() / 60000;
+        String key = "match-create:" + clientIdentifier + ":" + currentMinute;
+
+        if (requestCounts.size() >= cleanupThreshold) {
+            long prevMinute = currentMinute - 1;
+            requestCounts.keySet().removeIf(k -> {
+                String[] parts = k.split(":");
+                if (parts.length > 2 && parts[0].equals("match-create")) {
+                    try {
+                        return Long.parseLong(parts[2]) < prevMinute;
+                    } catch (NumberFormatException e) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+        }
+
+        RequestCounter counter = requestCounts.computeIfAbsent(key, k -> new RequestCounter());
+        int count = counter.incrementAndGet();
+
+        if (count > maxMatchCreationRequestsPerMinute) {
+            throw new RateLimitExceededException("Too many match creation requests. Please wait a moment before trying again.");
         }
     }
 

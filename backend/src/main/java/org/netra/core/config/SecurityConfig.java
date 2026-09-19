@@ -117,6 +117,15 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/blood-requests/*").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/v1/blood-requests/*/cancel").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/blood-requests/*/matches").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/v1/blood-requests/*/matches").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/blood-requests/*/match-responses").authenticated()
+
+                // Donor Match Response Endpoints
+                .requestMatchers(HttpMethod.GET, "/api/v1/donor/matches").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/donor/matches/*").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/v1/donor/matches/*/accept").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/v1/donor/matches/*/decline").authenticated()
+
                 .requestMatchers(HttpMethod.GET, "/api/v1/blood-requests").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/blood-requests/nearby").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/blood-requests/*").permitAll()

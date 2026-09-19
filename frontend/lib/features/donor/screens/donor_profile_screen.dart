@@ -5,6 +5,7 @@ import '../../../core/theme/netra_spacing.dart';
 import '../../../core/theme/netra_typography.dart';
 import '../../../common/widgets/common_widgets.dart';
 import '../../eligibility/screens/eligibility_intro_screen.dart';
+import '../../donor_response/screens/donor_incoming_matches_screen.dart';
 import '../models/donor_profile.dart';
 import '../state/donor_controller.dart';
 import 'edit_donor_profile_screen.dart';
@@ -233,7 +234,50 @@ class DonorProfileScreen extends StatelessWidget {
         ),
         NetraSpacing.gapH16,
 
-        // Verified Donation History Section
+        // Incoming Match Requests Section
+        Card(
+          elevation: 0,
+          color: NetraColors.surfaceWhite,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
+            side: const BorderSide(color: NetraColors.borderGray),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(NetraSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.mark_email_unread_outlined, color: NetraColors.primaryRed, size: 20),
+                    NetraSpacing.gapW12,
+                    Text("Blood Request Matches", style: NetraTypography.titleMedium),
+                  ],
+                ),
+                NetraSpacing.gapH8,
+                Text(
+                  "Review blood requests matching your profile and respond with acceptance or decline.",
+                  style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary),
+                ),
+                NetraSpacing.gapH16,
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const DonorIncomingMatchesScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.assignment_turned_in_outlined, size: 18),
+                  label: const Text("View Matched Requests"),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: NetraColors.primaryRed,
+                    side: const BorderSide(color: NetraColors.primaryRed),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        NetraSpacing.gapH16,
         Card(
           elevation: 0,
           color: NetraColors.surfaceWhite,

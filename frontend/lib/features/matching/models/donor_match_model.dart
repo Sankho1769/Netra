@@ -58,7 +58,8 @@ enum MatchQuality {
 
 /// Privacy-safe donor candidate matched to a blood request.
 class DonorMatch {
-  final String matchId;
+  /// Authorized internal donor-selection reference. Not a secret.
+  final String candidateReference;
   final String donorDisplayName;
   final String bloodGroup;
   final String bloodGroupVerificationStatus;
@@ -68,7 +69,7 @@ class DonorMatch {
   final MatchQuality matchQuality;
 
   const DonorMatch({
-    required this.matchId,
+    required this.candidateReference,
     required this.donorDisplayName,
     required this.bloodGroup,
     required this.bloodGroupVerificationStatus,
@@ -82,7 +83,7 @@ class DonorMatch {
 
   factory DonorMatch.fromJson(Map<String, dynamic> json) {
     return DonorMatch(
-      matchId: json['matchId'] as String? ?? '',
+      candidateReference: json['candidateReference'] as String? ?? '',
       donorDisplayName: json['donorDisplayName'] as String? ?? 'Anonymous Donor',
       bloodGroup: json['bloodGroup'] as String? ?? '',
       bloodGroupVerificationStatus:
@@ -96,7 +97,7 @@ class DonorMatch {
 
   Map<String, dynamic> toJson() {
     return {
-      'matchId': matchId,
+      'candidateReference': candidateReference,
       'donorDisplayName': donorDisplayName,
       'bloodGroup': bloodGroup,
       'bloodGroupVerificationStatus': bloodGroupVerificationStatus,
