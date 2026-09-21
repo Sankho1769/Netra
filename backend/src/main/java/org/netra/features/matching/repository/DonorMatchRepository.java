@@ -26,6 +26,10 @@ public interface DonorMatchRepository extends JpaRepository<DonorMatch, UUID> {
 
     boolean existsByBloodRequestIdAndDonorUserId(UUID bloodRequestId, UUID donorUserId);
 
+    List<DonorMatch> findByBloodRequestIdAndResponseStatus(UUID bloodRequestId, MatchStatus responseStatus);
+
+    List<DonorMatch> findByResponseStatusAndExpiresAtLessThanEqual(MatchStatus responseStatus, Instant expiresAt);
+
     int countByBloodRequestIdAndResponseStatus(UUID bloodRequestId, MatchStatus responseStatus);
 
     /**

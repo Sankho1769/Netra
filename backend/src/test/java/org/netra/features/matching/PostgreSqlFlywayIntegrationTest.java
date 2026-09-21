@@ -108,16 +108,16 @@ public class PostgreSqlFlywayIntegrationTest {
 
     @Test
     @Order(1)
-    @DisplayName("PostgreSQL Gate: Verify Flyway V1->V12 executed cleanly and created all schema objects")
-    void testFlywayV1ThroughV12SchemaMetadata() throws Exception {
+    @DisplayName("PostgreSQL Gate: Verify Flyway V1->V13 executed cleanly and created all schema objects")
+    void testFlywayV1ThroughV13SchemaMetadata() throws Exception {
         assertNotNull(dataSource, "DataSource must be injected");
         assertNotNull(jdbcTemplate, "JdbcTemplate must be injected");
 
-        // 1. Verify Flyway schema history table exists and contains 12 successful migrations
+        // 1. Verify Flyway schema history table exists and contains 13 successful migrations
         List<Map<String, Object>> history = jdbcTemplate.queryForList(
                 "SELECT version, description, type, script, success FROM flyway_schema_history ORDER BY installed_rank"
         );
-        assertEquals(12, history.size(), "Flyway must have applied exactly 12 migrations (V1 through V12)");
+        assertEquals(13, history.size(), "Flyway must have applied exactly 13 migrations (V1 through V13)");
 
         for (Map<String, Object> row : history) {
             Boolean success = (Boolean) row.get("success");
@@ -131,7 +131,7 @@ public class PostgreSqlFlywayIntegrationTest {
                 "users", "user_roles", "refresh_sessions", "security_audit_logs",
                 "donor_profiles", "blood_banks", "blood_inventory", "blood_bank_accounts",
                 "donation_events", "donation_event_registrations", "blood_requests",
-                "idempotency_records", "donor_matches"
+                "idempotency_records", "donor_matches", "notifications", "user_device_tokens"
         );
 
         try (Connection conn = dataSource.getConnection()) {
@@ -198,6 +198,62 @@ public class PostgreSqlFlywayIntegrationTest {
             assertTrue(indexes.contains("idx_donor_matches_blood_request_id"), "Index idx_donor_matches_blood_request_id must exist");
             assertTrue(indexes.contains("idx_donor_matches_donor_user_id"), "Index idx_donor_matches_donor_user_id must exist");
             assertTrue(indexes.contains("idx_donor_matches_status_expires"), "Index idx_donor_matches_status_expires must exist");
+
+            // 8. Verify notifications column structure
+            Set<String> notificationColumns = new HashSet<>();
+            try (ResultSet rs = meta.getColumns(null, "public", "notifications", "%")) {
+                while (rs.next()) {
+                    notificationColumns.add(rs.getString("COLUMN_NAME").toLowerCase());
+                }
+            }
+            Set<String> expectedNotificationColumns = Set.of(
+                    "id", "recipient_user_id", "type", "title", "body", "reference_type",
+                    "reference_id", "created_at", "updated_at", "read_at", "delivery_status",
+                    "idempotency_key", "version"
+            );
+            assertTrue(notificationColumns.containsAll(expectedNotificationColumns), "notifications must contain all 13 expected columns");
+
+            // 9. Verify user_device_tokens column structure
+            Set<String> tokenColumns = new HashSet<>();
+            try (ResultSet rs = meta.getColumns(null, "public", "user_device_tokens", "%")) {
+                while (rs.next()) {
+                    tokenColumns.add(rs.getString("COLUMN_NAME").toLowerCase());
+                }
+            }
+            Set<String> expectedTokenColumns = Set.of(
+                    "id", "user_id", "token", "token_hash", "provider", "platform",
+                    "active", "created_at", "updated_at", "last_seen_at", "revoked_at"
+            );
+            assertTrue(tokenColumns.containsAll(expectedTokenColumns), "user_device_tokens must contain all 11 expected columns");
+
+            // 10. Verify V13 constraints
+            Integer uqIdempCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'uq_notifications_idempotency_key'",
+                    Integer.class
+            );
+            assertEquals(1, uqIdempCount, "Unique constraint 'uq_notifications_idempotency_key' must exist in PostgreSQL");
+
+            Integer uqTokenCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'uq_user_device_tokens_token'",
+                    Integer.class
+            );
+            assertEquals(1, uqTokenCount, "Unique constraint 'uq_user_device_tokens_token' must exist in PostgreSQL");
+
+            // 11. Verify V13 indexes
+            List<String> notifIndexes = jdbcTemplate.queryForList(
+                    "SELECT indexname FROM pg_indexes WHERE tablename = 'notifications'",
+                    String.class
+            );
+            assertTrue(notifIndexes.contains("idx_notifications_recipient_created"), "Index idx_notifications_recipient_created must exist");
+            assertTrue(notifIndexes.contains("idx_notifications_recipient_unread"), "Index idx_notifications_recipient_unread must exist");
+            assertTrue(notifIndexes.contains("idx_notifications_reference"), "Index idx_notifications_reference must exist");
+
+            List<String> tokenIndexes = jdbcTemplate.queryForList(
+                    "SELECT indexname FROM pg_indexes WHERE tablename = 'user_device_tokens'",
+                    String.class
+            );
+            assertTrue(tokenIndexes.contains("idx_device_tokens_user_active"), "Index idx_device_tokens_user_active must exist");
+            assertTrue(tokenIndexes.contains("idx_device_tokens_token_hash"), "Index idx_device_tokens_token_hash must exist");
         }
     }
 
@@ -394,5 +450,87 @@ public class PostgreSqlFlywayIntegrationTest {
                 String.class, matchId
         );
         assertEquals("ACCEPTED", finalStatus, "Final status must be immutable terminal ACCEPTED");
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("PostgreSQL Functional: Verify notifications and user_device_tokens constraints and UUID generation")
+    void testV13NotificationsBehaviorOnPostgreSQL() {
+        UUID userId = UUID.randomUUID();
+        jdbcTemplate.update(
+                "INSERT INTO users (id, full_name, email, password_hash, status) VALUES (?, 'Notif User', ?, 'hash', 'ACTIVE')",
+                userId, "notif_" + userId + "@netra.org"
+        );
+
+        // 1. Insert notification with default UUID generation
+        String idempotencyKey = "NOTIF_TEST:" + UUID.randomUUID();
+        jdbcTemplate.update(
+                "INSERT INTO notifications (recipient_user_id, type, title, body, delivery_status, idempotency_key) " +
+                        "VALUES (?, 'MATCH_CREATED', 'Test Notification', 'You have a match', 'PENDING', ?)",
+                userId, idempotencyKey
+        );
+
+        Map<String, Object> inserted = jdbcTemplate.queryForMap(
+                "SELECT id, recipient_user_id, type, delivery_status, version, created_at, read_at FROM notifications WHERE idempotency_key = ?",
+                idempotencyKey
+        );
+        assertNotNull(inserted.get("id"), "PostgreSQL gen_random_uuid() must auto-populate id");
+        assertEquals(userId, inserted.get("recipient_user_id"));
+        assertEquals("MATCH_CREATED", inserted.get("type"));
+        assertEquals("PENDING", inserted.get("delivery_status"));
+        assertEquals(0L, ((Number) inserted.get("version")).longValue());
+        assertNull(inserted.get("read_at"));
+
+        // 2. Duplicate idempotency key must violate unique constraint uq_notifications_idempotency_key
+        assertThrows(DataIntegrityViolationException.class, () ->
+                jdbcTemplate.update(
+                        "INSERT INTO notifications (recipient_user_id, type, title, body, delivery_status, idempotency_key) " +
+                                "VALUES (?, 'MATCH_CREATED', 'Duplicate', 'Body', 'PENDING', ?)",
+                        userId, idempotencyKey
+                )
+        );
+
+        // 3. Invalid delivery status must violate chk_notifications_delivery_status
+        assertThrows(DataIntegrityViolationException.class, () ->
+                jdbcTemplate.update(
+                        "INSERT INTO notifications (recipient_user_id, type, title, body, delivery_status) " +
+                                "VALUES (?, 'MATCH_CREATED', 'Invalid Status', 'Body', 'INVALID_STATUS')",
+                        userId
+                )
+        );
+
+        // 4. Insert user device token with default UUID generation
+        String deviceToken = "fcm_token_" + UUID.randomUUID();
+        jdbcTemplate.update(
+                "INSERT INTO user_device_tokens (user_id, token, token_hash, platform, provider) " +
+                        "VALUES (?, ?, 'hash123', 'ANDROID', 'FCM')",
+                userId, deviceToken
+        );
+
+        Map<String, Object> insertedToken = jdbcTemplate.queryForMap(
+                "SELECT id, user_id, active, platform, provider, created_at FROM user_device_tokens WHERE token = ?",
+                deviceToken
+        );
+        assertNotNull(insertedToken.get("id"), "PostgreSQL gen_random_uuid() must auto-populate token id");
+        assertEquals(true, insertedToken.get("active"));
+        assertEquals("ANDROID", insertedToken.get("platform"));
+
+        // 5. Duplicate token must violate uq_user_device_tokens_token
+        assertThrows(DataIntegrityViolationException.class, () ->
+                jdbcTemplate.update(
+                        "INSERT INTO user_device_tokens (user_id, token, token_hash, platform, provider) " +
+                                "VALUES (?, ?, 'hash456', 'ANDROID', 'FCM')",
+                        userId, deviceToken
+                )
+        );
+
+        // 6. Invalid platform must violate chk_device_tokens_platform
+        assertThrows(DataIntegrityViolationException.class, () ->
+                jdbcTemplate.update(
+                        "INSERT INTO user_device_tokens (user_id, token, token_hash, platform, provider) " +
+                                "VALUES (?, 'token_invalid_plat', 'hash789', 'WINDOWS_PHONE', 'FCM')",
+                        userId
+                )
+        );
     }
 }

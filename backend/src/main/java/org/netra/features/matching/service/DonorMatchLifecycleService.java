@@ -1,14 +1,19 @@
 package org.netra.features.matching.service;
 
 import org.netra.core.audit.AuditService;
+import org.netra.features.matching.entity.DonorMatch;
 import org.netra.features.matching.repository.DonorMatchRepository;
+import org.netra.features.notification.event.BloodRequestCancelledEvent;
+import org.netra.features.notification.event.MatchExpiredEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -29,14 +34,25 @@ public class DonorMatchLifecycleService {
     private final DonorMatchRepository donorMatchRepository;
     private final AuditService auditService;
     private final java.time.Clock clock;
+    private final ApplicationEventPublisher eventPublisher;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public DonorMatchLifecycleService(
+            DonorMatchRepository donorMatchRepository,
+            AuditService auditService,
+            java.time.Clock clock,
+            org.springframework.beans.factory.ObjectProvider<ApplicationEventPublisher> eventPublisherProvider) {
+        this.donorMatchRepository = donorMatchRepository;
+        this.auditService = auditService;
+        this.clock = clock != null ? clock : java.time.Clock.systemUTC();
+        this.eventPublisher = eventPublisherProvider != null ? eventPublisherProvider.getIfAvailable() : null;
+    }
 
     public DonorMatchLifecycleService(
             DonorMatchRepository donorMatchRepository,
             AuditService auditService,
             java.time.Clock clock) {
-        this.donorMatchRepository = donorMatchRepository;
-        this.auditService = auditService;
-        this.clock = clock != null ? clock : java.time.Clock.systemUTC();
+        this(donorMatchRepository, auditService, clock, null);
     }
 
     /**
@@ -58,6 +74,8 @@ public class DonorMatchLifecycleService {
     @Transactional
     public int expireOverdueMatches(Instant referenceTime) {
         Instant now = referenceTime != null ? referenceTime : Instant.now(clock);
+        List<DonorMatch> overdue = donorMatchRepository.findByResponseStatusAndExpiresAtLessThanEqual(
+                org.netra.features.matching.entity.MatchStatus.MATCHED, now);
         int count = donorMatchRepository.expireOverdueMatches(now);
         if (count > 0) {
             log.info("Batch expired {} overdue donor match(es) at {}", count, now);
@@ -70,6 +88,12 @@ public class DonorMatchLifecycleService {
                         String.format("{\"expiredCount\":%d,\"timestamp\":\"%s\"}", count, now)
                 );
             }
+            if (eventPublisher != null) {
+                for (DonorMatch m : overdue) {
+                    eventPublisher.publishEvent(new MatchExpiredEvent(
+                            m.getId(), m.getBloodRequestId(), m.getDonorUserId(), null));
+                }
+            }
         }
         return count;
     }
@@ -80,6 +104,12 @@ public class DonorMatchLifecycleService {
     @Transactional
     public int cancelActiveMatchesForRequest(UUID requestId, UUID actorId, String clientIp, String userAgent) {
         Instant now = Instant.now(clock);
+        List<DonorMatch> activeMatches = donorMatchRepository.findByBloodRequestIdAndResponseStatus(
+                requestId, org.netra.features.matching.entity.MatchStatus.MATCHED);
+        List<UUID> affectedDonorUserIds = activeMatches.stream()
+                .map(DonorMatch::getDonorUserId)
+                .toList();
+
         int count = donorMatchRepository.cancelActiveMatchesForRequest(requestId, now);
         if (count > 0) {
             log.info("Cancelled {} active donor match(es) for blood request {}", count, requestId);
@@ -91,6 +121,10 @@ public class DonorMatchLifecycleService {
                         userAgent,
                         String.format("{\"requestId\":\"%s\",\"cancelledCount\":%d}", requestId, count)
                 );
+            }
+            if (eventPublisher != null && !affectedDonorUserIds.isEmpty()) {
+                eventPublisher.publishEvent(new BloodRequestCancelledEvent(
+                        requestId, actorId, affectedDonorUserIds));
             }
         }
         return count;

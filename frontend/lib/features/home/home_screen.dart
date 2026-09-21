@@ -12,6 +12,7 @@ import '../emergency/screens/emergency_mode_screen.dart';
 import '../auth/state/auth_scope.dart';
 import '../auth/screens/login_screen.dart';
 import '../profile/screens/profile_screen.dart';
+import '../notification/widgets/notification_bell_icon.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -60,6 +61,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+        actions: const [
+          NotificationBellIcon(),
+        ],
         showBackButton: false,
       ),
       body: _selectedTab == 0 ? _buildHomeTab(context) : _buildProfileTab(context),

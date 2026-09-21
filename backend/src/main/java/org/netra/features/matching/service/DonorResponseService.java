@@ -25,9 +25,13 @@ import org.netra.features.matching.rules.BloodCompatibilityMatrix;
 import org.netra.features.user.entity.User;
 import org.netra.features.user.entity.UserStatus;
 import org.netra.features.user.repository.UserRepository;
+import org.netra.features.notification.event.MatchAcceptedEvent;
+import org.netra.features.notification.event.MatchCreatedEvent;
+import org.netra.features.notification.event.MatchDeclinedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,6 +70,7 @@ public class DonorResponseService {
     private final double maxRadiusKm;
     private final int minDonationIntervalDays;
     private final int maxActiveMatchesPerRequest;
+    private final ApplicationEventPublisher eventPublisher;
 
     @org.springframework.beans.factory.annotation.Autowired
     public DonorResponseService(
@@ -81,7 +86,8 @@ public class DonorResponseService {
             @Value("${netra.donor-matching.match-response-ttl:24h}") Duration matchResponseTtl,
             @Value("${netra.matching.max-radius-km:100.0}") double maxRadiusKm,
             @Value("${netra.matching.min-donation-interval-days:90}") int minDonationIntervalDays,
-            @Value("${netra.donor-matching.max-active-matches-per-request:10}") int maxActiveMatchesPerRequest) {
+            @Value("${netra.donor-matching.max-active-matches-per-request:10}") int maxActiveMatchesPerRequest,
+            org.springframework.beans.factory.ObjectProvider<ApplicationEventPublisher> eventPublisherProvider) {
         this.donorMatchRepository = donorMatchRepository;
         this.bloodRequestRepository = bloodRequestRepository;
         this.authorizationService = authorizationService;
@@ -95,6 +101,7 @@ public class DonorResponseService {
         this.maxRadiusKm = maxRadiusKm;
         this.minDonationIntervalDays = minDonationIntervalDays;
         this.maxActiveMatchesPerRequest = maxActiveMatchesPerRequest;
+        this.eventPublisher = eventPublisherProvider != null ? eventPublisherProvider.getIfAvailable() : null;
     }
 
     public DonorResponseService(
@@ -112,7 +119,26 @@ public class DonorResponseService {
             int minDonationIntervalDays) {
         this(donorMatchRepository, bloodRequestRepository, authorizationService, donorProfileRepository,
                 userRepository, eligibilitySessionRepository, compatibilityMatrix, auditService,
-                clock, matchResponseTtl, maxRadiusKm, minDonationIntervalDays, 10);
+                clock, matchResponseTtl, maxRadiusKm, minDonationIntervalDays, 10, null);
+    }
+
+    public DonorResponseService(
+            DonorMatchRepository donorMatchRepository,
+            BloodRequestRepository bloodRequestRepository,
+            BloodRequestAuthorizationService authorizationService,
+            DonorProfileRepository donorProfileRepository,
+            UserRepository userRepository,
+            EligibilitySessionRepository eligibilitySessionRepository,
+            BloodCompatibilityMatrix compatibilityMatrix,
+            AuditService auditService,
+            Clock clock,
+            Duration matchResponseTtl,
+            double maxRadiusKm,
+            int minDonationIntervalDays,
+            int maxActiveMatchesPerRequest) {
+        this(donorMatchRepository, bloodRequestRepository, authorizationService, donorProfileRepository,
+                userRepository, eligibilitySessionRepository, compatibilityMatrix, auditService,
+                clock, matchResponseTtl, maxRadiusKm, minDonationIntervalDays, maxActiveMatchesPerRequest, null);
     }
 
     /**
@@ -267,6 +293,15 @@ public class DonorResponseService {
                         savedMatch.getId(), requestId)
         );
 
+        if (eventPublisher != null) {
+            eventPublisher.publishEvent(new MatchCreatedEvent(
+                    savedMatch.getId(),
+                    requestId,
+                    donorUserId,
+                    bloodRequest.getRequesterUserId()
+            ));
+        }
+
         String maskedName = DonorMatchingService.maskDisplayName(donorUser.getFullName());
         return new RequesterDonorMatchDto(
                 savedMatch.getId(),
@@ -402,6 +437,15 @@ public class DonorResponseService {
                 String.format("{\"matchId\":\"%s\",\"bloodRequestId\":\"%s\"}", matchId, req.getId())
         );
 
+        if (eventPublisher != null) {
+            eventPublisher.publishEvent(new MatchAcceptedEvent(
+                    matchId,
+                    req.getId(),
+                    currentUserId,
+                    req.getRequesterUserId()
+            ));
+        }
+
         DonorMatch updatedMatch = donorMatchRepository.findById(matchId)
                 .orElseThrow(() -> new ResourceNotFoundException("Donor match not found with id: " + matchId));
 
@@ -466,6 +510,15 @@ public class DonorResponseService {
                 userAgent,
                 String.format("{\"matchId\":\"%s\",\"bloodRequestId\":\"%s\"}", matchId, match.getBloodRequestId())
         );
+
+        if (eventPublisher != null) {
+            eventPublisher.publishEvent(new MatchDeclinedEvent(
+                    matchId,
+                    match.getBloodRequestId(),
+                    currentUserId,
+                    req.getRequesterUserId()
+            ));
+        }
 
         DonorMatch updatedMatch = donorMatchRepository.findById(matchId)
                 .orElseThrow(() -> new ResourceNotFoundException("Donor match not found with id: " + matchId));

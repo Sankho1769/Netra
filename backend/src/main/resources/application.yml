@@ -58,3 +58,10 @@ netra:
     match-response-ttl: 24h
     match-expiration-interval-ms: 60000
     max-active-matches-per-request: 10
+
+  notifications:
+    push:
+      provider: ${NETRA_PUSH_PROVIDER:noop}
+      fcm:
+        project-id: ${FCM_PROJECT_ID:}
+        credentials-path: ${FCM_CREDENTIALS_PATH:}

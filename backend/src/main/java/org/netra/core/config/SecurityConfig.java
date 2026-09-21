@@ -134,6 +134,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/emergency/blood-requests").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/v1/emergency/blood-requests/*/cancel").authenticated()
 
+                // Notifications & Device Tokens Endpoints
+                .requestMatchers("/api/v1/notifications/**").authenticated()
+                .requestMatchers("/api/v1/devices/**").authenticated()
+
                 // Protected Auth and User Endpoints
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout-all").authenticated()

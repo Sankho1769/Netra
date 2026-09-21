@@ -10,6 +10,8 @@ import org.netra.features.bloodrequest.service.BloodRequestService;
 import org.netra.features.emergency.dto.EmergencyBloodRequestRequest;
 import org.netra.features.emergency.dto.EmergencyCreationResult;
 import org.netra.features.emergency.entity.IdempotencyRecord;
+import org.netra.features.notification.event.EmergencyRequestCreatedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,16 +26,28 @@ public class EmergencyTransactionalService {
     private final EmergencyIdempotencyService idempotencyService;
     private final RateLimitingService rateLimitingService;
     private final AuditService auditService;
+    private final ApplicationEventPublisher eventPublisher;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public EmergencyTransactionalService(
+            BloodRequestService bloodRequestService,
+            EmergencyIdempotencyService idempotencyService,
+            RateLimitingService rateLimitingService,
+            AuditService auditService,
+            org.springframework.beans.factory.ObjectProvider<ApplicationEventPublisher> eventPublisherProvider) {
+        this.bloodRequestService = bloodRequestService;
+        this.idempotencyService = idempotencyService;
+        this.rateLimitingService = rateLimitingService;
+        this.auditService = auditService;
+        this.eventPublisher = eventPublisherProvider != null ? eventPublisherProvider.getIfAvailable() : null;
+    }
 
     public EmergencyTransactionalService(
             BloodRequestService bloodRequestService,
             EmergencyIdempotencyService idempotencyService,
             RateLimitingService rateLimitingService,
             AuditService auditService) {
-        this.bloodRequestService = bloodRequestService;
-        this.idempotencyService = idempotencyService;
-        this.rateLimitingService = rateLimitingService;
-        this.auditService = auditService;
+        this(bloodRequestService, idempotencyService, rateLimitingService, auditService, null);
     }
 
     @Transactional
@@ -85,6 +99,17 @@ public class EmergencyTransactionalService {
                 userAgent,
                 "{\"requestId\":\"" + created.getId() + "\"}"
         );
+
+        if (eventPublisher != null) {
+            eventPublisher.publishEvent(new EmergencyRequestCreatedEvent(
+                    created.getId(),
+                    currentUserId,
+                    request.getBloodGroup(),
+                    request.getLatitude(),
+                    request.getLongitude(),
+                    request.getRequiredBy()
+            ));
+        }
 
         return new EmergencyCreationResult(created, false);
     }
