@@ -108,16 +108,16 @@ public class PostgreSqlFlywayIntegrationTest {
 
     @Test
     @Order(1)
-    @DisplayName("PostgreSQL Gate: Verify Flyway V1->V13 executed cleanly and created all schema objects")
-    void testFlywayV1ThroughV13SchemaMetadata() throws Exception {
+    @DisplayName("PostgreSQL Gate: Verify Flyway V1->V14 executed cleanly and created all schema objects")
+    void testFlywayV1ThroughV14SchemaMetadata() throws Exception {
         assertNotNull(dataSource, "DataSource must be injected");
         assertNotNull(jdbcTemplate, "JdbcTemplate must be injected");
 
-        // 1. Verify Flyway schema history table exists and contains 13 successful migrations
+        // 1. Verify Flyway schema history table exists and contains 14 successful migrations
         List<Map<String, Object>> history = jdbcTemplate.queryForList(
                 "SELECT version, description, type, script, success FROM flyway_schema_history ORDER BY installed_rank"
         );
-        assertEquals(13, history.size(), "Flyway must have applied exactly 13 migrations (V1 through V13)");
+        assertEquals(14, history.size(), "Flyway must have applied exactly 14 migrations (V1 through V14)");
 
         for (Map<String, Object> row : history) {
             Boolean success = (Boolean) row.get("success");
@@ -131,7 +131,8 @@ public class PostgreSqlFlywayIntegrationTest {
                 "users", "user_roles", "refresh_sessions", "security_audit_logs",
                 "donor_profiles", "blood_banks", "blood_inventory", "blood_bank_accounts",
                 "donation_events", "donation_event_registrations", "blood_requests",
-                "idempotency_records", "donor_matches", "notifications", "user_device_tokens"
+                "idempotency_records", "donor_matches", "notifications", "user_device_tokens",
+                "donations"
         );
 
         try (Connection conn = dataSource.getConnection()) {
@@ -260,6 +261,47 @@ public class PostgreSqlFlywayIntegrationTest {
             );
             assertTrue(tokenIndexes.contains("idx_device_tokens_user_active"), "Index idx_device_tokens_user_active must exist");
             assertTrue(tokenIndexes.contains("idx_device_tokens_token_hash"), "Index idx_device_tokens_token_hash must exist");
+
+            // 12. Verify V14 donations constraints
+            Integer chkDonationSourceType = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'chk_donations_source_type'",
+                    Integer.class
+            );
+            assertEquals(1, chkDonationSourceType, "Check constraint 'chk_donations_source_type' must exist");
+
+            Integer chkDonationStatus = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'chk_donations_verification_status'",
+                    Integer.class
+            );
+            assertEquals(1, chkDonationStatus, "Check constraint 'chk_donations_verification_status' must exist");
+
+            Integer chkDonationSourceRef = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'chk_donations_source_references'",
+                    Integer.class
+            );
+            assertEquals(1, chkDonationSourceRef, "Check constraint 'chk_donations_source_references' must exist");
+
+            Integer uqDonationRequest = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'uq_donations_donor_blood_request'",
+                    Integer.class
+            );
+            assertEquals(1, uqDonationRequest, "Unique constraint 'uq_donations_donor_blood_request' must exist");
+
+            Integer uqDonationEvent = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'uq_donations_donor_event'",
+                    Integer.class
+            );
+            assertEquals(1, uqDonationEvent, "Unique constraint 'uq_donations_donor_event' must exist");
+
+            // 13. Verify V14 donations indexes
+            List<String> donationIndexes = jdbcTemplate.queryForList(
+                    "SELECT indexname FROM pg_indexes WHERE tablename = 'donations'",
+                    String.class
+            );
+            assertTrue(donationIndexes.contains("idx_donations_donor_status_date"), "Index idx_donations_donor_status_date must exist");
+            assertTrue(donationIndexes.contains("idx_donations_status_created"), "Index idx_donations_status_created must exist");
+            assertTrue(donationIndexes.contains("idx_donations_blood_request"), "Index idx_donations_blood_request must exist");
+            assertTrue(donationIndexes.contains("idx_donations_donation_event"), "Index idx_donations_donation_event must exist");
         }
     }
 
@@ -554,5 +596,160 @@ public class PostgreSqlFlywayIntegrationTest {
                         userId
                 )
         );
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("PostgreSQL Functional: Verify donations V14 constraints, source references, uniqueness, and UUID generation")
+    void testV14BehaviorOnPostgreSQL() {
+        // Seed prerequisites
+        UUID donorId = UUID.randomUUID();
+        UUID bankId = UUID.randomUUID();
+        UUID requestId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        UUID verifierId = UUID.randomUUID();
+
+        // 1. Insert users
+        jdbcTemplate.update(
+                "INSERT INTO users (id, full_name, email, password_hash, status) " +
+                        "VALUES (?, 'Donor V14', ?, 'hash', 'ACTIVE')",
+                donorId, "donor14_" + donorId + "@netra.org"
+        );
+        jdbcTemplate.update(
+                "INSERT INTO users (id, full_name, email, password_hash, status) " +
+                        "VALUES (?, 'Verifier Staff', ?, 'hash', 'ACTIVE')",
+                verifierId, "verifier14_" + verifierId + "@netra.org"
+        );
+
+        // 2. Insert blood bank
+        jdbcTemplate.update(
+                "INSERT INTO blood_banks (id, name, registration_number, phone, email, address, city, state, postal_code, latitude, longitude, operating_status, verification_status) " +
+                        "VALUES (?, 'V14 Bank', 'REG-V14', '1234567890', 'v14@bank.org', '123 St', 'Kolkata', 'WB', '700001', 22.57, 88.36, 'OPEN', 'VERIFIED')",
+                bankId
+        );
+
+        // 3. Insert blood request
+        jdbcTemplate.update(
+                "INSERT INTO blood_requests (id, requester_user_id, blood_group, units_required, urgency, status, hospital_name, hospital_address, city, state, postal_code, latitude, longitude, required_by) " +
+                        "VALUES (?, ?, 'O+', 1, 'NORMAL', 'OPEN', 'City Hosp', 'Street', 'Kolkata', 'WB', '700001', 22.57, 88.36, CURRENT_TIMESTAMP + INTERVAL '1 day')",
+                requestId, verifierId
+        );
+
+        // 4. Insert donation event
+        jdbcTemplate.update(
+                "INSERT INTO donation_events (id, blood_bank_id, title, event_type, status, venue_name, address, city, state, postal_code, latitude, longitude, start_at, end_at, registration_open_at, registration_close_at, donor_capacity, created_by) " +
+                        "VALUES (?, ?, 'V14 Camp', 'BLOOD_DONATION_CAMP', 'PUBLISHED', 'Camp Hall', 'St', 'Kolkata', 'WB', '700001', 22.57, 88.36, CURRENT_TIMESTAMP + INTERVAL '2 days', CURRENT_TIMESTAMP + INTERVAL '3 days', CURRENT_TIMESTAMP - INTERVAL '1 day', CURRENT_TIMESTAMP + INTERVAL '1 day', 50, ?)",
+                eventId, bankId, verifierId
+        );
+
+        // 5. Insert valid BLOOD_REQUEST donation and verify default UUID and status
+        jdbcTemplate.update(
+                "INSERT INTO donations (donor_user_id, source_type, blood_request_id, donation_date) " +
+                        "VALUES (?, 'BLOOD_REQUEST', ?, CURRENT_DATE)",
+                donorId, requestId
+        );
+
+        Map<String, Object> reqDonation = jdbcTemplate.queryForMap(
+                "SELECT id, donor_user_id, source_type, blood_request_id, donation_event_id, verification_status, version FROM donations WHERE donor_user_id = ? AND blood_request_id = ?",
+                donorId, requestId
+        );
+        assertNotNull(reqDonation.get("id"), "PostgreSQL gen_random_uuid() must auto-populate donation id");
+        assertEquals("BLOOD_REQUEST", reqDonation.get("source_type"));
+        assertEquals("PENDING_VERIFICATION", reqDonation.get("verification_status"));
+        assertEquals(0L, ((Number) reqDonation.get("version")).longValue());
+        assertNull(reqDonation.get("donation_event_id"));
+
+        // 6. Insert valid DONATION_EVENT donation
+        jdbcTemplate.update(
+                "INSERT INTO donations (donor_user_id, source_type, donation_event_id, donation_date) " +
+                        "VALUES (?, 'DONATION_EVENT', ?, CURRENT_DATE)",
+                donorId, eventId
+        );
+
+        Map<String, Object> evtDonation = jdbcTemplate.queryForMap(
+                "SELECT id, donor_user_id, source_type, donation_event_id, verification_status FROM donations WHERE donor_user_id = ? AND donation_event_id = ?",
+                donorId, eventId
+        );
+        assertNotNull(evtDonation.get("id"));
+        assertEquals("DONATION_EVENT", evtDonation.get("source_type"));
+        assertEquals("PENDING_VERIFICATION", evtDonation.get("verification_status"));
+
+        // 7. Duplicate BLOOD_REQUEST donation for same donor must violate uq_donations_donor_blood_request
+        assertThrows(DataIntegrityViolationException.class, () ->
+                jdbcTemplate.update(
+                        "INSERT INTO donations (donor_user_id, source_type, blood_request_id, donation_date) " +
+                                "VALUES (?, 'BLOOD_REQUEST', ?, CURRENT_DATE)",
+                        donorId, requestId
+                )
+        );
+
+        // 8. Duplicate DONATION_EVENT donation for same donor must violate uq_donations_donor_event
+        assertThrows(DataIntegrityViolationException.class, () ->
+                jdbcTemplate.update(
+                        "INSERT INTO donations (donor_user_id, source_type, donation_event_id, donation_date) " +
+                                "VALUES (?, 'DONATION_EVENT', ?, CURRENT_DATE)",
+                        donorId, eventId
+                )
+        );
+
+        // 9. Source reference check: BLOOD_REQUEST with null blood_request_id must violate chk_donations_source_references
+        assertThrows(DataIntegrityViolationException.class, () ->
+                jdbcTemplate.update(
+                        "INSERT INTO donations (donor_user_id, source_type, donation_date) " +
+                                "VALUES (?, 'BLOOD_REQUEST', CURRENT_DATE)",
+                        donorId
+                )
+        );
+
+        // 10. Source reference check: DONATION_EVENT with blood_request_id must violate chk_donations_source_references
+        assertThrows(DataIntegrityViolationException.class, () ->
+                jdbcTemplate.update(
+                        "INSERT INTO donations (donor_user_id, source_type, donation_event_id, blood_request_id, donation_date) " +
+                                "VALUES (?, 'DONATION_EVENT', ?, ?, CURRENT_DATE)",
+                        donorId, eventId, requestId
+                )
+        );
+
+        // 11. Invalid source type must violate chk_donations_source_type
+        assertThrows(DataIntegrityViolationException.class, () ->
+                jdbcTemplate.update(
+                        "INSERT INTO donations (donor_user_id, source_type, blood_request_id, donation_date) " +
+                                "VALUES (?, 'COMMUNITY_DRIVE', ?, CURRENT_DATE)",
+                        donorId, requestId
+                )
+        );
+
+        // 12. Invalid verification status must violate chk_donations_verification_status
+        assertThrows(DataIntegrityViolationException.class, () ->
+                jdbcTemplate.update(
+                        "INSERT INTO donations (donor_user_id, source_type, blood_request_id, donation_date, verification_status) " +
+                                "VALUES (?, 'BLOOD_REQUEST', ?, CURRENT_DATE, 'APPROVED')",
+                        donorId, requestId
+                )
+        );
+
+        // 13. Verify notifications table accepts new donation notification types
+        UUID notifId1 = UUID.randomUUID();
+        UUID notifId2 = UUID.randomUUID();
+        UUID notifId3 = UUID.randomUUID();
+
+        jdbcTemplate.update(
+                "INSERT INTO notifications (id, recipient_user_id, type, title, body) VALUES (?, ?, 'DONATION_SUBMITTED', 'Submitted', 'Body')",
+                notifId1, donorId
+        );
+        jdbcTemplate.update(
+                "INSERT INTO notifications (id, recipient_user_id, type, title, body) VALUES (?, ?, 'DONATION_VERIFIED', 'Verified', 'Body')",
+                notifId2, donorId
+        );
+        jdbcTemplate.update(
+                "INSERT INTO notifications (id, recipient_user_id, type, title, body) VALUES (?, ?, 'DONATION_REJECTED', 'Rejected', 'Body')",
+                notifId3, donorId
+        );
+
+        Integer notifCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM notifications WHERE id IN (?, ?, ?)",
+                Integer.class, notifId1, notifId2, notifId3
+        );
+        assertEquals(3, notifCount, "All 3 new donation notification types must be successfully inserted");
     }
 }

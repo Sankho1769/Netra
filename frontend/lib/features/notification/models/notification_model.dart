@@ -5,6 +5,9 @@ enum NotificationType {
   matchExpired,
   bloodRequestCancelled,
   emergencyRequestCreated,
+  donationSubmitted,
+  donationVerified,
+  donationRejected,
   unknown;
 
   static NotificationType fromString(String? value) {
@@ -22,6 +25,12 @@ enum NotificationType {
         return NotificationType.bloodRequestCancelled;
       case 'EMERGENCY_REQUEST_CREATED':
         return NotificationType.emergencyRequestCreated;
+      case 'DONATION_SUBMITTED':
+        return NotificationType.donationSubmitted;
+      case 'DONATION_VERIFIED':
+        return NotificationType.donationVerified;
+      case 'DONATION_REJECTED':
+        return NotificationType.donationRejected;
       default:
         return NotificationType.unknown;
     }
@@ -41,6 +50,12 @@ enum NotificationType {
         return 'BLOOD_REQUEST_CANCELLED';
       case NotificationType.emergencyRequestCreated:
         return 'EMERGENCY_REQUEST_CREATED';
+      case NotificationType.donationSubmitted:
+        return 'DONATION_SUBMITTED';
+      case NotificationType.donationVerified:
+        return 'DONATION_VERIFIED';
+      case NotificationType.donationRejected:
+        return 'DONATION_REJECTED';
       case NotificationType.unknown:
         return 'UNKNOWN';
     }
@@ -89,6 +104,7 @@ enum DeliveryStatus {
 enum NotificationReferenceType {
   donorMatch,
   bloodRequest,
+  donation,
   unknown;
 
   static NotificationReferenceType? fromString(String? value) {
@@ -98,6 +114,8 @@ enum NotificationReferenceType {
         return NotificationReferenceType.donorMatch;
       case 'BLOOD_REQUEST':
         return NotificationReferenceType.bloodRequest;
+      case 'DONATION':
+        return NotificationReferenceType.donation;
       default:
         return NotificationReferenceType.unknown;
     }
@@ -109,6 +127,8 @@ enum NotificationReferenceType {
         return 'DONOR_MATCH';
       case NotificationReferenceType.bloodRequest:
         return 'BLOOD_REQUEST';
+      case NotificationReferenceType.donation:
+        return 'DONATION';
       case NotificationReferenceType.unknown:
         return 'UNKNOWN';
     }

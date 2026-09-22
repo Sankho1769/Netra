@@ -26,6 +26,12 @@ class NotificationItemCard extends StatelessWidget {
         return Icons.block_outlined;
       case NotificationType.emergencyRequestCreated:
         return Icons.warning_amber_rounded;
+      case NotificationType.donationSubmitted:
+        return Icons.file_upload_outlined;
+      case NotificationType.donationVerified:
+        return Icons.verified_outlined;
+      case NotificationType.donationRejected:
+        return Icons.highlight_off_outlined;
       case NotificationType.unknown:
         return Icons.notifications_outlined;
     }
@@ -45,6 +51,12 @@ class NotificationItemCard extends StatelessWidget {
         return const Color(0xFFDC2626); // Red
       case NotificationType.emergencyRequestCreated:
         return const Color(0xFFE11D48); // Rose
+      case NotificationType.donationSubmitted:
+        return const Color(0xFFD97706); // Amber
+      case NotificationType.donationVerified:
+        return const Color(0xFF16A34A); // Green
+      case NotificationType.donationRejected:
+        return const Color(0xFFDC2626); // Red
       case NotificationType.unknown:
         return const Color(0xFF2563EB); // Blue
     }

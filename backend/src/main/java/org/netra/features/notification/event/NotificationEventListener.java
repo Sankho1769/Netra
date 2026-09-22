@@ -136,4 +136,55 @@ public class NotificationEventListener {
             log.error("Error handling EMERGENCY_REQUEST_CREATED event for request {}: {}", event.getBloodRequestId(), ex.getMessage());
         }
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void handleDonationSubmitted(org.netra.features.donation.event.DonationSubmittedEvent event) {
+        try {
+            notificationService.createNotification(
+                    event.getDonorUserId(),
+                    NotificationType.DONATION_SUBMITTED,
+                    "Donation Claim Submitted",
+                    "Your blood donation claim for " + event.getDonationDate() + " has been submitted for verification.",
+                    NotificationReferenceType.DONATION,
+                    event.getDonationId(),
+                    "DONATION_SUBMITTED:" + event.getDonationId()
+            );
+        } catch (Exception ex) {
+            log.error("Error handling DONATION_SUBMITTED event for donation {}: {}", event.getDonationId(), ex.getMessage());
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void handleDonationVerified(org.netra.features.donation.event.DonationVerifiedEvent event) {
+        try {
+            notificationService.createNotification(
+                    event.getDonorUserId(),
+                    NotificationType.DONATION_VERIFIED,
+                    "Blood Donation Verified",
+                    "Your blood donation on " + event.getDonationDate() + " has been officially verified. Thank you for saving lives!",
+                    NotificationReferenceType.DONATION,
+                    event.getDonationId(),
+                    "DONATION_VERIFIED:" + event.getDonationId()
+            );
+        } catch (Exception ex) {
+            log.error("Error handling DONATION_VERIFIED event for donation {}: {}", event.getDonationId(), ex.getMessage());
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void handleDonationRejected(org.netra.features.donation.event.DonationRejectedEvent event) {
+        try {
+            notificationService.createNotification(
+                    event.getDonorUserId(),
+                    NotificationType.DONATION_REJECTED,
+                    "Donation Verification Update",
+                    "Your donation claim could not be verified: " + event.getRejectionReason(),
+                    NotificationReferenceType.DONATION,
+                    event.getDonationId(),
+                    "DONATION_REJECTED:" + event.getDonationId()
+            );
+        } catch (Exception ex) {
+            log.error("Error handling DONATION_REJECTED event for donation {}: {}", event.getDonationId(), ex.getMessage());
+        }
+    }
 }

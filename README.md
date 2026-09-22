@@ -93,6 +93,26 @@ NETRA is a production-grade digital blood donation ecosystem engineered with zer
   - `FCM` (production Firebase Cloud Messaging HTTP v1): uses Google Firebase Admin SDK (`firebase-admin:9.2.0`). If credentials or project configuration are missing when FCM is active, fails explicitly and safely (never silently fakes delivery).
 - **PostgreSQL V13 Migration**: Flyway migration `V13__create_notifications.sql` provisions `notifications` and `user_device_tokens` tables with UUID primary keys, idempotency uniqueness, and check constraints.
 
+### 12. Verified Donation V1
+- **Authoritative Clinical Verification**: Donor match acceptance (`ACCEPTED`) records initial donor consent only. Verified Donation V1 is the sole authoritative source for actual donation completion, clinical verification, donor recovery cooldown tracking, and request/event attribution.
+- **Controlled State Machine**:
+  - `PENDING_VERIFICATION`: Initial claim submitted by donor, awaiting clinical confirmation.
+  - `VERIFIED`: Authoritatively verified by authorized staff (`ROLE_BLOODBANK`, `ROLE_ORGANIZATION`, or `ROLE_ADMIN`). Triggers authoritative `DonorProfile.lastDonationDate` update and NBTC cooldown reset.
+  - `REJECTED`: Clinical staff rejects claim with mandatory reason (e.g. donor no-show or screening deferral). `lastDonationDate` remains unchanged.
+  - `CANCELLED`: Donor cancels an unverified pending claim.
+- **Multi-Source Support**:
+  - `BLOOD_REQUEST`: Claims linked to verified fulfilled patient requests; strictly requires an existing `ACCEPTED` `DonorMatch`.
+  - `DONATION_EVENT`: Claims linked to verified blood drives/camps; strictly requires a valid `DonationEventRegistration`.
+- **Granular Verification RBAC**:
+  - `ROLE_BLOODBANK`: Authorized only for donations linked to their active blood bank facility or blood bank-sponsored events.
+  - `ROLE_ORGANIZATION`: Authorized only for events created by the organization.
+  - `ROLE_ADMIN`: Platform-wide verification and administrative correction authority (`/api/v1/donations/{id}/admin-correction`).
+  - Regular donors/receivers are strictly prohibited from verifying or approving donations.
+- **Optimistic Concurrency & Unique Constraints**: Database-level unique constraint preventing duplicate claims per request/event per donor; `@Version` concurrency control preventing conflicting simultaneous verifications.
+- **Domain Event & Notification Integration**: Publishes `DonationSubmittedEvent`, `DonationVerifiedEvent`, and `DonationRejectedEvent`, automatically delivering in-app notifications and push alerts to donors.
+- **PostgreSQL V14 Migration**: Flyway migration `V14__create_donations.sql` creates `donations` table, check constraints (`chk_donations_source_type`, `chk_donations_verification_status`, `chk_donations_source_references`), unique constraints, and alters `chk_notifications_type`.
+- **Flutter UI & Components**: `DonationHistoryScreen` for tracking past and pending claims, `ClaimDonationScreen` with source selector and date constraints, `DonationStatusBadge` presentation chip, and `DonationCard` with status badges and cancellation actions.
+
 ---
 
 ## Security & Architecture Principles
@@ -127,6 +147,7 @@ Netra/
 │   │       ├── auth/           (Authentication, login, register, token refresh)
 │   │       ├── bloodbank/      (Blood banks, inventory components, concurrency control)
 │   │       ├── bloodrequest/   (Blood requests, lifecycle, BOLA authorization)
+│   │       ├── donation/       (Verified donation lifecycle, clinical verification, donor claims, cooldowns)
 │   │       ├── donor/          (Donor profiles, availability, coordinates, coordinate validation)
 │   │       ├── eligibility/    (INDIA-NBTC-2026-01 rule engine, 6-step self-screening)
 │   │       ├── emergency/      (Emergency Mode V1, idempotency records, rate limit rollback)
@@ -136,7 +157,7 @@ Netra/
 │   │       └── user/           (User accounts, roles, profile management)
 │   ├── src/main/resources/
 │   │   ├── application.yml
-│   │   └── db/migration/       (Flyway V1 - V13 migrations)
+│   │   └── db/migration/       (Flyway V1 - V14 migrations)
 │   └── src/test/java/org/netra/
 │       ├── core/               (Security, audit, and rate-limiting tests)
 │       └── features/           (Feature-specific integration, security, and rule tests)
@@ -149,6 +170,7 @@ Netra/
 │           ├── auth/           (Login, registration, token storage)
 │           ├── blood_request/  (Blood request creation, list, details)
 │           ├── bloodbank/      (Blood bank discovery, inventory views)
+│           ├── donation/       (Donation history, claim submission, status badges, donation cards)
 │           ├── donor/          (Donor profile setup, status toggles)
 │           ├── donor_response/ (Incoming matches, detail screen, accept/decline flows, requester match lists)
 │           ├── eligibility/    (6-step self-check flow, deferral calculator)

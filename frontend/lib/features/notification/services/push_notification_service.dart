@@ -41,7 +41,9 @@ class PushNotificationService {
     final refId = payload['referenceId'];
     if (refType == null || refId == null) return false;
     if (refId.toString().trim().isEmpty) return false;
-    return refType == 'DONOR_MATCH' || refType == 'BLOOD_REQUEST';
+    return refType == 'DONOR_MATCH' ||
+        refType == 'BLOOD_REQUEST' ||
+        refType == 'DONATION';
   }
 
   /// Formats relative time (e.g. "5m ago", "2h ago", "Yesterday").
