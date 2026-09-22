@@ -51,6 +51,7 @@ enum DeliveryStatus {
   pending,
   sent,
   failed,
+  noDevices,
   unknown;
 
   static DeliveryStatus fromString(String? value) {
@@ -62,8 +63,25 @@ enum DeliveryStatus {
         return DeliveryStatus.sent;
       case 'FAILED':
         return DeliveryStatus.failed;
+      case 'NO_DEVICES':
+        return DeliveryStatus.noDevices;
       default:
         return DeliveryStatus.unknown;
+    }
+  }
+
+  String toServerString() {
+    switch (this) {
+      case DeliveryStatus.pending:
+        return 'PENDING';
+      case DeliveryStatus.sent:
+        return 'SENT';
+      case DeliveryStatus.failed:
+        return 'FAILED';
+      case DeliveryStatus.noDevices:
+        return 'NO_DEVICES';
+      case DeliveryStatus.unknown:
+        return 'UNKNOWN';
     }
   }
 }

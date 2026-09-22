@@ -9,6 +9,7 @@ import org.netra.features.notification.repository.NotificationRepository;
 import org.netra.features.notification.repository.UserDeviceTokenRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,19 +32,31 @@ public class PushNotificationServiceImpl implements PushNotificationService {
     private final PushNotificationProvider pushNotificationProvider;
     private final UserDeviceTokenRepository userDeviceTokenRepository;
     private final NotificationRepository notificationRepository;
+    private final NotificationTransactionalService transactionalService;
 
     public PushNotificationServiceImpl(
             PushNotificationProvider pushNotificationProvider,
             UserDeviceTokenRepository userDeviceTokenRepository,
             NotificationRepository notificationRepository) {
+        this(pushNotificationProvider, userDeviceTokenRepository, notificationRepository,
+                new NotificationTransactionalService(notificationRepository, userDeviceTokenRepository));
+    }
+
+    @Autowired
+    public PushNotificationServiceImpl(
+            PushNotificationProvider pushNotificationProvider,
+            UserDeviceTokenRepository userDeviceTokenRepository,
+            NotificationRepository notificationRepository,
+            NotificationTransactionalService transactionalService) {
         this.pushNotificationProvider = pushNotificationProvider;
         this.userDeviceTokenRepository = userDeviceTokenRepository;
         this.notificationRepository = notificationRepository;
+        this.transactionalService = transactionalService != null ? transactionalService
+                : new NotificationTransactionalService(notificationRepository, userDeviceTokenRepository);
     }
 
     @Override
-    @Async
-    @Transactional
+    @Async("notificationTaskExecutor")
     public void sendPushForNotification(UUID notificationId) {
         if (notificationId == null) {
             return;
@@ -59,9 +72,8 @@ public class PushNotificationServiceImpl implements PushNotificationService {
         List<UserDeviceToken> tokens = userDeviceTokenRepository.findByUserIdAndActiveTrue(recipientId);
 
         if (tokens.isEmpty()) {
-            log.debug("No active device tokens for recipient {}. Marking notification as SENT.", recipientId);
-            notification.setDeliveryStatus(NotificationDeliveryStatus.SENT);
-            notificationRepository.save(notification);
+            log.debug("No active device tokens for recipient {}. Marking notification as NO_DEVICES.", recipientId);
+            transactionalService.updateDeliveryStatus(notificationId, NotificationDeliveryStatus.NO_DEVICES);
             return;
         }
 
@@ -90,11 +102,11 @@ public class PushNotificationServiceImpl implements PushNotificationService {
                 if (result.isSuccess()) {
                     atLeastOneSuccess = true;
                     dt.markSeen(now);
-                    userDeviceTokenRepository.save(dt);
+                    transactionalService.saveDeviceTokenRequiresNew(dt);
                 } else if (result.isInvalidToken()) {
                     log.warn("Deactivating invalid device token for user {}", recipientId);
                     dt.revoke(now);
-                    userDeviceTokenRepository.save(dt);
+                    transactionalService.saveDeviceTokenRequiresNew(dt);
                 } else {
                     log.warn("Transient push delivery failure for user {}: {}", recipientId, result.getMessage());
                 }
@@ -103,11 +115,10 @@ public class PushNotificationServiceImpl implements PushNotificationService {
             }
         }
 
-        if (atLeastOneSuccess) {
-            notification.setDeliveryStatus(NotificationDeliveryStatus.SENT);
-        } else {
-            notification.setDeliveryStatus(NotificationDeliveryStatus.FAILED);
-        }
-        notificationRepository.save(notification);
+        NotificationDeliveryStatus finalStatus = atLeastOneSuccess
+                ? NotificationDeliveryStatus.SENT
+                : NotificationDeliveryStatus.FAILED;
+
+        transactionalService.updateDeliveryStatus(notificationId, finalStatus);
     }
 }

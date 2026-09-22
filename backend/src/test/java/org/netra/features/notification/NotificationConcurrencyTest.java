@@ -48,8 +48,8 @@ class NotificationConcurrencyTest {
 
     @BeforeEach
     void setUp() {
-        notificationRepository.deleteAll();
-        userDeviceTokenRepository.deleteAll();
+        notificationRepository.deleteAllInBatch();
+        userDeviceTokenRepository.deleteAllInBatch();
 
         testUser = new User(
                 "Concurrent User",

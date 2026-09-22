@@ -34,6 +34,16 @@ class PushNotificationService {
     };
   }
 
+  /// Validates whether a push payload contains a recognized valid domain reference.
+  bool isValidPayloadReference(Map<String, dynamic>? payload) {
+    if (payload == null) return false;
+    final refType = payload['referenceType'];
+    final refId = payload['referenceId'];
+    if (refType == null || refId == null) return false;
+    if (refId.toString().trim().isEmpty) return false;
+    return refType == 'DONOR_MATCH' || refType == 'BLOOD_REQUEST';
+  }
+
   /// Formats relative time (e.g. "5m ago", "2h ago", "Yesterday").
   static String formatRelativeTime(DateTime dateTime) {
     final now = DateTime.now();

@@ -104,8 +104,8 @@ class NotificationIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        notificationRepository.deleteAll();
-        userDeviceTokenRepository.deleteAll();
+        notificationRepository.deleteAllInBatch();
+        userDeviceTokenRepository.deleteAllInBatch();
         donorMatchRepository.deleteAll();
         donorProfileRepository.deleteAll();
         bloodRequestRepository.deleteAll();
@@ -347,5 +347,17 @@ class NotificationIntegrationTest {
         UserDeviceToken token = userDeviceTokenRepository.findById(tokenId).orElseThrow();
         assertFalse(token.isActive());
         assertNotNull(token.getRevokedAt());
+    }
+
+    @Test
+    @DisplayName("API: POST /api/v1/devices/tokens rejects unsupported non-FCM provider")
+    void testDeviceTokenApi_RejectsNonFcmProvider() throws Exception {
+        RegisterDeviceTokenRequest req = new RegisterDeviceTokenRequest("device_token_xyz", DevicePlatform.ANDROID, "APNS");
+
+        mockMvc.perform(post("/api/v1/devices/tokens")
+                        .header("Authorization", "Bearer " + donorToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest());
     }
 }

@@ -239,6 +239,12 @@ public class PostgreSqlFlywayIntegrationTest {
             );
             assertEquals(1, uqTokenCount, "Unique constraint 'uq_user_device_tokens_token' must exist in PostgreSQL");
 
+            Integer chkProviderCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'chk_device_tokens_provider'",
+                    Integer.class
+            );
+            assertEquals(1, chkProviderCount, "Check constraint 'chk_device_tokens_provider' must exist in PostgreSQL");
+
             // 11. Verify V13 indexes
             List<String> notifIndexes = jdbcTemplate.queryForList(
                     "SELECT indexname FROM pg_indexes WHERE tablename = 'notifications'",
@@ -499,6 +505,13 @@ public class PostgreSqlFlywayIntegrationTest {
                 )
         );
 
+        // 3b. NO_DEVICES delivery status is valid and accepted
+        jdbcTemplate.update(
+                "INSERT INTO notifications (recipient_user_id, type, title, body, delivery_status) " +
+                        "VALUES (?, 'MATCH_CREATED', 'No Devices Status', 'Body', 'NO_DEVICES')",
+                userId
+        );
+
         // 4. Insert user device token with default UUID generation
         String deviceToken = "fcm_token_" + UUID.randomUUID();
         jdbcTemplate.update(
@@ -529,6 +542,15 @@ public class PostgreSqlFlywayIntegrationTest {
                 jdbcTemplate.update(
                         "INSERT INTO user_device_tokens (user_id, token, token_hash, platform, provider) " +
                                 "VALUES (?, 'token_invalid_plat', 'hash789', 'WINDOWS_PHONE', 'FCM')",
+                        userId
+                )
+        );
+
+        // 7. Invalid provider must violate chk_device_tokens_provider
+        assertThrows(DataIntegrityViolationException.class, () ->
+                jdbcTemplate.update(
+                        "INSERT INTO user_device_tokens (user_id, token, token_hash, platform, provider) " +
+                                "VALUES (?, 'token_invalid_prov', 'hashprov', 'ANDROID', 'APNS')",
                         userId
                 )
         );

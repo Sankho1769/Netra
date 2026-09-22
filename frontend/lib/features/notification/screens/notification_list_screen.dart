@@ -91,15 +91,18 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
     // Mark as read locally and on server if not read yet
     if (!notification.isRead) {
       try {
-        _apiService.markAsRead(notification.id);
-        setState(() {
-          final idx = _notifications.indexWhere((n) => n.id == notification.id);
-          if (idx != -1) {
-            _notifications[idx] =
-                notification.copyWith(isRead: true, readAt: DateTime.now());
-          }
-          if (_unreadCount > 0) _unreadCount--;
-        });
+        await _apiService.markAsRead(notification.id);
+        if (mounted) {
+          setState(() {
+            final idx =
+                _notifications.indexWhere((n) => n.id == notification.id);
+            if (idx != -1) {
+              _notifications[idx] =
+                  notification.copyWith(isRead: true, readAt: DateTime.now());
+            }
+            if (_unreadCount > 0) _unreadCount--;
+          });
+        }
       } catch (_) {}
     }
 

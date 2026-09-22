@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS notifications (
         ON DELETE CASCADE,
 
     CONSTRAINT chk_notifications_delivery_status
-        CHECK (delivery_status IN ('PENDING', 'SENT', 'FAILED')),
+        CHECK (delivery_status IN ('PENDING', 'SENT', 'FAILED', 'NO_DEVICES')),
 
     CONSTRAINT chk_notifications_type
         CHECK (type IN ('MATCH_CREATED', 'MATCH_ACCEPTED', 'MATCH_DECLINED', 'MATCH_EXPIRED', 'BLOOD_REQUEST_CANCELLED', 'EMERGENCY_REQUEST_CREATED')),
@@ -60,6 +60,9 @@ CREATE TABLE IF NOT EXISTS user_device_tokens (
 
     CONSTRAINT chk_device_tokens_platform
         CHECK (platform IN ('ANDROID', 'IOS', 'WEB')),
+
+    CONSTRAINT chk_device_tokens_provider
+        CHECK (provider IN ('FCM')),
 
     CONSTRAINT uq_user_device_tokens_token
         UNIQUE (token)

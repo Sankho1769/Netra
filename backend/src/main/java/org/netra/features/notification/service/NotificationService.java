@@ -201,6 +201,9 @@ public class NotificationService {
         if (request == null || request.getToken() == null || request.getToken().trim().isEmpty()) {
             throw new ValidationException("Device token must not be empty.");
         }
+        if (request.getProvider() != null && !request.getProvider().trim().equalsIgnoreCase("FCM")) {
+            throw new ValidationException("Only FCM provider is supported for device tokens.");
+        }
 
         String rawToken = request.getToken().trim();
         String tokenHash = SecurityUtils.sha256Hex(rawToken);
@@ -214,7 +217,7 @@ public class NotificationService {
             // Securely reassign token to current authenticated user
             tokenEntity.setUserId(currentUserId);
             tokenEntity.setPlatform(request.getPlatform() != null ? request.getPlatform() : DevicePlatform.ANDROID);
-            tokenEntity.setProvider(request.getProvider() != null ? request.getProvider() : "FCM");
+            tokenEntity.setProvider("FCM");
             tokenEntity.setActive(true);
             tokenEntity.setRevokedAt(null);
             tokenEntity.setLastSeenAt(now);
@@ -225,7 +228,7 @@ public class NotificationService {
                     rawToken,
                     tokenHash,
                     request.getPlatform(),
-                    request.getProvider()
+                    "FCM"
             );
         }
 
@@ -239,7 +242,7 @@ public class NotificationService {
                 tokenEntity = concurrent.get();
                 tokenEntity.setUserId(currentUserId);
                 tokenEntity.setPlatform(request.getPlatform() != null ? request.getPlatform() : DevicePlatform.ANDROID);
-                tokenEntity.setProvider(request.getProvider() != null ? request.getProvider() : "FCM");
+                tokenEntity.setProvider("FCM");
                 tokenEntity.setActive(true);
                 tokenEntity.setRevokedAt(null);
                 tokenEntity.setLastSeenAt(now);

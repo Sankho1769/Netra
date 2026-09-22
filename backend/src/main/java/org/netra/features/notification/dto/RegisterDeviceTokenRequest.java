@@ -1,6 +1,7 @@
 package org.netra.features.notification.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.netra.features.notification.entity.DevicePlatform;
 
@@ -12,6 +13,7 @@ public class RegisterDeviceTokenRequest {
 
     private DevicePlatform platform = DevicePlatform.ANDROID;
 
+    @Pattern(regexp = "^(?i)FCM$", message = "Only FCM provider is supported")
     @Size(max = 32, message = "Provider must not exceed 32 characters")
     private String provider = "FCM";
 

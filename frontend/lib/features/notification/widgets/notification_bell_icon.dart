@@ -4,10 +4,12 @@ import '../screens/notification_list_screen.dart';
 
 class NotificationBellIcon extends StatefulWidget {
   final NotificationApiService? apiService;
+  final int? initialUnreadCount;
 
   const NotificationBellIcon({
     super.key,
     this.apiService,
+    this.initialUnreadCount,
   });
 
   @override
@@ -21,8 +23,11 @@ class _NotificationBellIconState extends State<NotificationBellIcon> {
   @override
   void initState() {
     super.initState();
+    _unreadCount = widget.initialUnreadCount ?? 0;
     _apiService = widget.apiService ?? NotificationApiService();
-    _fetchUnreadCount();
+    if (widget.initialUnreadCount == null) {
+      _fetchUnreadCount();
+    }
   }
 
   Future<void> _fetchUnreadCount() async {

@@ -74,6 +74,25 @@ NETRA is a production-grade digital blood donation ecosystem engineered with zer
 - **Zero Automated Notifications**: No automated SMS, push notifications, emails, robocalls, or in-app messaging. Communication is entirely user-driven through dashboards and clinical staff.
 - **Rate Limiting**: 20 match creation requests per minute per authenticated user.
 
+### 11. Notifications V1 & Push Delivery
+- **In-App Notification Feed**: Secure, paginated user notification retrieval and read status tracking (`/api/v1/notifications`, `/api/v1/notifications/unread-count`, `/api/v1/notifications/{id}/read`, `/api/v1/notifications/read-all`).
+- **Domain Event Driven**: Automatically generates notifications upon verified domain state transitions:
+  - `MATCH_CREATED` (for matched donors)
+  - `MATCH_ACCEPTED` (for requesters)
+  - `MATCH_DECLINED` (for requesters)
+  - `MATCH_EXPIRED` (for matched donors)
+  - `BLOOD_REQUEST_CANCELLED` (for matched donors)
+  - `EMERGENCY_REQUEST_CREATED` (for high-urgency notifications)
+- **Delivery Status Semantics**: Fully audited delivery lifecycle supporting `PENDING`, `SENT`, `FAILED`, and `NO_DEVICES`. If a recipient has no registered active devices, the notification is explicitly marked `NO_DEVICES` (never marked `SENT`).
+- **Device Token Management**: Authenticated registration and revocation of mobile push tokens (`/api/v1/devices/tokens`, `/api/v1/devices/tokens/{id}`).
+  - Server-controlled provider: strictly enforces `provider = 'FCM'` via Bean Validation and PostgreSQL database check constraint `chk_device_tokens_provider`.
+  - Privacy safeguards: Raw tokens are stored securely, masked in operational logs (`***`), and never exposed through public API responses.
+- **Decoupled Asynchronous Execution**: Push delivery runs via a dedicated bounded named thread pool executor (`@Async("notificationTaskExecutor")`), completely isolated from core business transactions. Push network timeouts or failures never roll back domain transactions (`ACCEPTED`, `DECLINED`, `CANCELLED`, `EXPIRED`, `MATCH_CREATED`).
+- **Pluggable Push Providers**:
+  - `NOOP` (default for development and local testing): logs delivery simulations safely without third-party network dependencies (`netra.notifications.push.provider=noop`).
+  - `FCM` (production Firebase Cloud Messaging HTTP v1): uses Google Firebase Admin SDK (`firebase-admin:9.2.0`). If credentials or project configuration are missing when FCM is active, fails explicitly and safely (never silently fakes delivery).
+- **PostgreSQL V13 Migration**: Flyway migration `V13__create_notifications.sql` provisions `notifications` and `user_device_tokens` tables with UUID primary keys, idempotency uniqueness, and check constraints.
+
 ---
 
 ## Security & Architecture Principles
@@ -113,10 +132,11 @@ Netra/
 │   │       ├── emergency/      (Emergency Mode V1, idempotency records, rate limit rollback)
 │   │       ├── events/         (Donation events, drives, participant registration)
 │   │       ├── matching/       (Donor Matching candidate engine, Donor Response persistent lifecycle, compatibility matrix)
+│   │       ├── notification/   (In-app notifications, FCM & NOOP push dispatch, async executor, device tokens)
 │   │       └── user/           (User accounts, roles, profile management)
 │   ├── src/main/resources/
 │   │   ├── application.yml
-│   │   └── db/migration/       (Flyway V1 - V12 migrations)
+│   │   └── db/migration/       (Flyway V1 - V13 migrations)
 │   └── src/test/java/org/netra/
 │       ├── core/               (Security, audit, and rate-limiting tests)
 │       └── features/           (Feature-specific integration, security, and rule tests)
@@ -136,6 +156,7 @@ Netra/
 │           ├── events/         (Event schedules, drive registration)
 │           ├── home/           (Dashboard, navigation, quick actions)
 │           ├── matching/       (Donor matches screen, candidate cards, radius filters)
+│           ├── notification/   (Notification bell badge, in-app feed, push handling, read tracking)
 │           └── profile/        (User profile, settings)
 └── docs/
     ├── SECURITY_THREAT_MODEL.md

@@ -317,4 +317,32 @@ class NotificationServiceTest {
         assertThrows(UnauthorizedSessionAccessException.class, () ->
                 notificationService.revokeDeviceToken(tokenId, currentUserId));
     }
+
+    @Test
+    @DisplayName("Device Token: Rejects unsupported provider")
+    void testRegisterDeviceToken_RejectsNonFcmProvider() {
+        UUID currentUserId = UUID.randomUUID();
+        RegisterDeviceTokenRequest req = new RegisterDeviceTokenRequest("device_token_xyz", DevicePlatform.ANDROID, "APNS");
+
+        assertThrows(ValidationException.class, () ->
+                notificationService.registerDeviceToken(currentUserId, req));
+    }
+
+    @Test
+    @DisplayName("Device Token: Case-insensitive FCM provider normalized to FCM")
+    void testRegisterDeviceToken_CaseInsensitiveFcm() {
+        UUID currentUserId = UUID.randomUUID();
+        RegisterDeviceTokenRequest req = new RegisterDeviceTokenRequest("device_token_xyz", DevicePlatform.ANDROID, "fcm");
+
+        when(userDeviceTokenRepository.findByToken("device_token_xyz")).thenReturn(Optional.empty());
+        when(userDeviceTokenRepository.saveAndFlush(any(UserDeviceToken.class))).thenAnswer(inv -> {
+            UserDeviceToken dt = inv.getArgument(0);
+            dt.setId(UUID.randomUUID());
+            return dt;
+        });
+
+        DeviceTokenDto dto = notificationService.registerDeviceToken(currentUserId, req);
+        assertNotNull(dto);
+        assertEquals("FCM", dto.getProvider());
+    }
 }

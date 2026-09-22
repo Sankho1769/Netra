@@ -59,4 +59,9 @@ public class NotificationTransactionalService {
 
         return NotificationDto.fromEntity(notification);
     }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void updateDeliveryStatus(UUID notificationId, org.netra.features.notification.entity.NotificationDeliveryStatus status) {
+        notificationRepository.updateDeliveryStatus(notificationId, status, Instant.now());
+    }
 }

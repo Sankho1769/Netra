@@ -67,8 +67,8 @@ class NotificationSecurityTest {
 
     @BeforeEach
     void setUp() {
-        notificationRepository.deleteAll();
-        userDeviceTokenRepository.deleteAll();
+        notificationRepository.deleteAllInBatch();
+        userDeviceTokenRepository.deleteAllInBatch();
 
         userA = new User(
                 "User Alpha",
