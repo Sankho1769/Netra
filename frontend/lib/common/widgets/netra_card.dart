@@ -26,6 +26,19 @@ class NetraCard extends StatelessWidget {
     this.elevation = 0,
   });
 
+  const NetraCard.elevated({
+    super.key,
+    required this.child,
+    this.padding = NetraSpacing.cardPadding,
+    this.onTap,
+    this.backgroundColor = NetraColors.surfaceWhite,
+    this.borderColor,
+    this.borderWidth = 0,
+    this.borderRadius = NetraSpacing.radiusLg,
+    this.isSelected = false,
+    this.elevation = 2.0,
+  });
+
   const NetraCard.outlined({
     super.key,
     required this.child,

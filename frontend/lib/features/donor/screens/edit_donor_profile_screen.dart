@@ -32,7 +32,8 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
   void initState() {
     super.initState();
     _selectedBloodGroup = widget.currentProfile?.bloodGroup ?? 'O+';
-    _selectedAvailability = widget.currentProfile?.availabilityStatus ?? 'AVAILABLE';
+    _selectedAvailability =
+        widget.currentProfile?.availabilityStatus ?? 'AVAILABLE';
   }
 
   Future<void> _handleSave() async {
@@ -42,7 +43,8 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
     if (token == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Session expired. Please log in again.")),
+          const SnackBar(
+              content: Text("Session expired. Please log in again.")),
         );
         setState(() => _isSaving = false);
       }
@@ -72,13 +74,15 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
       setState(() => _isSaving = false);
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Donor preferences saved successfully.")),
+          const SnackBar(
+              content: Text("Donor preferences saved successfully.")),
         );
         Navigator.of(context).pop();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.controller.errorMessage ?? "Failed to save donor preferences."),
+            content: Text(widget.controller.errorMessage ??
+                "Failed to save donor preferences."),
             backgroundColor: NetraColors.errorRed,
           ),
         );
@@ -107,7 +111,9 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
                   side: BorderSide(
-                    color: context.isMobile ? Colors.transparent : NetraColors.borderGray,
+                    color: context.isMobile
+                        ? Colors.transparent
+                        : NetraColors.borderGray,
                   ),
                 ),
                 child: Padding(
@@ -125,7 +131,8 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
                       NetraSpacing.gapH4,
                       Text(
                         "Select your verified or self-reported blood group.",
-                        style: NetraTypography.bodyMedium.copyWith(color: NetraColors.textSecondary),
+                        style: NetraTypography.bodyMedium
+                            .copyWith(color: NetraColors.textSecondary),
                       ),
                       NetraSpacing.gapH16,
 
@@ -136,17 +143,24 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
                         children: BloodGroupConstants.supported.map((bg) {
                           final isSelected = _selectedBloodGroup == bg;
                           return InkWell(
-                            onTap: () => setState(() => _selectedBloodGroup = bg),
-                            borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+                            onTap: () =>
+                                setState(() => _selectedBloodGroup = bg),
+                            borderRadius:
+                                BorderRadius.circular(NetraSpacing.radiusMd),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 150),
                               width: 88,
                               height: 52,
                               decoration: BoxDecoration(
-                                color: isSelected ? NetraColors.primaryRed : NetraColors.surfaceWhite,
-                                borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
-                                border: BorderSide(
-                                  color: isSelected ? NetraColors.primaryRed : NetraColors.borderGray,
+                                color: isSelected
+                                    ? NetraColors.primaryRed
+                                    : NetraColors.surfaceWhite,
+                                borderRadius: BorderRadius.circular(
+                                    NetraSpacing.radiusMd),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? NetraColors.primaryRed
+                                      : NetraColors.borderGray,
                                   width: isSelected ? 2 : 1,
                                 ),
                               ),
@@ -154,7 +168,9 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
                               child: Text(
                                 bg,
                                 style: NetraTypography.titleMedium.copyWith(
-                                  color: isSelected ? NetraColors.surfaceWhite : NetraColors.textPrimary,
+                                  color: isSelected
+                                      ? NetraColors.surfaceWhite
+                                      : NetraColors.textPrimary,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -169,16 +185,19 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
                         padding: const EdgeInsets.all(NetraSpacing.md),
                         decoration: BoxDecoration(
                           color: NetraColors.backgroundRed,
-                          borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
+                          borderRadius:
+                              BorderRadius.circular(NetraSpacing.radiusSm),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.info_outline_rounded, color: NetraColors.primaryRed, size: 18),
+                            const Icon(Icons.info_outline_rounded,
+                                color: NetraColors.primaryRed, size: 18),
                             NetraSpacing.gapW12,
                             Expanded(
                               child: Text(
                                 "Your blood group is self-reported until verified by an authorized blood bank upon clinical screening.",
-                                style: NetraTypography.bodySmall.copyWith(color: NetraColors.darkRed),
+                                style: NetraTypography.bodySmall
+                                    .copyWith(color: NetraColors.darkRed),
                               ),
                             ),
                           ],
@@ -193,14 +212,16 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
                       NetraSpacing.gapH4,
                       Text(
                         "Control whether you can be considered for approved donor contact requests.",
-                        style: NetraTypography.bodyMedium.copyWith(color: NetraColors.textSecondary),
+                        style: NetraTypography.bodyMedium
+                            .copyWith(color: NetraColors.textSecondary),
                       ),
                       NetraSpacing.gapH16,
 
                       _buildAvailabilityOption(
                         status: 'AVAILABLE',
                         title: "Available",
-                        subtitle: "You may be considered for approved donor requests.",
+                        subtitle:
+                            "You may be considered for approved donor requests.",
                         icon: Icons.check_circle_outline_rounded,
                         activeColor: NetraColors.successGreen,
                       ),
@@ -208,7 +229,8 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
                       _buildAvailabilityOption(
                         status: 'PAUSED',
                         title: "Paused",
-                        subtitle: "Temporarily pause donor matching and notifications.",
+                        subtitle:
+                            "Temporarily pause donor matching and notifications.",
                         icon: Icons.pause_circle_outline_rounded,
                         activeColor: Colors.amber.shade800,
                       ),
@@ -216,7 +238,8 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
                       _buildAvailabilityOption(
                         status: 'UNAVAILABLE',
                         title: "Unavailable",
-                        subtitle: "You will not be considered for donor contact.",
+                        subtitle:
+                            "You will not be considered for donor contact.",
                         icon: Icons.do_not_disturb_on_outlined,
                         activeColor: NetraColors.errorRed,
                       ),
@@ -224,14 +247,17 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
 
                       // Actions
                       NetraButton(
-                        text: isNew ? "Create Donor Profile" : "Save Preferences",
+                        text:
+                            isNew ? "Create Donor Profile" : "Save Preferences",
                         isLoading: _isSaving,
                         onPressed: _isSaving ? null : _handleSave,
                       ),
                       NetraSpacing.gapH12,
                       NetraButton.outlined(
                         text: "Cancel",
-                        onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
+                        onPressed: _isSaving
+                            ? null
+                            : () => Navigator.of(context).pop(),
                       ),
                     ],
                   ),
@@ -259,16 +285,20 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
       child: Container(
         padding: const EdgeInsets.all(NetraSpacing.md),
         decoration: BoxDecoration(
-          color: isSelected ? activeColor.withOpacity(0.08) : NetraColors.surfaceWhite,
+          color: isSelected
+              ? activeColor.withOpacity(0.08)
+              : NetraColors.surfaceWhite,
           borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
-          border: BorderSide(
+          border: Border.all(
             color: isSelected ? activeColor : NetraColors.borderGray,
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Row(
           children: [
-            Icon(icon, color: isSelected ? activeColor : NetraColors.textSecondary, size: 24),
+            Icon(icon,
+                color: isSelected ? activeColor : NetraColors.textSecondary,
+                size: 24),
             NetraSpacing.gapW16,
             Expanded(
               child: Column(

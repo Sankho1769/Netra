@@ -73,7 +73,8 @@ class EmergencyModeScreen extends StatelessWidget {
                             Text(
                               "Priority visibility across emergency & discovery workflows",
                               style: NetraTypography.bodySmall.copyWith(
-                                color: NetraColors.surfaceWhite.withOpacity(0.9),
+                                color:
+                                    NetraColors.surfaceWhite.withOpacity(0.9),
                               ),
                             ),
                           ],
@@ -96,7 +97,8 @@ class EmergencyModeScreen extends StatelessWidget {
             // Section: Immediate Actions
             Text(
               "Immediate Actions",
-              style: NetraTypography.titleLarge.copyWith(fontWeight: FontWeight.bold),
+              style: NetraTypography.titleLarge
+                  .copyWith(fontWeight: FontWeight.bold),
             ),
             NetraSpacing.gapH12,
 
@@ -107,7 +109,8 @@ class EmergencyModeScreen extends StatelessWidget {
               iconBgColor: const Color(0xFFFEE2E2),
               iconColor: const Color(0xFFDC2626),
               title: "I Need Blood Immediately",
-              description: "Create a CRITICAL blood request with highest priority across NETRA's emergency discovery workflows.",
+              description:
+                  "Create a CRITICAL blood request with highest priority across NETRA's emergency discovery workflows.",
               buttonLabel: "Create Emergency Request",
               buttonColor: const Color(0xFFDC2626),
               onTap: () {
@@ -127,13 +130,15 @@ class EmergencyModeScreen extends StatelessWidget {
               iconBgColor: const Color(0xFFEFF6FF),
               iconColor: const Color(0xFF2563EB),
               title: "Find Nearby Blood Centres",
-              description: "Locate authorized blood banks, view operating hours, and verify stock directly.",
+              description:
+                  "Locate authorized blood banks, view operating hours, and verify stock directly.",
               buttonLabel: "Locate Blood Centres",
               buttonColor: const Color(0xFF2563EB),
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const EmergencyNearbyScreen(initialTabIndex: 0),
+                    builder: (context) =>
+                        const EmergencyNearbyScreen(initialTabIndex: 0),
                   ),
                 );
               },
@@ -147,13 +152,15 @@ class EmergencyModeScreen extends StatelessWidget {
               iconBgColor: const Color(0xFFFEF3C7),
               iconColor: const Color(0xFFD97706),
               title: "View Active Requests",
-              description: "See nearby open and critical blood requests from patients in urgent need.",
+              description:
+                  "See nearby open and critical blood requests from patients in urgent need.",
               buttonLabel: "View Nearby Requests",
               buttonColor: const Color(0xFFD97706),
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const EmergencyNearbyScreen(initialTabIndex: 1),
+                    builder: (context) =>
+                        const EmergencyNearbyScreen(initialTabIndex: 1),
                   ),
                 );
               },
@@ -165,7 +172,8 @@ class EmergencyModeScreen extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.shield_outlined, color: NetraColors.primaryRed, size: 24),
+                  const Icon(Icons.shield_outlined,
+                      color: NetraColors.primaryRed, size: 24),
                   NetraSpacing.gapW12,
                   Expanded(
                     child: Column(
@@ -173,12 +181,14 @@ class EmergencyModeScreen extends StatelessWidget {
                       children: [
                         Text(
                           "Privacy & Medical Coordination",
-                          style: NetraTypography.titleSmall.copyWith(fontWeight: FontWeight.bold),
+                          style: NetraTypography.titleSmall
+                              .copyWith(fontWeight: FontWeight.bold),
                         ),
                         NetraSpacing.gapH4,
                         Text(
                           "NETRA does not expose donor personal contact information. Available contact and fulfillment actions are handled through the supported NETRA workflow and verified blood-bank processes.",
-                          style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary),
+                          style: NetraTypography.bodySmall
+                              .copyWith(color: NetraColors.textSecondary),
                         ),
                       ],
                     ),
@@ -239,12 +249,14 @@ class EmergencyModeScreen extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: NetraTypography.titleMedium.copyWith(fontWeight: FontWeight.bold),
+                      style: NetraTypography.titleMedium
+                          .copyWith(fontWeight: FontWeight.bold),
                     ),
                     NetraSpacing.gapH4,
                     Text(
                       description,
-                      style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary),
+                      style: NetraTypography.bodySmall
+                          .copyWith(color: NetraColors.textSecondary),
                     ),
                   ],
                 ),
@@ -270,7 +282,8 @@ class EmergencyModeScreen extends StatelessWidget {
                 children: [
                   Text(
                     buttonLabel,
-                    style: NetraTypography.labelLarge.copyWith(color: NetraColors.surfaceWhite),
+                    style: NetraTypography.labelLarge
+                        .copyWith(color: NetraColors.surfaceWhite),
                   ),
                   NetraSpacing.gapW8,
                   const Icon(Icons.arrow_forward_rounded, size: 16),

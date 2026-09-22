@@ -79,18 +79,21 @@ class DonorMatch {
     required this.matchQuality,
   });
 
-  bool get isVerified => bloodGroupVerificationStatus.toUpperCase() == 'VERIFIED';
+  bool get isVerified =>
+      bloodGroupVerificationStatus.toUpperCase() == 'VERIFIED';
 
   factory DonorMatch.fromJson(Map<String, dynamic> json) {
     return DonorMatch(
       candidateReference: json['candidateReference'] as String? ?? '',
-      donorDisplayName: json['donorDisplayName'] as String? ?? 'Anonymous Donor',
+      donorDisplayName:
+          json['donorDisplayName'] as String? ?? 'Anonymous Donor',
       bloodGroup: json['bloodGroup'] as String? ?? '',
       bloodGroupVerificationStatus:
           json['bloodGroupVerificationStatus'] as String? ?? 'SELF_REPORTED',
       availabilityStatus: json['availabilityStatus'] as String? ?? 'AVAILABLE',
       distanceKm: (json['distanceKm'] as num?)?.toDouble() ?? 0.0,
-      compatibilityType: CompatibilityType.fromString(json['compatibilityType'] as String?),
+      compatibilityType:
+          CompatibilityType.fromString(json['compatibilityType'] as String?),
       matchQuality: MatchQuality.fromString(json['matchQuality'] as String?),
     );
   }
@@ -137,7 +140,9 @@ class DonorMatchResponse {
       urgency: json['urgency'] as String? ?? 'NORMAL',
       searchRadiusKm: (json['searchRadiusKm'] as num?)?.toDouble() ?? 25.0,
       candidateCount: json['candidateCount'] as int? ?? 0,
-      matches: rawMatches.map((e) => DonorMatch.fromJson(e as Map<String, dynamic>)).toList(),
+      matches: rawMatches
+          .map((e) => DonorMatch.fromJson(e as Map<String, dynamic>))
+          .toList(),
       disclaimer: json['disclaimer'] as String? ?? '',
     );
   }

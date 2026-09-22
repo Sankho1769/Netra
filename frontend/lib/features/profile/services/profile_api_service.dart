@@ -7,7 +7,8 @@ class ProfileApiService {
 
   ProfileApiService({ApiClient? client, String? baseUrl})
       : _client = client ??
-            ApiClient(baseUrl: baseUrl ?? 'http://localhost:8080/api/v1/profile');
+            ApiClient(
+                baseUrl: baseUrl ?? 'http://localhost:8080/api/v1/profile');
 
   Future<UserProfile> getMyProfile(String accessToken) async {
     try {
@@ -18,7 +19,8 @@ class ProfileApiService {
       return UserProfile.fromJson(response as Map<String, dynamic>);
     } catch (e) {
       if (e is NetworkException) rethrow;
-      throw const ValidationException('Failed to load profile. Please try again.');
+      throw const ValidationException(
+          'Failed to load profile. Please try again.');
     }
   }
 
@@ -35,7 +37,8 @@ class ProfileApiService {
       return UserProfile.fromJson(response as Map<String, dynamic>);
     } catch (e) {
       if (e is NetworkException) rethrow;
-      throw const ValidationException('Failed to update profile. Please verify your details.');
+      throw const ValidationException(
+          'Failed to update profile. Please verify your details.');
     }
   }
 }

@@ -22,6 +22,14 @@ abstract final class NetraTypography {
     color: NetraColors.textPrimary,
   );
 
+  static const TextStyle displaySmall = TextStyle(
+    fontSize: 24,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.3,
+    height: 1.3,
+    color: NetraColors.textPrimary,
+  );
+
   // Headline Styles (for screen titles and modal headers)
   static const TextStyle headlineLarge = TextStyle(
     fontSize: 24,

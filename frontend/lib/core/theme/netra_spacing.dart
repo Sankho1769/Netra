@@ -32,34 +32,49 @@ abstract final class NetraSpacing {
   static const EdgeInsets paddingXxl = EdgeInsets.all(xxl);
 
   // Horizontal Padding Presets
-  static const EdgeInsets paddingHorizontalSm = EdgeInsets.symmetric(horizontal: sm);
-  static const EdgeInsets paddingHorizontalMd = EdgeInsets.symmetric(horizontal: md);
-  static const EdgeInsets paddingHorizontalLg = EdgeInsets.symmetric(horizontal: lg);
-  static const EdgeInsets paddingHorizontalXl = EdgeInsets.symmetric(horizontal: xl);
+  static const EdgeInsets paddingHorizontalSm =
+      EdgeInsets.symmetric(horizontal: sm);
+  static const EdgeInsets paddingHorizontalMd =
+      EdgeInsets.symmetric(horizontal: md);
+  static const EdgeInsets paddingHorizontalLg =
+      EdgeInsets.symmetric(horizontal: lg);
+  static const EdgeInsets paddingHorizontalXl =
+      EdgeInsets.symmetric(horizontal: xl);
 
   // Vertical Padding Presets
-  static const EdgeInsets paddingVerticalSm = EdgeInsets.symmetric(vertical: sm);
-  static const EdgeInsets paddingVerticalMd = EdgeInsets.symmetric(vertical: md);
-  static const EdgeInsets paddingVerticalLg = EdgeInsets.symmetric(vertical: lg);
-  static const EdgeInsets paddingVerticalXl = EdgeInsets.symmetric(vertical: xl);
+  static const EdgeInsets paddingVerticalSm =
+      EdgeInsets.symmetric(vertical: sm);
+  static const EdgeInsets paddingVerticalMd =
+      EdgeInsets.symmetric(vertical: md);
+  static const EdgeInsets paddingVerticalLg =
+      EdgeInsets.symmetric(vertical: lg);
+  static const EdgeInsets paddingVerticalXl =
+      EdgeInsets.symmetric(vertical: xl);
 
   // Card / Dialog Padding
   static const EdgeInsets cardPadding = EdgeInsets.all(16.0);
+  static const EdgeInsets cardPaddingStandard = cardPadding;
   static const EdgeInsets cardPaddingDense = EdgeInsets.all(12.0);
   static const EdgeInsets cardPaddingSpacious = EdgeInsets.all(24.0);
 
   // Screen Gutters
-  static const EdgeInsets screenMobile = EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0);
-  static const EdgeInsets screenTablet = EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0);
-  static const EdgeInsets screenDesktop = EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0);
+  static const EdgeInsets screenMobile =
+      EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0);
+  static const EdgeInsets screenTablet =
+      EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0);
+  static const EdgeInsets screenDesktop =
+      EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0);
 
   // Vertical Gaps (SizedBox)
+  static const Widget gapH2 = SizedBox(height: xxs);
   static const Widget gapH4 = SizedBox(height: xs);
+  static const Widget gapH6 = SizedBox(height: 6.0);
   static const Widget gapH8 = SizedBox(height: sm);
   static const Widget gapH12 = SizedBox(height: md);
   static const Widget gapH16 = SizedBox(height: lg);
   static const Widget gapH20 = SizedBox(height: 20.0);
   static const Widget gapH24 = SizedBox(height: xl);
+  static const Widget gapH28 = SizedBox(height: 28.0);
   static const Widget gapH32 = SizedBox(height: xxl);
   static const Widget gapH48 = SizedBox(height: xxxl);
 
@@ -68,6 +83,7 @@ abstract final class NetraSpacing {
   static const Widget gapW8 = SizedBox(width: sm);
   static const Widget gapW12 = SizedBox(width: md);
   static const Widget gapW16 = SizedBox(width: lg);
+  static const Widget gapW20 = SizedBox(width: 20.0);
   static const Widget gapW24 = SizedBox(width: xl);
   static const Widget gapW32 = SizedBox(width: xxl);
 }

@@ -4,6 +4,7 @@ import '../../../core/theme/netra_colors.dart';
 import '../../../core/theme/netra_spacing.dart';
 import '../../../core/theme/netra_typography.dart';
 import '../../../common/widgets/common_widgets.dart';
+import '../models/auth_models.dart';
 import '../state/auth_controller.dart';
 import '../state/auth_scope.dart';
 import '../widgets/auth_text_field.dart';
@@ -64,7 +65,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final success = await authController.register(
       fullName: _fullNameController.text.trim(),
       email: _emailController.text.trim(),
-      phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+      phone: _phoneController.text.trim().isEmpty
+          ? null
+          : _phoneController.text.trim(),
       password: _passwordController.text,
     );
 
@@ -87,7 +90,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: NetraColors.textPrimary),
+          icon: const Icon(Icons.arrow_back_rounded,
+              color: NetraColors.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -103,7 +107,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
                   side: BorderSide(
-                    color: context.isMobile ? Colors.transparent : NetraColors.borderGray,
+                    color: context.isMobile
+                        ? Colors.transparent
+                        : NetraColors.borderGray,
                   ),
                 ),
                 child: Padding(
@@ -123,7 +129,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: NetraColors.backgroundRed,
-                              borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+                              borderRadius:
+                                  BorderRadius.circular(NetraSpacing.radiusMd),
                             ),
                             child: const Icon(
                               Icons.person_add_outlined,
@@ -154,21 +161,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             padding: const EdgeInsets.all(NetraSpacing.md),
                             decoration: BoxDecoration(
                               color: NetraColors.backgroundRed,
-                              borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
-                              border: BorderSide(color: NetraColors.errorRed.withOpacity(0.4)),
+                              borderRadius:
+                                  BorderRadius.circular(NetraSpacing.radiusSm),
+                              border: Border.all(
+                                  color: NetraColors.errorRed.withOpacity(0.4)),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.error_outline_rounded, color: NetraColors.errorRed, size: 20),
+                                const Icon(Icons.error_outline_rounded,
+                                    color: NetraColors.errorRed, size: 20),
                                 NetraSpacing.gapW12,
                                 Expanded(
                                   child: Text(
                                     authController.errorMessage!,
-                                    style: NetraTypography.bodySmall.copyWith(color: NetraColors.errorRed),
+                                    style: NetraTypography.bodySmall
+                                        .copyWith(color: NetraColors.errorRed),
                                   ),
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.close, size: 16, color: NetraColors.errorRed),
+                                  icon: const Icon(Icons.close,
+                                      size: 16, color: NetraColors.errorRed),
                                   padding: EdgeInsets.zero,
                                   constraints: const BoxConstraints(),
                                   onPressed: () => authController.clearError(),
@@ -185,7 +197,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           hint: "John Doe",
                           controller: _fullNameController,
                           textInputAction: TextInputAction.next,
-                          prefixIcon: const Icon(Icons.badge_outlined, size: 20),
+                          prefixIcon:
+                              const Icon(Icons.badge_outlined, size: 20),
                           validator: (val) {
                             if (val == null || val.trim().isEmpty) {
                               return "Full name is required";
@@ -205,12 +218,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
-                          prefixIcon: const Icon(Icons.email_outlined, size: 20),
+                          prefixIcon:
+                              const Icon(Icons.email_outlined, size: 20),
                           validator: (val) {
                             if (val == null || val.trim().isEmpty) {
                               return "Email is required";
                             }
-                            final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+                            final emailRegex =
+                                RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
                             if (!emailRegex.hasMatch(val.trim())) {
                               return "Enter a valid email address";
                             }
@@ -226,10 +241,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           controller: _phoneController,
                           keyboardType: TextInputType.phone,
                           textInputAction: TextInputAction.next,
-                          prefixIcon: const Icon(Icons.phone_outlined, size: 20),
+                          prefixIcon:
+                              const Icon(Icons.phone_outlined, size: 20),
                           validator: (val) {
                             if (val != null && val.trim().isNotEmpty) {
-                              final phoneRegex = RegExp(r'^\+?[0-9\s\-]{7,16}$');
+                              final phoneRegex =
+                                  RegExp(r'^\+?[0-9\s\-]{7,16}$');
                               if (!phoneRegex.hasMatch(val.trim())) {
                                 return "Enter a valid phone number";
                               }
@@ -246,8 +263,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           controller: _passwordController,
                           isPassword: true,
                           textInputAction: TextInputAction.done,
-                          prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
-                          onFieldSubmitted: (_) => _handleRegister(authController),
+                          prefixIcon:
+                              const Icon(Icons.lock_outline_rounded, size: 20),
+                          onFieldSubmitted: (_) =>
+                              _handleRegister(authController),
                           validator: (val) {
                             if (val == null || val.isEmpty) {
                               return "Password is required";
@@ -274,7 +293,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           padding: const EdgeInsets.all(NetraSpacing.md),
                           decoration: BoxDecoration(
                             color: NetraColors.backgroundGray,
-                            borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
+                            borderRadius:
+                                BorderRadius.circular(NetraSpacing.radiusSm),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -288,9 +308,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                               NetraSpacing.gapH8,
                               _buildRuleItem("8+ characters", _hasMinLength),
-                              _buildRuleItem("At least one uppercase letter", _hasUpperCase),
-                              _buildRuleItem("At least one lowercase letter", _hasLowerCase),
-                              _buildRuleItem("At least one number (0-9)", _hasDigit),
+                              _buildRuleItem("At least one uppercase letter",
+                                  _hasUpperCase),
+                              _buildRuleItem("At least one lowercase letter",
+                                  _hasLowerCase),
+                              _buildRuleItem(
+                                  "At least one number (0-9)", _hasDigit),
                             ],
                           ),
                         ),
@@ -301,16 +324,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           padding: const EdgeInsets.all(NetraSpacing.md),
                           decoration: BoxDecoration(
                             color: NetraColors.backgroundGreen,
-                            borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
+                            borderRadius:
+                                BorderRadius.circular(NetraSpacing.radiusSm),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.verified_user_outlined, color: NetraColors.successGreen, size: 20),
+                              const Icon(Icons.verified_user_outlined,
+                                  color: NetraColors.successGreen, size: 20),
                               NetraSpacing.gapW12,
                               Expanded(
                                 child: Text(
                                   "Zero medical data collected at registration. Clinical suitability is assessed separately and confidentially.",
-                                  style: NetraTypography.bodySmall.copyWith(color: NetraColors.successGreen),
+                                  style: NetraTypography.bodySmall.copyWith(
+                                      color: NetraColors.successGreen),
                                 ),
                               ),
                             ],
@@ -322,7 +348,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         NetraButton(
                           text: "Create Account",
                           isLoading: isLoading,
-                          onPressed: isLoading ? null : () => _handleRegister(authController),
+                          onPressed: isLoading
+                              ? null
+                              : () => _handleRegister(authController),
                         ),
                         NetraSpacing.gapH16,
 
@@ -332,7 +360,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           children: [
                             Text(
                               "Already have an account?",
-                              style: NetraTypography.bodyMedium.copyWith(color: NetraColors.textSecondary),
+                              style: NetraTypography.bodyMedium
+                                  .copyWith(color: NetraColors.textSecondary),
                             ),
                             TextButton(
                               onPressed: () {
@@ -367,15 +396,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Row(
         children: [
           Icon(
-            satisfied ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+            satisfied
+                ? Icons.check_circle_rounded
+                : Icons.radio_button_unchecked_rounded,
             size: 14,
-            color: satisfied ? NetraColors.successGreen : NetraColors.textSecondary,
+            color: satisfied
+                ? NetraColors.successGreen
+                : NetraColors.textSecondary,
           ),
           NetraSpacing.gapW8,
           Text(
             text,
             style: NetraTypography.bodySmall.copyWith(
-              color: satisfied ? NetraColors.successGreen : NetraColors.textSecondary,
+              color: satisfied
+                  ? NetraColors.successGreen
+                  : NetraColors.textSecondary,
             ),
           ),
         ],

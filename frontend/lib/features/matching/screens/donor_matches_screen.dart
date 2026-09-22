@@ -71,7 +71,8 @@ class _DonorMatchesScreenState extends State<DonorMatchesScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString().replaceFirst('ValidationException: ', '');
+          _errorMessage =
+              e.toString().replaceFirst('ValidationException: ', '');
           _isLoading = false;
         });
       }
@@ -240,11 +241,15 @@ class _DonorMatchesScreenState extends State<DonorMatchesScreen> {
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        backgroundColor: isSelected ? const Color(0xFFDC2626) : Colors.white,
+                        backgroundColor:
+                            isSelected ? const Color(0xFFDC2626) : Colors.white,
                         side: BorderSide(
-                          color: isSelected ? const Color(0xFFDC2626) : Colors.grey.shade300,
+                          color: isSelected
+                              ? const Color(0xFFDC2626)
+                              : Colors.grey.shade300,
                         ),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
                       ),
                       onPressed: () {
                         if (_selectedRadiusKm != radius) {
@@ -308,8 +313,10 @@ class _DonorMatchesScreenState extends State<DonorMatchesScreen> {
           itemCount: matches.length,
           itemBuilder: (ctx, index) {
             final match = matches[index];
-            final isMatched = _matchedCandidateRefs.contains(match.candidateReference);
-            final isProcessing = _processingCandidateRef == match.candidateReference;
+            final isMatched =
+                _matchedCandidateRefs.contains(match.candidateReference);
+            final isProcessing =
+                _processingCandidateRef == match.candidateReference;
             return DonorMatchCard(
               match: match,
               rank: index + 1,
@@ -356,7 +363,8 @@ class _DonorMatchesScreenState extends State<DonorMatchesScreen> {
 
     try {
       final responseService = DonorResponseApiService();
-      await responseService.createMatch(widget.requestId, candidate.candidateReference);
+      await responseService.createMatch(
+          widget.requestId, candidate.candidateReference);
       if (mounted) {
         setState(() {
           _matchedCandidateRefs.add(candidate.candidateReference);
@@ -364,7 +372,8 @@ class _DonorMatchesScreenState extends State<DonorMatchesScreen> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Persistent match created for ${candidate.donorDisplayName}!'),
+            content: Text(
+                'Persistent match created for ${candidate.donorDisplayName}!'),
             backgroundColor: const Color(0xFF16A34A),
             action: SnackBarAction(
               label: 'View Responses',
@@ -388,7 +397,8 @@ class _DonorMatchesScreenState extends State<DonorMatchesScreen> {
         setState(() => _processingCandidateRef = null);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString().replaceFirst('ValidationException: ', '')),
+            content:
+                Text(e.toString().replaceFirst('ValidationException: ', '')),
             backgroundColor: const Color(0xFFDC2626),
           ),
         );
@@ -440,8 +450,10 @@ class _DonorMatchesScreenState extends State<DonorMatchesScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFDC2626),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 icon: const Icon(Icons.zoom_out_map, size: 18),
                 label: const Text('Expand to 100 km'),
@@ -480,7 +492,8 @@ class _DonorMatchesScreenState extends State<DonorMatchesScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              _errorMessage ?? 'An unexpected error occurred while querying the donor matching engine.',
+              _errorMessage ??
+                  'An unexpected error occurred while querying the donor matching engine.',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 13, color: Colors.grey),
             ),

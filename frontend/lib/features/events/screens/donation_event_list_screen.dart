@@ -4,7 +4,6 @@ import '../../../core/responsive/responsive_scaffold.dart';
 import '../../../common/widgets/netra_loading_indicator.dart';
 import '../../../common/widgets/netra_error_view.dart';
 import '../../../common/widgets/netra_empty_view.dart';
-import '../models/donation_event.dart';
 import '../state/donation_event_controller.dart';
 import '../widgets/donation_event_card.dart';
 import 'donation_event_details_screen.dart';
@@ -17,7 +16,8 @@ class DonationEventListScreen extends StatefulWidget {
   const DonationEventListScreen({super.key, this.controller});
 
   @override
-  State<DonationEventListScreen> createState() => _DonationEventListScreenState();
+  State<DonationEventListScreen> createState() =>
+      _DonationEventListScreenState();
 }
 
 class _DonationEventListScreenState extends State<DonationEventListScreen> {
@@ -66,7 +66,8 @@ class _DonationEventListScreenState extends State<DonationEventListScreen> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const MyEventRegistrationsScreen()),
+                  MaterialPageRoute(
+                      builder: (_) => const MyEventRegistrationsScreen()),
                 );
               },
             ),
@@ -76,7 +77,8 @@ class _DonationEventListScreenState extends State<DonationEventListScreen> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const CreateDonationEventScreen()),
+                  MaterialPageRoute(
+                      builder: (_) => const CreateDonationEventScreen()),
                 );
               },
             ),
@@ -85,7 +87,8 @@ class _DonationEventListScreenState extends State<DonationEventListScreen> {
             children: [
               // Search & Filter Header
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: Column(
                   children: [
                     TextField(
@@ -105,7 +108,8 @@ class _DonationEventListScreenState extends State<DonationEventListScreen> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
                       ),
                       onSubmitted: _onCitySubmitted,
                     ),
@@ -142,7 +146,8 @@ class _DonationEventListScreenState extends State<DonationEventListScreen> {
 
   Widget _buildContent(int crossAxisCount) {
     if (_controller.isLoading) {
-      return const Center(child: NetraLoadingIndicator(message: 'Finding donation camps...'));
+      return const Center(
+          child: NetraLoadingIndicator(message: 'Finding donation camps...'));
     }
 
     if (_controller.errorMessage != null) {

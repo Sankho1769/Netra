@@ -80,9 +80,15 @@ class EventRegistration {
       donorUserId: json['donorUserId'] as String,
       status: EventRegistrationStatus.fromString(json['status'] as String?),
       registeredAt: DateTime.parse(json['registeredAt'] as String),
-      cancelledAt: json['cancelledAt'] != null ? DateTime.parse(json['cancelledAt'] as String) : null,
-      checkedInAt: json['checkedInAt'] != null ? DateTime.parse(json['checkedInAt'] as String) : null,
-      completedAt: json['completedAt'] != null ? DateTime.parse(json['completedAt'] as String) : null,
+      cancelledAt: json['cancelledAt'] != null
+          ? DateTime.parse(json['cancelledAt'] as String)
+          : null,
+      checkedInAt: json['checkedInAt'] != null
+          ? DateTime.parse(json['checkedInAt'] as String)
+          : null,
+      completedAt: json['completedAt'] != null
+          ? DateTime.parse(json['completedAt'] as String)
+          : null,
     );
   }
 }
@@ -111,7 +117,9 @@ class EventAttendee {
       donorName: json['donorName'] as String? ?? 'Anonymous Donor',
       status: EventRegistrationStatus.fromString(json['status'] as String?),
       registeredAt: DateTime.parse(json['registeredAt'] as String),
-      checkedInAt: json['checkedInAt'] != null ? DateTime.parse(json['checkedInAt'] as String) : null,
+      checkedInAt: json['checkedInAt'] != null
+          ? DateTime.parse(json['checkedInAt'] as String)
+          : null,
     );
   }
 }

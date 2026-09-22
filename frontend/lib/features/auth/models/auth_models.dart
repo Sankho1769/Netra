@@ -38,7 +38,10 @@ class User {
       fullName: json['fullName'] as String? ?? '',
       email: json['email'] as String? ?? '',
       phone: json['phone'] as String?,
-      roles: (json['roles'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? ['ROLE_DONOR'],
+      roles: (json['roles'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          ['ROLE_DONOR'],
       status: json['status'] as String? ?? 'ACTIVE',
     );
   }

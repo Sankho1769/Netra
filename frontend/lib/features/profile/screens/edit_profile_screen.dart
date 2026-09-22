@@ -32,8 +32,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.currentProfile.fullName);
-    _phoneController = TextEditingController(text: widget.currentProfile.phone ?? '');
+    _nameController =
+        TextEditingController(text: widget.currentProfile.fullName);
+    _phoneController =
+        TextEditingController(text: widget.currentProfile.phone ?? '');
   }
 
   @override
@@ -56,7 +58,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (token == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Session expired. Please log in again.")),
+          const SnackBar(
+              content: Text("Session expired. Please log in again.")),
         );
         setState(() => _isSaving = false);
       }
@@ -67,7 +70,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       token,
       UpdateUserProfileRequest(
         fullName: _nameController.text.trim(),
-        phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+        phone: _phoneController.text.trim().isEmpty
+            ? null
+            : _phoneController.text.trim(),
       ),
     );
 
@@ -81,7 +86,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.controller.errorMessage ?? "Failed to update profile."),
+            content: Text(
+                widget.controller.errorMessage ?? "Failed to update profile."),
             backgroundColor: NetraColors.errorRed,
           ),
         );
@@ -106,7 +112,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
                   side: BorderSide(
-                    color: context.isMobile ? Colors.transparent : NetraColors.borderGray,
+                    color: context.isMobile
+                        ? Colors.transparent
+                        : NetraColors.borderGray,
                   ),
                 ),
                 child: Padding(
@@ -127,7 +135,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         NetraSpacing.gapH8,
                         Text(
                           "Update your basic identity details. Medical and donation details are managed separately.",
-                          style: NetraTypography.bodyMedium.copyWith(color: NetraColors.textSecondary),
+                          style: NetraTypography.bodyMedium
+                              .copyWith(color: NetraColors.textSecondary),
                         ),
                         NetraSpacing.gapH24,
 
@@ -144,7 +153,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           label: "Email Address",
                           hint: widget.currentProfile.email,
                           readOnly: true,
-                          helperText: "Email cannot be modified directly without an authenticated verification flow.",
+                          helperText:
+                              "Email cannot be modified directly without an authenticated verification flow.",
                         ),
                         NetraSpacing.gapH16,
 
@@ -154,7 +164,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           hint: "+91 98765 43210",
                           controller: _phoneController,
                           keyboardType: TextInputType.phone,
-                          helperText: "Used only for urgent blood donation contact when availability is enabled.",
+                          helperText:
+                              "Used only for urgent blood donation contact when availability is enabled.",
                         ),
                         NetraSpacing.gapH24,
 
@@ -169,7 +180,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         // Cancel Button
                         NetraButton.outlined(
                           text: "Cancel",
-                          onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
+                          onPressed: _isSaving
+                              ? null
+                              : () => Navigator.of(context).pop(),
                         ),
                       ],
                     ),

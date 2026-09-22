@@ -127,13 +127,16 @@ class ApiClient {
   }
 
   Uri _buildUri(String path, Map<String, dynamic>? queryParameters) {
-    final cleanBase = baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
+    final cleanBase = baseUrl.endsWith('/')
+        ? baseUrl.substring(0, baseUrl.length - 1)
+        : baseUrl;
     final cleanPath = path.startsWith('/') ? path : '/$path';
     final urlString = '$cleanBase$cleanPath';
     final uri = Uri.parse(urlString);
 
     if (queryParameters != null && queryParameters.isNotEmpty) {
-      final mappedParams = queryParameters.map((k, v) => MapEntry(k, v.toString()));
+      final mappedParams =
+          queryParameters.map((k, v) => MapEntry(k, v.toString()));
       return uri.replace(queryParameters: mappedParams);
     }
     return uri;
@@ -173,7 +176,8 @@ class ApiClient {
 
     switch (statusCode) {
       case 400:
-        throw ValidationException(message, statusCode: statusCode, details: responseBody);
+        throw ValidationException(message,
+            statusCode: statusCode, details: responseBody);
       case 401:
       case 403:
         throw UnauthorizedException(message);
@@ -187,7 +191,8 @@ class ApiClient {
         if (statusCode >= 500) {
           throw ServerException(message);
         }
-        throw ValidationException(message, statusCode: statusCode, details: responseBody);
+        throw ValidationException(message,
+            statusCode: statusCode, details: responseBody);
     }
   }
 

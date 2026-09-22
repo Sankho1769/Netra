@@ -63,7 +63,9 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
       final updated = await _apiService.markAllAsRead();
       if (mounted) {
         setState(() {
-          _notifications = _notifications.map((n) => n.copyWith(isRead: true, readAt: DateTime.now())).toList();
+          _notifications = _notifications
+              .map((n) => n.copyWith(isRead: true, readAt: DateTime.now()))
+              .toList();
           _unreadCount = 0;
         });
         ScaffoldMessenger.of(context).showSnackBar(
@@ -93,7 +95,8 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
         setState(() {
           final idx = _notifications.indexWhere((n) => n.id == notification.id);
           if (idx != -1) {
-            _notifications[idx] = notification.copyWith(isRead: true, readAt: DateTime.now());
+            _notifications[idx] =
+                notification.copyWith(isRead: true, readAt: DateTime.now());
           }
           if (_unreadCount > 0) _unreadCount--;
         });
@@ -101,18 +104,23 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
     }
 
     // Safe navigation based on referenceType
-    if (notification.referenceType == NotificationReferenceType.donorMatch && notification.referenceId != null) {
+    if (notification.referenceType == NotificationReferenceType.donorMatch &&
+        notification.referenceId != null) {
       if (!mounted) return;
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => DonorMatchDetailScreen(matchId: notification.referenceId!),
+          builder: (_) =>
+              DonorMatchDetailScreen(matchId: notification.referenceId!),
         ),
       );
-    } else if (notification.referenceType == NotificationReferenceType.bloodRequest && notification.referenceId != null) {
+    } else if (notification.referenceType ==
+            NotificationReferenceType.bloodRequest &&
+        notification.referenceId != null) {
       if (!mounted) return;
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => BloodRequestDetailsScreen(requestId: notification.referenceId!),
+          builder: (_) =>
+              BloodRequestDetailsScreen(requestId: notification.referenceId!),
         ),
       );
     } else {
@@ -126,7 +134,8 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(notification.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(notification.title,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         content: Text(notification.body),
         actions: [
           TextButton(
@@ -146,7 +155,8 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9),
       appBar: AppBar(
-        title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text('Notifications',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF0F172A),
         elevation: 0,
@@ -167,7 +177,8 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
               // Filter Chips Row
               Container(
                 color: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   children: [
                     FilterChip(
@@ -252,11 +263,17 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.notifications_none_rounded, size: 64, color: Colors.grey.shade400),
+                  Icon(Icons.notifications_none_rounded,
+                      size: 64, color: Colors.grey.shade400),
                   const SizedBox(height: 16),
                   Text(
-                    _unreadOnly ? 'No unread notifications' : 'No notifications yet',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.grey.shade600),
+                    _unreadOnly
+                        ? 'No unread notifications'
+                        : 'No notifications yet',
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 8),
                   Text(

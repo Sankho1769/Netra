@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/eligibility_models.dart';
+import '../models/eligibility_models.dart';
 import '../services/eligibility_api_service.dart';
 
 class EligibilityController extends ChangeNotifier {
@@ -55,7 +55,8 @@ class EligibilityController extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool isAnswered(String key) => _answers[key] != null && _answers[key]!.isNotEmpty;
+  bool isAnswered(String key) =>
+      _answers[key] != null && _answers[key]!.isNotEmpty;
 
   int? get daysSinceLastDonation {
     final dateStr = _answers['LAST_DONATION_DATE'];
@@ -93,24 +94,29 @@ class EligibilityController extends ChangeNotifier {
           }
         }
 
-        if (_answers['BIOLOGICAL_SEX'] == null || _answers['BIOLOGICAL_SEX']!.isEmpty) {
-          _errors['BIOLOGICAL_SEX'] = 'Please select biological sex for clinical intervals.';
+        if (_answers['BIOLOGICAL_SEX'] == null ||
+            _answers['BIOLOGICAL_SEX']!.isEmpty) {
+          _errors['BIOLOGICAL_SEX'] =
+              'Please select biological sex for clinical intervals.';
         }
         break;
 
       case 2:
         // Recent Donation
         if (_answers['PREVIOUS_DONATION'] == null) {
-          _errors['PREVIOUS_DONATION'] = 'Please indicate whether you have donated blood before.';
+          _errors['PREVIOUS_DONATION'] =
+              'Please indicate whether you have donated blood before.';
         } else if (_answers['PREVIOUS_DONATION'] == 'true') {
           final lastDate = _answers['LAST_DONATION_DATE'];
           if (lastDate == null || lastDate.isEmpty) {
-            _errors['LAST_DONATION_DATE'] = 'Please select the date of your last donation.';
+            _errors['LAST_DONATION_DATE'] =
+                'Please select the date of your last donation.';
           } else {
             try {
               final parsed = DateTime.parse(lastDate);
               if (parsed.isAfter(DateTime.now())) {
-                _errors['LAST_DONATION_DATE'] = 'Last donation date cannot be in the future.';
+                _errors['LAST_DONATION_DATE'] =
+                    'Last donation date cannot be in the future.';
               }
             } catch (_) {
               _errors['LAST_DONATION_DATE'] = 'Invalid date format.';
@@ -122,46 +128,58 @@ class EligibilityController extends ChangeNotifier {
       case 3:
         // Current Health
         if (_answers['CURRENTLY_FEELING_WELL'] == null) {
-          _errors['CURRENTLY_FEELING_WELL'] = 'Please answer whether you are currently feeling well.';
+          _errors['CURRENTLY_FEELING_WELL'] =
+              'Please answer whether you are currently feeling well.';
         }
         if (_answers['FEVER_OR_ILLNESS_14D'] == null) {
-          _errors['FEVER_OR_ILLNESS_14D'] = 'Please answer whether you had a fever or illness in the last 14 days.';
+          _errors['FEVER_OR_ILLNESS_14D'] =
+              'Please answer whether you had a fever or illness in the last 14 days.';
         }
         if (_answers['CURRENT_MEDICATION'] == null) {
-          _errors['CURRENT_MEDICATION'] = 'Please answer whether you are currently taking prescription medications.';
+          _errors['CURRENT_MEDICATION'] =
+              'Please answer whether you are currently taking prescription medications.';
         }
         final sex = _answers['BIOLOGICAL_SEX'];
-        if ((sex == 'FEMALE' || sex == 'OTHER') && _answers['PREGNANCY_OR_CHILDBIRTH'] == null) {
-          _errors['PREGNANCY_OR_CHILDBIRTH'] = 'Please answer the pregnancy and childbirth question.';
+        if ((sex == 'FEMALE' || sex == 'OTHER') &&
+            _answers['PREGNANCY_OR_CHILDBIRTH'] == null) {
+          _errors['PREGNANCY_OR_CHILDBIRTH'] =
+              'Please answer the pregnancy and childbirth question.';
         }
         break;
 
       case 4:
         // Donation Safety
         if (_answers['TATTOO_OR_PIERCING_6M'] == null) {
-          _errors['TATTOO_OR_PIERCING_6M'] = 'Please answer whether you had a tattoo or piercing in the last 6 months.';
+          _errors['TATTOO_OR_PIERCING_6M'] =
+              'Please answer whether you had a tattoo or piercing in the last 6 months.';
         }
         if (_answers['MAJOR_SURGERY_12M'] == null) {
-          _errors['MAJOR_SURGERY_12M'] = 'Please answer whether you had major surgery in the last 12 months.';
+          _errors['MAJOR_SURGERY_12M'] =
+              'Please answer whether you had major surgery in the last 12 months.';
         }
         if (_answers['DENTAL_PROCEDURE_72H'] == null) {
-          _errors['DENTAL_PROCEDURE_72H'] = 'Please answer whether you had a dental procedure in the last 72 hours.';
+          _errors['DENTAL_PROCEDURE_72H'] =
+              'Please answer whether you had a dental procedure in the last 72 hours.';
         }
         if (_answers['CHRONIC_OR_CARDIAC_CONDITION'] == null) {
-          _errors['CHRONIC_OR_CARDIAC_CONDITION'] = 'Please answer whether you have a history of heart or chronic conditions.';
+          _errors['CHRONIC_OR_CARDIAC_CONDITION'] =
+              'Please answer whether you have a history of heart or chronic conditions.';
         }
         break;
 
       case 5:
         // Pre-Donation Check
         if (_answers['SLEEP_HOURS_LAST_NIGHT'] == null) {
-          _errors['SLEEP_HOURS_LAST_NIGHT'] = 'Please answer whether you had 4 to 6 hours of sleep last night.';
+          _errors['SLEEP_HOURS_LAST_NIGHT'] =
+              'Please answer whether you had 4 to 6 hours of sleep last night.';
         }
         if (_answers['MEAL_WITHIN_4_HOURS'] == null) {
-          _errors['MEAL_WITHIN_4_HOURS'] = 'Please answer whether you had a meal or snack within the last 4 hours.';
+          _errors['MEAL_WITHIN_4_HOURS'] =
+              'Please answer whether you had a meal or snack within the last 4 hours.';
         }
         if (_answers['HYDRATED_TODAY'] == null) {
-          _errors['HYDRATED_TODAY'] = 'Please answer whether you have had plenty of fluids today.';
+          _errors['HYDRATED_TODAY'] =
+              'Please answer whether you have had plenty of fluids today.';
         }
         break;
     }

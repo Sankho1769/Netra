@@ -45,7 +45,8 @@ class WhyWeAskSheet extends StatelessWidget {
         child: Container(
           decoration: const BoxDecoration(
             color: NetraColors.surfaceWhite,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(NetraSpacing.radiusXl)),
+            borderRadius: BorderRadius.vertical(
+                top: Radius.circular(NetraSpacing.radiusXl)),
           ),
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
           child: Column(
@@ -69,9 +70,11 @@ class WhyWeAskSheet extends StatelessWidget {
                     padding: NetraSpacing.paddingSm,
                     decoration: BoxDecoration(
                       color: NetraColors.backgroundRed,
-                      borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+                      borderRadius:
+                          BorderRadius.circular(NetraSpacing.radiusMd),
                     ),
-                    child: const Icon(Icons.help_outline_rounded, color: NetraColors.primaryRed, size: 22),
+                    child: const Icon(Icons.help_outline_rounded,
+                        color: NetraColors.primaryRed, size: 22),
                   ),
                   NetraSpacing.gapW12,
                   Expanded(
@@ -85,7 +88,8 @@ class WhyWeAskSheet extends StatelessWidget {
               NetraSpacing.gapH16,
               Text(
                 explanation,
-                style: NetraTypography.bodyLarge.copyWith(color: NetraColors.textSecondary),
+                style: NetraTypography.bodyLarge
+                    .copyWith(color: NetraColors.textSecondary),
               ),
               if (clinicalSource != null && clinicalSource!.isNotEmpty) ...[
                 NetraSpacing.gapH16,
@@ -98,7 +102,8 @@ class WhyWeAskSheet extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.verified_outlined, size: 16, color: NetraColors.textMuted),
+                      const Icon(Icons.verified_outlined,
+                          size: 16, color: NetraColors.textMuted),
                       NetraSpacing.gapW8,
                       Expanded(
                         child: Text(

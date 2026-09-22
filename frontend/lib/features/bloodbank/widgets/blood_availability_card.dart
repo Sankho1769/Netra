@@ -34,15 +34,20 @@ class BloodAvailabilityCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: hasStock ? NetraColors.backgroundRed : NetraColors.backgroundGray,
+                  color: hasStock
+                      ? NetraColors.backgroundRed
+                      : NetraColors.backgroundGray,
                   borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
                 ),
                 child: Text(
                   item.bloodGroup,
                   style: NetraTypography.titleMedium.copyWith(
-                    color: hasStock ? NetraColors.primaryRed : NetraColors.textSecondary,
+                    color: hasStock
+                        ? NetraColors.primaryRed
+                        : NetraColors.textSecondary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -62,7 +67,9 @@ class BloodAvailabilityCard extends StatelessWidget {
                 '${item.unitsAvailable}',
                 style: NetraTypography.headlineMedium.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: hasStock ? NetraColors.textPrimary : NetraColors.textMuted,
+                  color: hasStock
+                      ? NetraColors.textPrimary
+                      : NetraColors.textMuted,
                 ),
               ),
               NetraSpacing.gapW4,

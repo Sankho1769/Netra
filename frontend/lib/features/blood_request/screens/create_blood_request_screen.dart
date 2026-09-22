@@ -8,7 +8,8 @@ class CreateBloodRequestScreen extends StatefulWidget {
   const CreateBloodRequestScreen({super.key, this.controller});
 
   @override
-  State<CreateBloodRequestScreen> createState() => _CreateBloodRequestScreenState();
+  State<CreateBloodRequestScreen> createState() =>
+      _CreateBloodRequestScreenState();
 }
 
 class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
@@ -20,18 +21,28 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
   BloodRequestUrgency _selectedUrgency = BloodRequestUrgency.normal;
 
   final TextEditingController _hospitalNameController = TextEditingController();
-  final TextEditingController _hospitalAddressController = TextEditingController();
+  final TextEditingController _hospitalAddressController =
+      TextEditingController();
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _stateController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
-  final TextEditingController _latitudeController = TextEditingController(text: '18.9401');
-  final TextEditingController _longitudeController = TextEditingController(text: '72.8347');
+  final TextEditingController _latitudeController =
+      TextEditingController(text: '18.9401');
+  final TextEditingController _longitudeController =
+      TextEditingController(text: '72.8347');
   final TextEditingController _descriptionController = TextEditingController();
 
   DateTime _requiredBy = DateTime.now().add(const Duration(hours: 24));
 
   final List<String> _bloodGroups = [
-    'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'
+    'A+',
+    'A-',
+    'B+',
+    'B-',
+    'O+',
+    'O-',
+    'AB+',
+    'AB-'
   ];
 
   @override
@@ -57,7 +68,9 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
     final now = DateTime.now();
     final pickedDate = await showDatePicker(
       context: context,
-      initialDate: _requiredBy.isAfter(now) ? _requiredBy : now.add(const Duration(hours: 1)),
+      initialDate: _requiredBy.isAfter(now)
+          ? _requiredBy
+          : now.add(const Duration(hours: 1)),
       firstDate: now,
       lastDate: now.add(const Duration(days: 30)),
     );
@@ -101,14 +114,18 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
 
     if (lat == null || lat < -90.0 || lat > 90.0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Latitude must be between -90 and 90.'), backgroundColor: Colors.red),
+        const SnackBar(
+            content: Text('Latitude must be between -90 and 90.'),
+            backgroundColor: Colors.red),
       );
       return;
     }
 
     if (lng == null || lng < -180.0 || lng > 180.0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Longitude must be between -180 and 180.'), backgroundColor: Colors.red),
+        const SnackBar(
+            content: Text('Longitude must be between -180 and 180.'),
+            backgroundColor: Colors.red),
       );
       return;
     }
@@ -141,7 +158,8 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_controller.errorMessage ?? 'Failed to create blood request.'),
+          content: Text(
+              _controller.errorMessage ?? 'Failed to create blood request.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -152,7 +170,8 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('New Blood Request', style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text('New Blood Request',
+            style: TextStyle(fontWeight: FontWeight.w700)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -171,7 +190,8 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline, color: Color(0xFFDC2626), size: 20),
+                    const Icon(Icons.info_outline,
+                        color: Color(0xFFDC2626), size: 20),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -199,16 +219,20 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Blood Group',
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                       ),
                       items: _bloodGroups.map((bg) {
                         return DropdownMenuItem(
                           value: bg,
-                          child: Text(bg, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          child: Text(bg,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold)),
                         );
                       }).toList(),
                       onChanged: (val) {
-                        if (val != null) setState(() => _selectedBloodGroup = val);
+                        if (val != null)
+                          setState(() => _selectedBloodGroup = val);
                       },
                     ),
                   ),
@@ -220,7 +244,8 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Units (1-50)',
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                       ),
                       keyboardType: TextInputType.number,
                       validator: (val) {
@@ -243,7 +268,8 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
               const SizedBox(height: 16),
 
               // Urgency Selector
-              const Text('Urgency Level', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              const Text('Urgency Level',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
               const SizedBox(height: 6),
               Row(
                 children: BloodRequestUrgency.values.map((urgency) {
@@ -261,11 +287,14 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                                 : const Color(0xFFDBEAFE),
                         labelStyle: TextStyle(
                           fontSize: 12,
-                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                          color: isSelected ? urgency.color : Colors.grey.shade700,
+                          fontWeight:
+                              isSelected ? FontWeight.w700 : FontWeight.w500,
+                          color:
+                              isSelected ? urgency.color : Colors.grey.shade700,
                         ),
                         onSelected: (selected) {
-                          if (selected) setState(() => _selectedUrgency = urgency);
+                          if (selected)
+                            setState(() => _selectedUrgency = urgency);
                         },
                       ),
                     ),
@@ -282,7 +311,9 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                   hintText: 'e.g. Apollo Memorial Hospital',
                   border: OutlineInputBorder(),
                 ),
-                validator: (val) => val == null || val.trim().isEmpty ? 'Hospital name is required' : null,
+                validator: (val) => val == null || val.trim().isEmpty
+                    ? 'Hospital name is required'
+                    : null,
               ),
               const SizedBox(height: 14),
               TextFormField(
@@ -292,7 +323,9 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                   hintText: 'e.g. 100 Central Road, Block B',
                   border: OutlineInputBorder(),
                 ),
-                validator: (val) => val == null || val.trim().isEmpty ? 'Hospital address is required' : null,
+                validator: (val) => val == null || val.trim().isEmpty
+                    ? 'Hospital address is required'
+                    : null,
               ),
               const SizedBox(height: 14),
 
@@ -307,7 +340,9 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                         labelText: 'City *',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (val) => val == null || val.trim().isEmpty ? 'City required' : null,
+                      validator: (val) => val == null || val.trim().isEmpty
+                          ? 'City required'
+                          : null,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -319,7 +354,9 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                         labelText: 'State *',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (val) => val == null || val.trim().isEmpty ? 'State required' : null,
+                      validator: (val) => val == null || val.trim().isEmpty
+                          ? 'State required'
+                          : null,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -331,7 +368,9 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                         labelText: 'PIN Code *',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (val) => val == null || val.trim().isEmpty ? 'PIN required' : null,
+                      validator: (val) => val == null || val.trim().isEmpty
+                          ? 'PIN required'
+                          : null,
                     ),
                   ),
                 ],
@@ -348,7 +387,8 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                         labelText: 'Latitude (-90 to 90)',
                         border: OutlineInputBorder(),
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -359,7 +399,8 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                         labelText: 'Longitude (-180 to 180)',
                         border: OutlineInputBorder(),
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                     ),
                   ),
                 ],
@@ -368,16 +409,20 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
 
               // Required By Deadline Picker
               ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                   side: BorderSide(color: Colors.grey.shade400),
                 ),
-                leading: const Icon(Icons.calendar_today, color: Color(0xFFDC2626)),
-                title: const Text('Required By Deadline *', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                leading:
+                    const Icon(Icons.calendar_today, color: Color(0xFFDC2626)),
+                title: const Text('Required By Deadline *',
+                    style: TextStyle(fontSize: 12, color: Colors.grey)),
                 subtitle: Text(
                   _formatDateTime(_requiredBy),
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w700),
                 ),
                 trailing: TextButton(
                   onPressed: _pickDeadline,
@@ -391,7 +436,8 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                 controller: _descriptionController,
                 decoration: const InputDecoration(
                   labelText: 'General Context / Requirement Notes (Optional)',
-                  hintText: 'e.g. Needed for scheduled bypass procedure tomorrow morning',
+                  hintText:
+                      'e.g. Needed for scheduled bypass procedure tomorrow morning',
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 3,
@@ -406,18 +452,21 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFDC2626),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: _controller.isSubmitting ? null : _submitRequest,
                   child: _controller.isSubmitting
                       ? const SizedBox(
                           width: 24,
                           height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
                         )
                       : const Text(
                           'Publish Blood Request',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                 ),
               ),

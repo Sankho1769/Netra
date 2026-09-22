@@ -107,7 +107,8 @@ class RequesterMatchDetailScreen extends StatelessWidget {
               children: [
                 Text(
                   match.donorDisplayName,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 MatchStatusBadge(status: match.responseStatus),
               ],
@@ -119,7 +120,8 @@ class RequesterMatchDetailScreen extends StatelessWidget {
               match.bloodGroup,
               trailingWidget: match.isVerified
                   ? Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: const Color(0xFFDCFCE7),
                         borderRadius: BorderRadius.circular(4),
@@ -161,7 +163,8 @@ class RequesterMatchDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Match Timeline', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            const Text('Match Timeline',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             _buildDetailRow(
               Icons.schedule_outlined,
@@ -190,7 +193,8 @@ class RequesterMatchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value, {Widget? trailingWidget}) {
+  Widget _buildDetailRow(IconData icon, String label, String value,
+      {Widget? trailingWidget}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -200,14 +204,16 @@ class RequesterMatchDetailScreen extends StatelessWidget {
           const SizedBox(width: 10),
           SizedBox(
             width: 130,
-            child: Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+            child: Text(label,
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
           ),
           Expanded(
             child: Row(
               children: [
                 Text(
                   value,
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w600, fontSize: 13),
                 ),
                 if (trailingWidget != null) ...[
                   const SizedBox(width: 8),

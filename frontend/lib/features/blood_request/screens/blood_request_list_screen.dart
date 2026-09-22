@@ -22,11 +22,17 @@ class _BloodRequestListScreenState extends State<BloodRequestListScreen>
   final TextEditingController _citySearchController = TextEditingController();
 
   final List<String> _bloodGroups = [
-    'All', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'
+    'All',
+    'A+',
+    'A-',
+    'B+',
+    'B-',
+    'O+',
+    'O-',
+    'AB+',
+    'AB-'
   ];
   String _selectedGroup = 'All';
-
-  final List<String> _urgencies = ['All', 'NORMAL', 'URGENT', 'CRITICAL'];
   String _selectedUrgency = 'All';
 
   @override
@@ -58,7 +64,9 @@ class _BloodRequestListScreenState extends State<BloodRequestListScreen>
   void _applyFilters() {
     _controller.setFilters(
       bloodGroup: _selectedGroup == 'All' ? null : _selectedGroup,
-      city: _citySearchController.text.trim().isEmpty ? null : _citySearchController.text.trim(),
+      city: _citySearchController.text.trim().isEmpty
+          ? null
+          : _citySearchController.text.trim(),
       urgency: _selectedUrgency == 'All' ? null : _selectedUrgency,
     );
   }
@@ -79,7 +87,8 @@ class _BloodRequestListScreenState extends State<BloodRequestListScreen>
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => MyBloodRequestsScreen(controller: _controller),
+                  builder: (_) =>
+                      MyBloodRequestsScreen(controller: _controller),
                 ),
               );
             },
@@ -106,8 +115,10 @@ class _BloodRequestListScreenState extends State<BloodRequestListScreen>
                       // Tab 1: Discoverable open requests
                       _buildRequestsList(
                         requests: _controller.discoverableRequests,
-                        onRefresh: () => _controller.loadDiscoverableRequests(refresh: true),
-                        emptyMessage: 'No active blood requests found matching your filters.',
+                        onRefresh: () =>
+                            _controller.loadDiscoverableRequests(refresh: true),
+                        emptyMessage:
+                            'No active blood requests found matching your filters.',
                       ),
                       // Tab 2: Nearby requests
                       _buildRequestsList(
@@ -116,7 +127,8 @@ class _BloodRequestListScreenState extends State<BloodRequestListScreen>
                           latitude: 18.9401,
                           longitude: 72.8347,
                         ),
-                        emptyMessage: 'No nearby blood requests found within search radius.',
+                        emptyMessage:
+                            'No nearby blood requests found within search radius.',
                       ),
                     ],
                   ),
@@ -167,7 +179,8 @@ class _BloodRequestListScreenState extends State<BloodRequestListScreen>
                       },
                     )
                   : null,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               isDense: true,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -192,8 +205,11 @@ class _BloodRequestListScreenState extends State<BloodRequestListScreen>
                     checkmarkColor: const Color(0xFFDC2626),
                     labelStyle: TextStyle(
                       fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: isSelected ? const Color(0xFFDC2626) : Colors.grey.shade700,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected
+                          ? const Color(0xFFDC2626)
+                          : Colors.grey.shade700,
                     ),
                     onSelected: (selected) {
                       setState(() {
@@ -223,7 +239,8 @@ class _BloodRequestListScreenState extends State<BloodRequestListScreen>
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
             const SizedBox(height: 80),
-            Icon(Icons.bloodtype_outlined, size: 64, color: Colors.grey.shade400),
+            Icon(Icons.bloodtype_outlined,
+                size: 64, color: Colors.grey.shade400),
             const SizedBox(height: 16),
             Center(
               child: Text(

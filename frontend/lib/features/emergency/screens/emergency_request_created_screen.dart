@@ -46,7 +46,8 @@ class EmergencyRequestCreatedScreen extends StatelessWidget {
                       color: Color(0xFFDC2626),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.check_rounded, color: NetraColors.surfaceWhite, size: 36),
+                    child: const Icon(Icons.check_rounded,
+                        color: NetraColors.surfaceWhite, size: 36),
                   ),
                   NetraSpacing.gapH12,
                   Text(
@@ -60,7 +61,8 @@ class EmergencyRequestCreatedScreen extends StatelessWidget {
                   NetraSpacing.gapH8,
                   Text(
                     "This creates a CRITICAL blood request that becomes available through NETRA's supported emergency and discovery workflows.",
-                    style: NetraTypography.bodyMedium.copyWith(color: NetraColors.textPrimary),
+                    style: NetraTypography.bodyMedium
+                        .copyWith(color: NetraColors.textPrimary),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -71,7 +73,8 @@ class EmergencyRequestCreatedScreen extends StatelessWidget {
             // Request Summary Card
             Text(
               "Request Summary",
-              style: NetraTypography.titleMedium.copyWith(fontWeight: FontWeight.bold),
+              style: NetraTypography.titleMedium
+                  .copyWith(fontWeight: FontWeight.bold),
             ),
             NetraSpacing.gapH8,
             Container(
@@ -83,17 +86,21 @@ class EmergencyRequestCreatedScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _buildSummaryRow("Blood Group", request.bloodGroup, isHighlight: true),
+                  _buildSummaryRow("Blood Group", request.bloodGroup,
+                      isHighlight: true),
                   const Divider(height: 16),
-                  _buildSummaryRow("Units Needed", "${request.unitsRequired} Units"),
+                  _buildSummaryRow(
+                      "Units Needed", "${request.unitsRequired} Units"),
                   const Divider(height: 16),
                   _buildSummaryRow("Hospital", request.hospitalName),
                   const Divider(height: 16),
-                  _buildSummaryRow("Location", "${request.city}, ${request.state}"),
+                  _buildSummaryRow(
+                      "Location", "${request.city}, ${request.state}"),
                   const Divider(height: 16),
                   _buildSummaryRow("Deadline", formattedDeadline),
                   const Divider(height: 16),
-                  _buildSummaryRow("Priority", "CRITICAL", badgeColor: const Color(0xFFDC2626)),
+                  _buildSummaryRow("Priority", "CRITICAL",
+                      badgeColor: const Color(0xFFDC2626)),
                 ],
               ),
             ),
@@ -110,12 +117,14 @@ class EmergencyRequestCreatedScreen extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.info_outline_rounded, color: Color(0xFF2563EB), size: 22),
+                  const Icon(Icons.info_outline_rounded,
+                      color: Color(0xFF2563EB), size: 22),
                   NetraSpacing.gapW12,
                   Expanded(
                     child: Text(
                       "Next Step: Please contact the hospital blood bank or nearby certified blood centers directly to check unit availability and coordinate fulfillment.",
-                      style: NetraTypography.bodySmall.copyWith(color: const Color(0xFF1E40AF)),
+                      style: NetraTypography.bodySmall
+                          .copyWith(color: const Color(0xFF1E40AF)),
                     ),
                   ),
                 ],
@@ -134,12 +143,14 @@ class EmergencyRequestCreatedScreen extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.shield_outlined, color: NetraColors.primaryRed, size: 20),
+                  const Icon(Icons.shield_outlined,
+                      color: NetraColors.primaryRed, size: 20),
                   NetraSpacing.gapW12,
                   Expanded(
                     child: Text(
                       "NETRA does not expose donor personal contact information. Available contact and fulfillment actions are handled through the supported NETRA workflow and verified blood-bank processes.",
-                      style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary),
+                      style: NetraTypography.bodySmall
+                          .copyWith(color: NetraColors.textSecondary),
                     ),
                   ),
                 ],
@@ -162,7 +173,8 @@ class EmergencyRequestCreatedScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => BloodRequestDetailsScreen(requestId: request.id),
+                      builder: (context) =>
+                          BloodRequestDetailsScreen(requestId: request.id),
                     ),
                   );
                 },
@@ -212,7 +224,8 @@ class EmergencyRequestCreatedScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => const EmergencyNearbyScreen(initialTabIndex: 0),
+                      builder: (context) =>
+                          const EmergencyNearbyScreen(initialTabIndex: 0),
                     ),
                   );
                 },
@@ -238,11 +251,14 @@ class EmergencyRequestCreatedScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value, {bool isHighlight = false, Color? badgeColor}) {
+  Widget _buildSummaryRow(String label, String value,
+      {bool isHighlight = false, Color? badgeColor}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: NetraTypography.bodyMedium.copyWith(color: NetraColors.textSecondary)),
+        Text(label,
+            style: NetraTypography.bodyMedium
+                .copyWith(color: NetraColors.textSecondary)),
         if (badgeColor != null)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -252,7 +268,8 @@ class EmergencyRequestCreatedScreen extends StatelessWidget {
             ),
             child: Text(
               value,
-              style: NetraTypography.labelSmall.copyWith(color: NetraColors.surfaceWhite, fontWeight: FontWeight.bold),
+              style: NetraTypography.labelSmall.copyWith(
+                  color: NetraColors.surfaceWhite, fontWeight: FontWeight.bold),
             ),
           )
         else
@@ -260,7 +277,9 @@ class EmergencyRequestCreatedScreen extends StatelessWidget {
             value,
             style: NetraTypography.titleSmall.copyWith(
               fontWeight: isHighlight ? FontWeight.bold : FontWeight.w600,
-              color: isHighlight ? const Color(0xFFDC2626) : NetraColors.textPrimary,
+              color: isHighlight
+                  ? const Color(0xFFDC2626)
+                  : NetraColors.textPrimary,
             ),
           ),
       ],

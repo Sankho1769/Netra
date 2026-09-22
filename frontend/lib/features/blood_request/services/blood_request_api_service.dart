@@ -7,7 +7,9 @@ class BloodRequestApiService {
 
   BloodRequestApiService({ApiClient? client, String? baseUrl})
       : _client = client ??
-            ApiClient(baseUrl: baseUrl ?? 'http://localhost:8080/api/v1/blood-requests');
+            ApiClient(
+                baseUrl:
+                    baseUrl ?? 'http://localhost:8080/api/v1/blood-requests');
 
   Future<List<BloodRequestSummary>> discoverRequests({
     String? bloodGroup,
@@ -35,14 +37,19 @@ class BloodRequestApiService {
 
       if (response is Map<String, dynamic> && response.containsKey('content')) {
         final list = response['content'] as List<dynamic>;
-        return list.map((e) => BloodRequestSummary.fromJson(e as Map<String, dynamic>)).toList();
+        return list
+            .map((e) => BloodRequestSummary.fromJson(e as Map<String, dynamic>))
+            .toList();
       } else if (response is List<dynamic>) {
-        return response.map((e) => BloodRequestSummary.fromJson(e as Map<String, dynamic>)).toList();
+        return response
+            .map((e) => BloodRequestSummary.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
       return [];
     } catch (e) {
       if (e is NetworkException) rethrow;
-      throw const ValidationException('Failed to discover blood requests. Please try again.');
+      throw const ValidationException(
+          'Failed to discover blood requests. Please try again.');
     }
   }
 
@@ -60,9 +67,13 @@ class BloodRequestApiService {
 
       if (response is Map<String, dynamic> && response.containsKey('content')) {
         final list = response['content'] as List<dynamic>;
-        return list.map((e) => BloodRequestSummary.fromJson(e as Map<String, dynamic>)).toList();
+        return list
+            .map((e) => BloodRequestSummary.fromJson(e as Map<String, dynamic>))
+            .toList();
       } else if (response is List<dynamic>) {
-        return response.map((e) => BloodRequestSummary.fromJson(e as Map<String, dynamic>)).toList();
+        return response
+            .map((e) => BloodRequestSummary.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
       return [];
     } catch (e) {
@@ -87,10 +98,13 @@ class BloodRequestApiService {
         queryParams['bloodGroup'] = bloodGroup.trim();
       }
 
-      final response = await _client.get('/nearby', queryParameters: queryParams);
+      final response =
+          await _client.get('/nearby', queryParameters: queryParams);
 
       if (response is List<dynamic>) {
-        return response.map((e) => BloodRequestSummary.fromJson(e as Map<String, dynamic>)).toList();
+        return response
+            .map((e) => BloodRequestSummary.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
       return [];
     } catch (e) {
@@ -120,7 +134,8 @@ class BloodRequestApiService {
     }
   }
 
-  Future<BloodRequestDetail> updateRequest(String id, Map<String, dynamic> payload) async {
+  Future<BloodRequestDetail> updateRequest(
+      String id, Map<String, dynamic> payload) async {
     try {
       final response = await _client.patch('/$id', body: payload);
       return BloodRequestDetail.fromJson(response as Map<String, dynamic>);

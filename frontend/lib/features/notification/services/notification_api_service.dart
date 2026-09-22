@@ -11,7 +11,8 @@ class NotificationApiService {
     ApiClient? client,
     SecureTokenStorage? tokenStorage,
     String? baseUrl,
-  })  : _client = client ?? ApiClient(baseUrl: baseUrl ?? 'http://localhost:8080/api/v1'),
+  })  : _client = client ??
+            ApiClient(baseUrl: baseUrl ?? 'http://localhost:8080/api/v1'),
         _tokenStorage = tokenStorage ?? PlatformSecureTokenStorage();
 
   Future<Map<String, String>> _authHeaders() async {
@@ -27,7 +28,10 @@ class NotificationApiService {
     if (e is NetworkException) {
       return e.message;
     }
-    final str = e.toString().replaceFirst('Exception: ', '').replaceFirst('ValidationException: ', '');
+    final str = e
+        .toString()
+        .replaceFirst('Exception: ', '')
+        .replaceFirst('ValidationException: ', '');
     if (str.toLowerCase().contains('sql') ||
         str.toLowerCase().contains('database') ||
         str.toLowerCase().contains('hibernate') ||
@@ -35,7 +39,9 @@ class NotificationApiService {
         str.toLowerCase().contains('internal')) {
       return 'A system error occurred. Please try again later.';
     }
-    return str.isEmpty ? 'An unexpected error occurred. Please try again.' : str;
+    return str.isEmpty
+        ? 'An unexpected error occurred. Please try again.'
+        : str;
   }
 
   /// Fetches paginated notifications for the authenticated user.
@@ -47,7 +53,8 @@ class NotificationApiService {
     try {
       final headers = await _authHeaders();
       final queryParams = 'page=$page&size=$size&unreadOnly=$unreadOnly';
-      final response = await _client.get('/notifications?$queryParams', headers: headers);
+      final response =
+          await _client.get('/notifications?$queryParams', headers: headers);
 
       if (response is Map<String, dynamic>) {
         final content = response['content'] as List<dynamic>?;
@@ -72,7 +79,8 @@ class NotificationApiService {
   Future<int> getUnreadCount() async {
     try {
       final headers = await _authHeaders();
-      final response = await _client.get('/notifications/unread-count', headers: headers);
+      final response =
+          await _client.get('/notifications/unread-count', headers: headers);
       if (response is Map<String, dynamic>) {
         return (response['unreadCount'] as num?)?.toInt() ?? 0;
       }
@@ -87,11 +95,13 @@ class NotificationApiService {
   Future<AppNotification> markAsRead(String notificationId) async {
     try {
       final headers = await _authHeaders();
-      final response = await _client.patch('/notifications/$notificationId/read', headers: headers);
+      final response = await _client
+          .patch('/notifications/$notificationId/read', headers: headers);
       if (response is Map<String, dynamic>) {
         return AppNotification.fromJson(response);
       }
-      throw const FormatException('Invalid server response when marking notification as read');
+      throw const FormatException(
+          'Invalid server response when marking notification as read');
     } catch (e) {
       if (e is NetworkException) rethrow;
       throw ValidationException(_sanitizeErrorMessage(e));
@@ -102,7 +112,8 @@ class NotificationApiService {
   Future<int> markAllAsRead() async {
     try {
       final headers = await _authHeaders();
-      final response = await _client.patch('/notifications/read-all', headers: headers);
+      final response =
+          await _client.patch('/notifications/read-all', headers: headers);
       if (response is Map<String, dynamic>) {
         return (response['updatedCount'] as num?)?.toInt() ?? 0;
       }
@@ -127,11 +138,13 @@ class NotificationApiService {
         provider: provider,
       ).toJson();
 
-      final response = await _client.post('/devices/tokens', headers: headers, body: body);
+      final response =
+          await _client.post('/devices/tokens', headers: headers, body: body);
       if (response is Map<String, dynamic>) {
         return DeviceToken.fromJson(response);
       }
-      throw const FormatException('Invalid server response when registering device token');
+      throw const FormatException(
+          'Invalid server response when registering device token');
     } catch (e) {
       if (e is NetworkException) rethrow;
       throw ValidationException(_sanitizeErrorMessage(e));

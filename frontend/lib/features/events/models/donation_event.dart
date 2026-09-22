@@ -135,11 +135,14 @@ class DonationEventSummary {
       startAt: DateTime.parse(json['startAt'] as String),
       endAt: DateTime.parse(json['endAt'] as String),
       registrationOpenAt: DateTime.parse(json['registrationOpenAt'] as String),
-      registrationCloseAt: DateTime.parse(json['registrationCloseAt'] as String),
+      registrationCloseAt:
+          DateTime.parse(json['registrationCloseAt'] as String),
       donorCapacity: json['donorCapacity'] as int,
       currentRegistrationCount: json['currentRegistrationCount'] as int? ?? 0,
       remainingCapacity: json['remainingCapacity'] as int? ?? 0,
-      distanceKm: json['distanceKm'] != null ? (json['distanceKm'] as num).toDouble() : null,
+      distanceKm: json['distanceKm'] != null
+          ? (json['distanceKm'] as num).toDouble()
+          : null,
       isRegistrationOpen: json['isRegistrationOpen'] as bool? ?? false,
     );
   }
@@ -202,19 +205,34 @@ class DonationEventDetail extends DonationEventSummary {
       startAt: DateTime.parse(json['startAt'] as String),
       endAt: DateTime.parse(json['endAt'] as String),
       registrationOpenAt: DateTime.parse(json['registrationOpenAt'] as String),
-      registrationCloseAt: DateTime.parse(json['registrationCloseAt'] as String),
+      registrationCloseAt:
+          DateTime.parse(json['registrationCloseAt'] as String),
       donorCapacity: json['donorCapacity'] as int,
       currentRegistrationCount: json['currentRegistrationCount'] as int? ?? 0,
       remainingCapacity: json['remainingCapacity'] as int? ?? 0,
-      distanceKm: json['distanceKm'] != null ? (json['distanceKm'] as num).toDouble() : null,
+      distanceKm: json['distanceKm'] != null
+          ? (json['distanceKm'] as num).toDouble()
+          : null,
       isRegistrationOpen: json['isRegistrationOpen'] as bool? ?? false,
-      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
-      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
-      publishedAt: json['publishedAt'] != null ? DateTime.parse(json['publishedAt'] as String) : null,
-      cancelledAt: json['cancelledAt'] != null ? DateTime.parse(json['cancelledAt'] as String) : null,
+      latitude: json['latitude'] != null
+          ? (json['latitude'] as num).toDouble()
+          : null,
+      longitude: json['longitude'] != null
+          ? (json['longitude'] as num).toDouble()
+          : null,
+      publishedAt: json['publishedAt'] != null
+          ? DateTime.parse(json['publishedAt'] as String)
+          : null,
+      cancelledAt: json['cancelledAt'] != null
+          ? DateTime.parse(json['cancelledAt'] as String)
+          : null,
       cancellationReason: json['cancellationReason'] as String?,
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : null,
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt'] as String) : null,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : null,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'] as String)
+          : null,
     );
   }
 }

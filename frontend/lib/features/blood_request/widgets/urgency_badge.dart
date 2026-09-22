@@ -24,7 +24,6 @@ class UrgencyBadge extends StatelessWidget {
         icon = Icons.priority_high_rounded;
         break;
       case BloodRequestUrgency.normal:
-      default:
         bg = const Color(0xFFDBEAFE);
         fg = const Color(0xFF2563EB);
         icon = Icons.info_outline_rounded;

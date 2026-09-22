@@ -16,9 +16,10 @@ class NetraEmptyView extends StatelessWidget {
     required this.title,
     required this.message,
     this.icon = Icons.inbox_outlined,
-    this.actionText,
+    String? actionText,
+    String? actionLabel,
     this.onAction,
-  });
+  }) : actionText = actionLabel ?? actionText;
 
   @override
   Widget build(BuildContext context) {

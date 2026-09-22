@@ -93,20 +93,24 @@ class DonorMatchDetail {
   factory DonorMatchDetail.fromJson(Map<String, dynamic> json) {
     final rawExpiresAt = json['expiresAt'];
     if (rawExpiresAt == null || rawExpiresAt is! String) {
-      throw const FormatException('Malformed donor match response: expiresAt timestamp is missing.');
+      throw const FormatException(
+          'Malformed donor match response: expiresAt timestamp is missing.');
     }
     final expiresAt = DateTime.tryParse(rawExpiresAt);
     if (expiresAt == null) {
-      throw const FormatException('Malformed donor match response: expiresAt timestamp is invalid.');
+      throw const FormatException(
+          'Malformed donor match response: expiresAt timestamp is invalid.');
     }
 
     final rawCreatedAt = json['createdAt'];
     if (rawCreatedAt == null || rawCreatedAt is! String) {
-      throw const FormatException('Malformed donor match response: createdAt timestamp is missing.');
+      throw const FormatException(
+          'Malformed donor match response: createdAt timestamp is missing.');
     }
     final createdAt = DateTime.tryParse(rawCreatedAt);
     if (createdAt == null) {
-      throw const FormatException('Malformed donor match response: createdAt timestamp is invalid.');
+      throw const FormatException(
+          'Malformed donor match response: createdAt timestamp is invalid.');
     }
 
     final rawStatus = json['responseStatus'] as String?;
@@ -118,15 +122,20 @@ class DonorMatchDetail {
       bloodGroupRequired: json['bloodGroupRequired'] as String? ?? '',
       unitsRequired: json['unitsRequired'] as int? ?? 1,
       urgency: json['urgency'] as String? ?? 'NORMAL',
-      hospitalName: json['hospitalName'] as String? ?? 'Authorized Medical Facility',
+      hospitalName:
+          json['hospitalName'] as String? ?? 'Authorized Medical Facility',
       city: json['city'] as String? ?? '',
       state: json['state'] as String? ?? '',
       distanceKm: (json['distanceKm'] as num?)?.toDouble(),
-      requiredBy: json['requiredBy'] != null ? DateTime.tryParse(json['requiredBy'] as String) : null,
+      requiredBy: json['requiredBy'] != null
+          ? DateTime.tryParse(json['requiredBy'] as String)
+          : null,
       expiresAt: expiresAt,
       responseStatus: responseStatus,
       createdAt: createdAt,
-      respondedAt: json['respondedAt'] != null ? DateTime.tryParse(json['respondedAt'] as String) : null,
+      respondedAt: json['respondedAt'] != null
+          ? DateTime.tryParse(json['respondedAt'] as String)
+          : null,
       disclaimer: json['disclaimer'] as String? ??
           'Accepting a match does not confirm medical eligibility or donation. Final screening is performed by qualified blood-bank staff.',
     );
@@ -165,30 +174,36 @@ class RequesterDonorMatch {
     required this.expiresAt,
   });
 
-  bool get isVerified => bloodGroupVerificationStatus.toUpperCase() == 'VERIFIED';
+  bool get isVerified =>
+      bloodGroupVerificationStatus.toUpperCase() == 'VERIFIED';
   bool get isExpired => !DateTime.now().isBefore(expiresAt);
 
   factory RequesterDonorMatch.fromJson(Map<String, dynamic> json) {
     final rawExpiresAt = json['expiresAt'];
     if (rawExpiresAt == null || rawExpiresAt is! String) {
-      throw const FormatException('Malformed requester match response: expiresAt timestamp is missing.');
+      throw const FormatException(
+          'Malformed requester match response: expiresAt timestamp is missing.');
     }
     final expiresAt = DateTime.tryParse(rawExpiresAt);
     if (expiresAt == null) {
-      throw const FormatException('Malformed requester match response: expiresAt timestamp is invalid.');
+      throw const FormatException(
+          'Malformed requester match response: expiresAt timestamp is invalid.');
     }
 
     final rawCreatedAt = json['createdAt'];
     if (rawCreatedAt == null || rawCreatedAt is! String) {
-      throw const FormatException('Malformed requester match response: createdAt timestamp is missing.');
+      throw const FormatException(
+          'Malformed requester match response: createdAt timestamp is missing.');
     }
     final createdAt = DateTime.tryParse(rawCreatedAt);
     if (createdAt == null) {
-      throw const FormatException('Malformed requester match response: createdAt timestamp is invalid.');
+      throw const FormatException(
+          'Malformed requester match response: createdAt timestamp is invalid.');
     }
 
     final rawUpdatedAt = json['updatedAt'];
-    final updatedAt = rawUpdatedAt is String ? DateTime.tryParse(rawUpdatedAt) : null;
+    final updatedAt =
+        rawUpdatedAt is String ? DateTime.tryParse(rawUpdatedAt) : null;
 
     final rawStatus = json['responseStatus'] as String?;
     final responseStatus = DonorMatchStatus.fromString(rawStatus);
@@ -196,7 +211,8 @@ class RequesterDonorMatch {
     return RequesterDonorMatch(
       matchId: json['matchId'] as String? ?? '',
       bloodRequestId: json['bloodRequestId'] as String? ?? '',
-      donorDisplayName: json['donorDisplayName'] as String? ?? 'Anonymous Donor',
+      donorDisplayName:
+          json['donorDisplayName'] as String? ?? 'Anonymous Donor',
       bloodGroup: json['bloodGroup'] as String? ?? '',
       bloodGroupVerificationStatus:
           json['bloodGroupVerificationStatus'] as String? ?? 'SELF_REPORTED',
@@ -205,7 +221,9 @@ class RequesterDonorMatch {
       responseStatus: responseStatus,
       createdAt: createdAt,
       updatedAt: updatedAt ?? createdAt,
-      respondedAt: json['respondedAt'] != null ? DateTime.tryParse(json['respondedAt'] as String) : null,
+      respondedAt: json['respondedAt'] != null
+          ? DateTime.tryParse(json['respondedAt'] as String)
+          : null,
       expiresAt: expiresAt,
     );
   }

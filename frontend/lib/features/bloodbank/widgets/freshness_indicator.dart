@@ -57,7 +57,9 @@ class FreshnessIndicator extends StatelessWidget {
             Icon(icon, size: 12, color: fg),
             NetraSpacing.gapW4,
             Text(
-              relativeTime != null ? '${freshness.label} ($relativeTime)' : freshness.label,
+              relativeTime != null
+                  ? '${freshness.label} ($relativeTime)'
+                  : freshness.label,
               style: NetraTypography.labelSmall.copyWith(
                 color: fg,
                 fontSize: 10,

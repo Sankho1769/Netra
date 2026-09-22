@@ -72,7 +72,8 @@ class Step1BasicInfo extends StatelessWidget {
             NetraSpacing.gapH8,
             Text(
               errors['BIOLOGICAL_SEX']!,
-              style: NetraTypography.bodySmall.copyWith(color: NetraColors.errorRed),
+              style: NetraTypography.bodySmall
+                  .copyWith(color: NetraColors.errorRed),
             ),
           ],
           NetraSpacing.gapH32,
@@ -100,10 +101,12 @@ class Step1BasicInfo extends StatelessWidget {
           decoration: InputDecoration(
             hintText: "Age in years (e.g. 24)",
             errorText: errors['AGE'],
-            prefixIcon: const Icon(Icons.cake_outlined, color: NetraColors.textSecondary),
+            prefixIcon: const Icon(Icons.cake_outlined,
+                color: NetraColors.textSecondary),
           ),
           controller: TextEditingController(text: controller.getAnswer('AGE'))
-            ..selection = TextSelection.collapsed(offset: controller.getAnswer('AGE')?.length ?? 0),
+            ..selection = TextSelection.collapsed(
+                offset: controller.getAnswer('AGE')?.length ?? 0),
           onChanged: (val) => controller.setAnswer('AGE', val),
         ),
       ],
@@ -129,10 +132,13 @@ class Step1BasicInfo extends StatelessWidget {
           decoration: InputDecoration(
             hintText: "Weight in kg (e.g. 62)",
             errorText: errors['WEIGHT_KG'],
-            prefixIcon: const Icon(Icons.monitor_weight_outlined, color: NetraColors.textSecondary),
+            prefixIcon: const Icon(Icons.monitor_weight_outlined,
+                color: NetraColors.textSecondary),
           ),
-          controller: TextEditingController(text: controller.getAnswer('WEIGHT_KG'))
-            ..selection = TextSelection.collapsed(offset: controller.getAnswer('WEIGHT_KG')?.length ?? 0),
+          controller:
+              TextEditingController(text: controller.getAnswer('WEIGHT_KG'))
+                ..selection = TextSelection.collapsed(
+                    offset: controller.getAnswer('WEIGHT_KG')?.length ?? 0),
           onChanged: (val) => controller.setAnswer('WEIGHT_KG', val),
         ),
       ],
@@ -150,22 +156,31 @@ class Step1BasicInfo extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: isSelected ? NetraColors.backgroundRed : NetraColors.surfaceWhite,
+            color: isSelected
+                ? NetraColors.backgroundRed
+                : NetraColors.surfaceWhite,
             borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
             border: Border.all(
-              color: isSelected ? NetraColors.primaryRed : NetraColors.borderGray,
+              color:
+                  isSelected ? NetraColors.primaryRed : NetraColors.borderGray,
               width: isSelected ? 2.0 : 1.0,
             ),
           ),
           child: Column(
             children: [
-              Icon(icon, size: 24, color: isSelected ? NetraColors.primaryRed : NetraColors.textSecondary),
+              Icon(icon,
+                  size: 24,
+                  color: isSelected
+                      ? NetraColors.primaryRed
+                      : NetraColors.textSecondary),
               NetraSpacing.gapH4,
               Text(
                 label,
                 style: NetraTypography.titleSmall.copyWith(
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? NetraColors.primaryRed : NetraColors.textPrimary,
+                  color: isSelected
+                      ? NetraColors.primaryRed
+                      : NetraColors.textPrimary,
                 ),
               ),
             ],
@@ -206,11 +221,13 @@ class Step1BasicInfo extends StatelessWidget {
                 padding: NetraSpacing.paddingXs,
                 child: Row(
                   children: [
-                    const Icon(Icons.help_outline_rounded, size: 16, color: NetraColors.primaryRed),
+                    const Icon(Icons.help_outline_rounded,
+                        size: 16, color: NetraColors.primaryRed),
                     NetraSpacing.gapW4,
                     Text(
                       "Why we ask",
-                      style: NetraTypography.labelSmall.copyWith(color: NetraColors.primaryRed),
+                      style: NetraTypography.labelSmall
+                          .copyWith(color: NetraColors.primaryRed),
                     ),
                   ],
                 ),

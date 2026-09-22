@@ -103,9 +103,13 @@ class BloodBankSummary {
       postalCode: json['postalCode'] as String,
       phone: json['phone'] as String,
       email: json['email'] as String?,
-      verificationStatus: BloodBankVerificationStatus.fromString(json['verificationStatus'] as String?),
-      operatingStatus: BloodBankOperatingStatus.fromString(json['operatingStatus'] as String?),
-      distanceKm: json['distanceKm'] != null ? (json['distanceKm'] as num).toDouble() : null,
+      verificationStatus: BloodBankVerificationStatus.fromString(
+          json['verificationStatus'] as String?),
+      operatingStatus: BloodBankOperatingStatus.fromString(
+          json['operatingStatus'] as String?),
+      distanceKm: json['distanceKm'] != null
+          ? (json['distanceKm'] as num).toDouble()
+          : null,
     );
   }
 
@@ -172,11 +176,19 @@ class BloodBankDetail {
       longitude: (json['longitude'] as num).toDouble(),
       phone: json['phone'] as String,
       email: json['email'] as String?,
-      verificationStatus: BloodBankVerificationStatus.fromString(json['verificationStatus'] as String?),
-      operatingStatus: BloodBankOperatingStatus.fromString(json['operatingStatus'] as String?),
-      distanceKm: json['distanceKm'] != null ? (json['distanceKm'] as num).toDouble() : null,
-      createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'] as String) : null,
-      updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt'] as String) : null,
+      verificationStatus: BloodBankVerificationStatus.fromString(
+          json['verificationStatus'] as String?),
+      operatingStatus: BloodBankOperatingStatus.fromString(
+          json['operatingStatus'] as String?),
+      distanceKm: json['distanceKm'] != null
+          ? (json['distanceKm'] as num).toDouble()
+          : null,
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'] as String)
+          : null,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.tryParse(json['updatedAt'] as String)
+          : null,
       inventory: invList,
     );
   }

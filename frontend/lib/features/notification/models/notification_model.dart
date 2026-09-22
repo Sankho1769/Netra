@@ -125,7 +125,8 @@ class AppNotification {
   factory AppNotification.fromJson(Map<String, dynamic> json) {
     final rawCreatedAt = json['createdAt'] as String?;
     if (rawCreatedAt == null) {
-      throw const FormatException('Missing required createdAt timestamp in Notification');
+      throw const FormatException(
+          'Missing required createdAt timestamp in Notification');
     }
 
     final rawReadAt = json['readAt'] as String?;
@@ -137,12 +138,14 @@ class AppNotification {
       type: NotificationType.fromString(json['type'] as String?),
       title: json['title'] as String? ?? '',
       body: json['body'] as String? ?? '',
-      referenceType: NotificationReferenceType.fromString(json['referenceType'] as String?),
+      referenceType: NotificationReferenceType.fromString(
+          json['referenceType'] as String?),
       referenceId: json['referenceId'] as String?,
       createdAt: DateTime.parse(rawCreatedAt),
       readAt: readAt,
       isRead: isRead,
-      deliveryStatus: DeliveryStatus.fromString(json['deliveryStatus'] as String?),
+      deliveryStatus:
+          DeliveryStatus.fromString(json['deliveryStatus'] as String?),
     );
   }
 
@@ -185,10 +188,10 @@ class DeviceTokenRegistration {
   });
 
   Map<String, dynamic> toJson() => {
-    'token': token,
-    'platform': platform,
-    'provider': provider,
-  };
+        'token': token,
+        'platform': platform,
+        'provider': provider,
+      };
 }
 
 class DeviceToken {

@@ -53,7 +53,8 @@ class NotificationItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typeColor = _colorForType(notification.type);
-    final relativeTime = PushNotificationService.formatRelativeTime(notification.createdAt);
+    final relativeTime =
+        PushNotificationService.formatRelativeTime(notification.createdAt);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -62,7 +63,9 @@ class NotificationItemCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: notification.isRead ? Colors.grey.shade200 : const Color(0xFFE2E8F0),
+          color: notification.isRead
+              ? Colors.grey.shade200
+              : const Color(0xFFE2E8F0),
           width: 1.0,
         ),
       ),
@@ -101,7 +104,9 @@ class NotificationItemCard extends StatelessWidget {
                             notification.title,
                             style: TextStyle(
                               fontSize: 15,
-                              fontWeight: notification.isRead ? FontWeight.w600 : FontWeight.bold,
+                              fontWeight: notification.isRead
+                                  ? FontWeight.w600
+                                  : FontWeight.bold,
                               color: const Color(0xFF0F172A),
                             ),
                           ),
@@ -139,7 +144,8 @@ class NotificationItemCard extends StatelessWidget {
                             color: Colors.grey.shade500,
                           ),
                         ),
-                        if (notification.referenceType != null && notification.referenceId != null)
+                        if (notification.referenceType != null &&
+                            notification.referenceId != null)
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [

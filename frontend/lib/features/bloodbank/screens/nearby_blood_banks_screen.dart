@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../common/widgets/common_widgets.dart';
-import '../../../core/location/location_models.dart';
 import '../../../core/location/location_service.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/netra_colors.dart';
@@ -30,7 +29,16 @@ class _NearbyBloodBanksScreenState extends State<NearbyBloodBanksScreen> {
   double? _currentLon;
   String? _selectedBloodGroup;
 
-  final List<String> _bloodGroups = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
+  final List<String> _bloodGroups = [
+    'A+',
+    'A-',
+    'B+',
+    'B-',
+    'O+',
+    'O-',
+    'AB+',
+    'AB-'
+  ];
 
   @override
   void initState() {
@@ -51,14 +59,15 @@ class _NearbyBloodBanksScreenState extends State<NearbyBloodBanksScreen> {
     });
 
     try {
-      final loc = await _locationService.getCurrentLocation(approximateOnly: true);
-      if (loc != null) {
+      final loc =
+          await _locationService.getCurrentLocation(approximateOnly: true);
+      if (loc != null && loc.latitude != null && loc.longitude != null) {
         _currentLat = loc.latitude;
         _currentLon = loc.longitude;
         _searchController.text = loc.displayName;
         final list = await _apiService.getNearbyBloodBanks(
-          latitude: loc.latitude,
-          longitude: loc.longitude,
+          latitude: loc.latitude!,
+          longitude: loc.longitude!,
           radiusKm: 25.0,
         );
         if (mounted) {
@@ -133,7 +142,8 @@ class _NearbyBloodBanksScreenState extends State<NearbyBloodBanksScreen> {
             Container(
               color: NetraColors.surfaceWhite,
               child: ResponsiveContainer.wide(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Column(
                   children: [
                     Row(
@@ -145,10 +155,12 @@ class _NearbyBloodBanksScreenState extends State<NearbyBloodBanksScreen> {
                             onSubmitted: (_) => _search(),
                             decoration: InputDecoration(
                               hintText: "Enter city or region to search",
-                              prefixIcon: const Icon(Icons.search_rounded, color: NetraColors.textSecondary),
+                              prefixIcon: const Icon(Icons.search_rounded,
+                                  color: NetraColors.textSecondary),
                               suffixIcon: _searchController.text.isNotEmpty
                                   ? IconButton(
-                                      icon: const Icon(Icons.clear_rounded, size: 20),
+                                      icon: const Icon(Icons.clear_rounded,
+                                          size: 20),
                                       onPressed: () {
                                         _searchController.clear();
                                         _search();
@@ -160,10 +172,12 @@ class _NearbyBloodBanksScreenState extends State<NearbyBloodBanksScreen> {
                         ),
                         NetraSpacing.gapW8,
                         IconButton(
-                          icon: const Icon(Icons.my_location_rounded, color: NetraColors.primaryRed),
+                          icon: const Icon(Icons.my_location_rounded,
+                              color: NetraColors.primaryRed),
                           tooltip: "Use approximate device location",
                           onPressed: () async {
-                            final loc = await _locationService.getCurrentLocation(approximateOnly: true);
+                            final loc = await _locationService
+                                .getCurrentLocation(approximateOnly: true);
                             if (mounted && loc != null) {
                               _currentLat = loc.latitude;
                               _currentLon = loc.longitude;
@@ -171,7 +185,8 @@ class _NearbyBloodBanksScreenState extends State<NearbyBloodBanksScreen> {
                               _fetchDefaultOrNearby();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text("Approximate location used: ${loc.displayName}. Exact coordinates are not recorded."),
+                                  content: Text(
+                                      "Approximate location used: ${loc.displayName}. Exact coordinates are not recorded."),
                                 ),
                               );
                             }
@@ -222,12 +237,14 @@ class _NearbyBloodBanksScreenState extends State<NearbyBloodBanksScreen> {
                     // Location Privacy Notice
                     Row(
                       children: [
-                        const Icon(Icons.shield_outlined, size: 14, color: NetraColors.textMuted),
+                        const Icon(Icons.shield_outlined,
+                            size: 14, color: NetraColors.textMuted),
                         NetraSpacing.gapW8,
                         Expanded(
                           child: Text(
                             "NETRA uses approximate location for discovery. Exact location is never permanently recorded.",
-                            style: NetraTypography.bodySmall.copyWith(color: NetraColors.textMuted),
+                            style: NetraTypography.bodySmall
+                                .copyWith(color: NetraColors.textMuted),
                           ),
                         ),
                       ],
@@ -241,7 +258,9 @@ class _NearbyBloodBanksScreenState extends State<NearbyBloodBanksScreen> {
             // Content Area
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: NetraColors.primaryRed))
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                          color: NetraColors.primaryRed))
                   : _errorMessage != null
                       ? Center(
                           child: Padding(
@@ -249,9 +268,12 @@ class _NearbyBloodBanksScreenState extends State<NearbyBloodBanksScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.error_outline_rounded, size: 48, color: NetraColors.ineligibleRed),
+                                const Icon(Icons.error_outline_rounded,
+                                    size: 48, color: NetraColors.ineligibleRed),
                                 NetraSpacing.gapH12,
-                                Text(_errorMessage!, style: NetraTypography.bodyLarge, textAlign: TextAlign.center),
+                                Text(_errorMessage!,
+                                    style: NetraTypography.bodyLarge,
+                                    textAlign: TextAlign.center),
                                 NetraSpacing.gapH16,
                                 NetraButton.primary(
                                   text: "Retry",
@@ -268,17 +290,21 @@ class _NearbyBloodBanksScreenState extends State<NearbyBloodBanksScreen> {
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(Icons.search_off_rounded, size: 48, color: NetraColors.textMuted),
+                                    const Icon(Icons.search_off_rounded,
+                                        size: 48, color: NetraColors.textMuted),
                                     NetraSpacing.gapH12,
                                     Text(
                                       "No authorized blood centres found matching your query.",
-                                      style: NetraTypography.titleMedium.copyWith(color: NetraColors.textSecondary),
+                                      style: NetraTypography.titleMedium
+                                          .copyWith(
+                                              color: NetraColors.textSecondary),
                                       textAlign: TextAlign.center,
                                     ),
                                     NetraSpacing.gapH8,
                                     Text(
                                       "Try expanding your search radius or selecting 'All Blood Groups'.",
-                                      style: NetraTypography.bodySmall.copyWith(color: NetraColors.textMuted),
+                                      style: NetraTypography.bodySmall.copyWith(
+                                          color: NetraColors.textMuted),
                                       textAlign: TextAlign.center,
                                     ),
                                   ],
@@ -286,10 +312,12 @@ class _NearbyBloodBanksScreenState extends State<NearbyBloodBanksScreen> {
                               ),
                             )
                           : ResponsiveContainer.wide(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
                               child: isDesktopOrTablet
                                   ? GridView.builder(
-                                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                      gridDelegate:
+                                          const SliverGridDelegateWithFixedCrossAxisCount(
                                         crossAxisCount: 2,
                                         crossAxisSpacing: 16,
                                         mainAxisSpacing: 16,
@@ -306,7 +334,8 @@ class _NearbyBloodBanksScreenState extends State<NearbyBloodBanksScreen> {
                                     )
                                   : ListView.separated(
                                       itemCount: _bloodBanks.length,
-                                      separatorBuilder: (context, index) => NetraSpacing.gapH12,
+                                      separatorBuilder: (context, index) =>
+                                          NetraSpacing.gapH12,
                                       itemBuilder: (context, index) {
                                         final bank = _bloodBanks[index];
                                         return BloodBankCard(

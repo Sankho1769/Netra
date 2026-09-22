@@ -44,7 +44,8 @@ class DonorController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _donorProfile = await _apiService.createDonorProfile(accessToken, request);
+      _donorProfile =
+          await _apiService.createDonorProfile(accessToken, request);
       _isInitialized = true;
       _isLoading = false;
       notifyListeners();
@@ -66,7 +67,8 @@ class DonorController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _donorProfile = await _apiService.updateDonorProfile(accessToken, request);
+      _donorProfile =
+          await _apiService.updateDonorProfile(accessToken, request);
       _isLoading = false;
       notifyListeners();
       return true;

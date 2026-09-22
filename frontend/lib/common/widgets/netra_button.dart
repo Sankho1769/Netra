@@ -25,6 +25,16 @@ class NetraButton extends StatelessWidget {
     this.height = 52.0,
   });
 
+  const NetraButton.primary({
+    super.key,
+    required this.text,
+    required this.onPressed,
+    this.icon,
+    this.isLoading = false,
+    this.isFullWidth = true,
+    this.height = 52.0,
+  }) : variant = NetraButtonVariant.primary;
+
   const NetraButton.outlined({
     super.key,
     required this.text,
@@ -77,7 +87,8 @@ class NetraButton extends StatelessWidget {
         child: CircularProgressIndicator(
           strokeWidth: 2.5,
           valueColor: AlwaysStoppedAnimation<Color>(
-            variant == NetraButtonVariant.primary || variant == NetraButtonVariant.danger
+            variant == NetraButtonVariant.primary ||
+                    variant == NetraButtonVariant.danger
                 ? NetraColors.surfaceWhite
                 : NetraColors.primaryRed,
           ),
@@ -112,7 +123,8 @@ class NetraButton extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
             ),
-            textStyle: NetraTypography.labelLarge.copyWith(color: NetraColors.surfaceWhite),
+            textStyle: NetraTypography.labelLarge
+                .copyWith(color: NetraColors.surfaceWhite),
           ),
           child: childContent,
         );
@@ -131,7 +143,8 @@ class NetraButton extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
             ),
-            textStyle: NetraTypography.labelLarge.copyWith(color: NetraColors.primaryRed),
+            textStyle: NetraTypography.labelLarge
+                .copyWith(color: NetraColors.primaryRed),
           ),
           child: childContent,
         );
@@ -144,14 +157,17 @@ class NetraButton extends StatelessWidget {
             foregroundColor: NetraColors.primaryRed,
             disabledForegroundColor: NetraColors.textDisabled,
             side: BorderSide(
-              color: effectiveOnPressed == null ? NetraColors.borderGray : NetraColors.primaryRed,
+              color: effectiveOnPressed == null
+                  ? NetraColors.borderGray
+                  : NetraColors.primaryRed,
               width: 1.5,
             ),
             minimumSize: Size(isFullWidth ? double.infinity : 120, height),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
             ),
-            textStyle: NetraTypography.labelLarge.copyWith(color: NetraColors.primaryRed),
+            textStyle: NetraTypography.labelLarge
+                .copyWith(color: NetraColors.primaryRed),
           ),
           child: childContent,
         );
@@ -167,7 +183,8 @@ class NetraButton extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
             ),
-            textStyle: NetraTypography.labelLarge.copyWith(color: NetraColors.primaryRed),
+            textStyle: NetraTypography.labelLarge
+                .copyWith(color: NetraColors.primaryRed),
           ),
           child: childContent,
         );
@@ -186,13 +203,16 @@ class NetraButton extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
             ),
-            textStyle: NetraTypography.labelLarge.copyWith(color: NetraColors.surfaceWhite),
+            textStyle: NetraTypography.labelLarge
+                .copyWith(color: NetraColors.surfaceWhite),
           ),
           child: childContent,
         );
         break;
     }
 
-    return isFullWidth ? SizedBox(width: double.infinity, child: button) : button;
+    return isFullWidth
+        ? SizedBox(width: double.infinity, child: button)
+        : button;
   }
 }

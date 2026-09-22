@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'responsive_breakpoints.dart';
 
 enum ResponsiveContainerWidth {
-  narrow,   // 560px
-  reading,  // 680px (ideal for eligibility questionnaire, single column forms)
+  narrow, // 560px
+  reading, // 680px (ideal for eligibility questionnaire, single column forms)
   standard, // 880px (ideal for review screens, two column forms)
-  wide,     // 1140px (ideal for dashboards, lists, grids)
-  canvas,   // 1400px (ultrawide layout bounds)
+  wide, // 1140px (ideal for dashboards, lists, grids)
+  canvas, // 1400px (ultrawide layout bounds)
 }
 
 class ResponsiveContainer extends StatelessWidget {

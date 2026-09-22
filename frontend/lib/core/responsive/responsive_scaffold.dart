@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../common/widgets/netra_app_bar.dart';
 import '../theme/netra_colors.dart';
 import '../theme/netra_spacing.dart';
 import '../theme/netra_typography.dart';
@@ -20,6 +21,8 @@ class ResponsiveNavigationDestination {
 
 class ResponsiveScaffold extends StatelessWidget {
   final PreferredSizeWidget? appBar;
+  final String? title;
+  final List<Widget>? actions;
   final Widget body;
   final List<ResponsiveNavigationDestination>? destinations;
   final int selectedIndex;
@@ -31,6 +34,8 @@ class ResponsiveScaffold extends StatelessWidget {
   const ResponsiveScaffold({
     super.key,
     this.appBar,
+    this.title,
+    this.actions,
     required this.body,
     this.destinations,
     this.selectedIndex = 0,
@@ -42,14 +47,15 @@ class ResponsiveScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveAppBar = appBar ??
+        (title != null ? NetraAppBar(title: title!, actions: actions) : null);
     final hasNavigation = destinations != null && destinations!.isNotEmpty;
     final isMobile = context.isMobile;
     final isTablet = context.isTablet;
-    final isDesktop = context.isDesktopOrWide;
 
     if (!hasNavigation || isMobile) {
       return Scaffold(
-        appBar: appBar,
+        appBar: effectiveAppBar,
         backgroundColor: backgroundColor ?? NetraColors.backgroundGray,
         body: body,
         floatingActionButton: floatingActionButton,
@@ -64,7 +70,8 @@ class ResponsiveScaffold extends StatelessWidget {
                 destinations: destinations!.map((d) {
                   return NavigationDestination(
                     icon: Icon(d.icon),
-                    selectedIcon: Icon(d.selectedIcon ?? d.icon, color: NetraColors.primaryRed),
+                    selectedIcon: Icon(d.selectedIcon ?? d.icon,
+                        color: NetraColors.primaryRed),
                     label: d.label,
                     tooltip: d.tooltip,
                   );
@@ -77,7 +84,7 @@ class ResponsiveScaffold extends StatelessWidget {
     // Tablet: NavigationRail
     if (isTablet) {
       return Scaffold(
-        appBar: appBar,
+        appBar: effectiveAppBar,
         backgroundColor: backgroundColor ?? NetraColors.backgroundGray,
         floatingActionButton: floatingActionButton,
         floatingActionButtonLocation: floatingActionButtonLocation,
@@ -92,7 +99,8 @@ class ResponsiveScaffold extends StatelessWidget {
               destinations: destinations!.map((d) {
                 return NavigationRailDestination(
                   icon: Icon(d.icon),
-                  selectedIcon: Icon(d.selectedIcon ?? d.icon, color: NetraColors.primaryRed),
+                  selectedIcon: Icon(d.selectedIcon ?? d.icon,
+                      color: NetraColors.primaryRed),
                   label: Text(
                     d.label,
                     style: NetraTypography.labelSmall,
@@ -100,7 +108,8 @@ class ResponsiveScaffold extends StatelessWidget {
                 );
               }).toList(),
             ),
-            const VerticalDivider(thickness: 1, width: 1, color: NetraColors.borderGray),
+            const VerticalDivider(
+                thickness: 1, width: 1, color: NetraColors.borderGray),
             Expanded(child: body),
           ],
         ),
@@ -109,7 +118,7 @@ class ResponsiveScaffold extends StatelessWidget {
 
     // Desktop: Extended NavigationRail / Persistent Drawer
     return Scaffold(
-      appBar: appBar,
+      appBar: effectiveAppBar,
       backgroundColor: backgroundColor ?? NetraColors.backgroundGray,
       floatingActionButton: floatingActionButton,
       floatingActionButtonLocation: floatingActionButtonLocation,
@@ -123,16 +132,19 @@ class ResponsiveScaffold extends StatelessWidget {
             backgroundColor: NetraColors.surfaceWhite,
             indicatorColor: NetraColors.backgroundRed,
             leading: Padding(
-              padding: const EdgeInsets.symmetric(vertical: NetraSpacing.lg, horizontal: NetraSpacing.md),
+              padding: const EdgeInsets.symmetric(
+                  vertical: NetraSpacing.lg, horizontal: NetraSpacing.md),
               child: Row(
                 children: [
                   Container(
                     padding: NetraSpacing.paddingSm,
                     decoration: BoxDecoration(
                       color: NetraColors.backgroundRed,
-                      borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+                      borderRadius:
+                          BorderRadius.circular(NetraSpacing.radiusMd),
                     ),
-                    child: const Icon(Icons.water_drop_rounded, color: NetraColors.primaryRed, size: 28),
+                    child: const Icon(Icons.water_drop_rounded,
+                        color: NetraColors.primaryRed, size: 28),
                   ),
                   NetraSpacing.gapW12,
                   const Text(
@@ -150,7 +162,8 @@ class ResponsiveScaffold extends StatelessWidget {
             destinations: destinations!.map((d) {
               return NavigationRailDestination(
                 icon: Icon(d.icon),
-                selectedIcon: Icon(d.selectedIcon ?? d.icon, color: NetraColors.primaryRed),
+                selectedIcon: Icon(d.selectedIcon ?? d.icon,
+                    color: NetraColors.primaryRed),
                 label: Text(
                   d.label,
                   style: NetraTypography.labelLarge,
@@ -158,7 +171,8 @@ class ResponsiveScaffold extends StatelessWidget {
               );
             }).toList(),
           ),
-          const VerticalDivider(thickness: 1, width: 1, color: NetraColors.borderGray),
+          const VerticalDivider(
+              thickness: 1, width: 1, color: NetraColors.borderGray),
           Expanded(child: body),
         ],
       ),

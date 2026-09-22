@@ -5,7 +5,6 @@ import '../../../core/theme/netra_colors.dart';
 import '../../../core/theme/netra_spacing.dart';
 import '../../../core/theme/netra_typography.dart';
 import '../models/blood_bank.dart';
-import '../models/blood_inventory.dart';
 import '../services/bloodbank_api_service.dart';
 import '../widgets/blood_availability_card.dart';
 import '../widgets/verification_badge.dart';
@@ -77,7 +76,8 @@ class _BloodBankDetailsScreenState extends State<BloodBankDetailsScreen> {
       ),
       backgroundColor: NetraColors.backgroundGray,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: NetraColors.primaryRed))
+          ? const Center(
+              child: CircularProgressIndicator(color: NetraColors.primaryRed))
           : _errorMessage != null
               ? Center(
                   child: Padding(
@@ -85,9 +85,12 @@ class _BloodBankDetailsScreenState extends State<BloodBankDetailsScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline_rounded, size: 48, color: NetraColors.ineligibleRed),
+                        const Icon(Icons.error_outline_rounded,
+                            size: 48, color: NetraColors.ineligibleRed),
                         NetraSpacing.gapH12,
-                        Text(_errorMessage!, style: NetraTypography.bodyLarge, textAlign: TextAlign.center),
+                        Text(_errorMessage!,
+                            style: NetraTypography.bodyLarge,
+                            textAlign: TextAlign.center),
                         NetraSpacing.gapH16,
                         NetraButton.primary(
                           text: "Retry",
@@ -126,18 +129,22 @@ class _BloodBankDetailsScreenState extends State<BloodBankDetailsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(bank.name, style: NetraTypography.headlineSmall),
-                              if (bank.registrationNumber != null && bank.registrationNumber!.isNotEmpty) ...[
+                              Text(bank.name,
+                                  style: NetraTypography.headlineSmall),
+                              if (bank.registrationNumber != null &&
+                                  bank.registrationNumber!.isNotEmpty) ...[
                                 NetraSpacing.gapH4,
                                 Text(
                                   'Reg: ${bank.registrationNumber}',
-                                  style: NetraTypography.labelSmall.copyWith(color: NetraColors.textMuted),
+                                  style: NetraTypography.labelSmall
+                                      .copyWith(color: NetraColors.textMuted),
                                 ),
                               ],
                             ],
                           ),
                         ),
-                        BloodBankVerificationBadge(status: bank.verificationStatus),
+                        BloodBankVerificationBadge(
+                            status: bank.verificationStatus),
                       ],
                     ),
                     NetraSpacing.gapH16,
@@ -145,7 +152,8 @@ class _BloodBankDetailsScreenState extends State<BloodBankDetailsScreen> {
                     NetraSpacing.gapH16,
 
                     // Details Info Rows
-                    _buildInfoRow(Icons.location_on_outlined, '${bank.address}, ${bank.city}, ${bank.state} - ${bank.postalCode}'),
+                    _buildInfoRow(Icons.location_on_outlined,
+                        '${bank.address}, ${bank.city}, ${bank.state} - ${bank.postalCode}'),
                     NetraSpacing.gapH12,
                     _buildInfoRow(Icons.phone_outlined, bank.phone),
                     if (bank.email != null && bank.email!.isNotEmpty) ...[
@@ -156,15 +164,21 @@ class _BloodBankDetailsScreenState extends State<BloodBankDetailsScreen> {
                     Row(
                       children: [
                         Icon(
-                          isOpen ? Icons.access_time_rounded : Icons.access_time_filled_rounded,
+                          isOpen
+                              ? Icons.access_time_rounded
+                              : Icons.access_time_filled_rounded,
                           size: 18,
-                          color: isOpen ? NetraColors.eligibleGreen : NetraColors.ineligibleRed,
+                          color: isOpen
+                              ? NetraColors.eligibleGreen
+                              : NetraColors.ineligibleRed,
                         ),
                         NetraSpacing.gapW8,
                         Text(
                           'Operating Status: ${bank.operatingStatus.displayName}',
                           style: NetraTypography.bodyMedium.copyWith(
-                            color: isOpen ? NetraColors.eligibleGreen : NetraColors.ineligibleRed,
+                            color: isOpen
+                                ? NetraColors.eligibleGreen
+                                : NetraColors.ineligibleRed,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -172,7 +186,8 @@ class _BloodBankDetailsScreenState extends State<BloodBankDetailsScreen> {
                           const Spacer(),
                           Text(
                             bank.formattedDistance,
-                            style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary),
+                            style: NetraTypography.bodySmall
+                                .copyWith(color: NetraColors.textSecondary),
                           ),
                         ],
                       ],
@@ -187,9 +202,11 @@ class _BloodBankDetailsScreenState extends State<BloodBankDetailsScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Blood Stock Availability', style: NetraTypography.titleLarge),
+                  Text('Blood Stock Availability',
+                      style: NetraTypography.titleLarge),
                   IconButton(
-                    icon: const Icon(Icons.refresh_rounded, color: NetraColors.primaryRed),
+                    icon: const Icon(Icons.refresh_rounded,
+                        color: NetraColors.primaryRed),
                     tooltip: 'Refresh Inventory',
                     onPressed: _loadDetails,
                   ),
@@ -198,7 +215,8 @@ class _BloodBankDetailsScreenState extends State<BloodBankDetailsScreen> {
               NetraSpacing.gapH4,
               Text(
                 'Reported stock levels with freshness verification. NETRA does not reserve blood units.',
-                style: NetraTypography.bodySmall.copyWith(color: NetraColors.textMuted),
+                style: NetraTypography.bodySmall
+                    .copyWith(color: NetraColors.textMuted),
               ),
 
               NetraSpacing.gapH16,
@@ -216,7 +234,8 @@ class _BloodBankDetailsScreenState extends State<BloodBankDetailsScreen> {
                   child: Center(
                     child: Text(
                       'No inventory reported yet by this blood centre.',
-                      style: NetraTypography.bodyMedium.copyWith(color: NetraColors.textSecondary),
+                      style: NetraTypography.bodyMedium
+                          .copyWith(color: NetraColors.textSecondary),
                     ),
                   ),
                 )
@@ -225,26 +244,30 @@ class _BloodBankDetailsScreenState extends State<BloodBankDetailsScreen> {
                     ? GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 4,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
                           mainAxisExtent: 110,
                         ),
                         itemCount: bank.inventory.length,
-                        itemBuilder: (context, index) => BloodAvailabilityCard(item: bank.inventory[index]),
+                        itemBuilder: (context, index) =>
+                            BloodAvailabilityCard(item: bank.inventory[index]),
                       )
                     : GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
                           mainAxisExtent: 110,
                         ),
                         itemCount: bank.inventory.length,
-                        itemBuilder: (context, index) => BloodAvailabilityCard(item: bank.inventory[index]),
+                        itemBuilder: (context, index) =>
+                            BloodAvailabilityCard(item: bank.inventory[index]),
                       ),
             ],
           ),
@@ -262,7 +285,8 @@ class _BloodBankDetailsScreenState extends State<BloodBankDetailsScreen> {
         Expanded(
           child: Text(
             text,
-            style: NetraTypography.bodyMedium.copyWith(color: NetraColors.textPrimary),
+            style: NetraTypography.bodyMedium
+                .copyWith(color: NetraColors.textPrimary),
           ),
         ),
       ],

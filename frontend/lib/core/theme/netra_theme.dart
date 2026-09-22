@@ -49,7 +49,7 @@ class NetraTheme {
         centerTitle: true,
         titleTextStyle: NetraTypography.headlineSmall,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: NetraColors.surfaceWhite,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -67,7 +67,8 @@ class NetraTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
           ),
-          textStyle: NetraTypography.labelLarge.copyWith(color: NetraColors.surfaceWhite),
+          textStyle: NetraTypography.labelLarge
+              .copyWith(color: NetraColors.surfaceWhite),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -78,13 +79,15 @@ class NetraTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
           ),
-          textStyle: NetraTypography.labelLarge.copyWith(color: NetraColors.primaryRed),
+          textStyle: NetraTypography.labelLarge
+              .copyWith(color: NetraColors.primaryRed),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: NetraColors.surfaceWhite,
-        contentPadding: const EdgeInsets.symmetric(horizontal: NetraSpacing.lg, vertical: NetraSpacing.md),
+        contentPadding: const EdgeInsets.symmetric(
+            horizontal: NetraSpacing.lg, vertical: NetraSpacing.md),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
           borderSide: const BorderSide(color: NetraColors.borderGray),
@@ -102,7 +105,8 @@ class NetraTheme {
           borderSide: const BorderSide(color: NetraColors.darkRed, width: 1.5),
         ),
         labelStyle: NetraTypography.bodyMedium,
-        hintStyle: NetraTypography.bodyMedium.copyWith(color: NetraColors.textMuted),
+        hintStyle:
+            NetraTypography.bodyMedium.copyWith(color: NetraColors.textMuted),
       ),
     );
   }

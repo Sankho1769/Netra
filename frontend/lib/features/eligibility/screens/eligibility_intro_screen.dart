@@ -87,10 +87,12 @@ class EligibilityIntroScreen extends StatelessWidget {
               NetraButton(
                 text: "Start Eligibility Check",
                 onPressed: () {
-                  final controller = EligibilityController(apiService: EligibilityApiService());
+                  final controller = EligibilityController(
+                      apiService: EligibilityApiService());
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => EligibilityFlowScreen(controller: controller),
+                      builder: (context) =>
+                          EligibilityFlowScreen(controller: controller),
                     ),
                   );
                 },

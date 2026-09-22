@@ -128,7 +128,9 @@ class BloodRequestSummary {
       city: json['city'] as String,
       state: json['state'] as String,
       requiredBy: DateTime.parse(json['requiredBy'] as String),
-      distanceKm: json['distanceKm'] != null ? (json['distanceKm'] as num).toDouble() : null,
+      distanceKm: json['distanceKm'] != null
+          ? (json['distanceKm'] as num).toDouble()
+          : null,
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }
@@ -185,20 +187,30 @@ class BloodRequestDetail extends BloodRequestSummary {
       city: json['city'] as String,
       state: json['state'] as String,
       requiredBy: DateTime.parse(json['requiredBy'] as String),
-      distanceKm: json['distanceKm'] != null ? (json['distanceKm'] as num).toDouble() : null,
+      distanceKm: json['distanceKm'] != null
+          ? (json['distanceKm'] as num).toDouble()
+          : null,
       createdAt: DateTime.parse(json['createdAt'] as String),
       requesterUserId: json['requesterUserId'] as String?,
       isOwner: json['isOwner'] as bool? ?? false,
       canManage: json['canManage'] as bool? ?? false,
       hospitalAddress: json['hospitalAddress'] as String,
       postalCode: json['postalCode'] as String,
-      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
-      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
+      latitude: json['latitude'] != null
+          ? (json['latitude'] as num).toDouble()
+          : null,
+      longitude: json['longitude'] != null
+          ? (json['longitude'] as num).toDouble()
+          : null,
       description: json['description'] as String?,
       updatedAt: DateTime.parse(json['updatedAt'] as String),
-      cancelledAt: json['cancelledAt'] != null ? DateTime.parse(json['cancelledAt'] as String) : null,
+      cancelledAt: json['cancelledAt'] != null
+          ? DateTime.parse(json['cancelledAt'] as String)
+          : null,
       cancellationReason: json['cancellationReason'] as String?,
-      fulfilledAt: json['fulfilledAt'] != null ? DateTime.parse(json['fulfilledAt'] as String) : null,
+      fulfilledAt: json['fulfilledAt'] != null
+          ? DateTime.parse(json['fulfilledAt'] as String)
+          : null,
     );
   }
 }

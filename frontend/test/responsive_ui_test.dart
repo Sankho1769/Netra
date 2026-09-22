@@ -33,9 +33,12 @@ void main() {
       expect(ResponsiveBreakpoints.getScreenType(1439.0), ScreenType.desktop);
 
       // 5. Wide Desktop (>= 1440px)
-      expect(ResponsiveBreakpoints.getScreenType(1440.0), ScreenType.wideDesktop);
-      expect(ResponsiveBreakpoints.getScreenType(1920.0), ScreenType.wideDesktop);
-      expect(ResponsiveBreakpoints.getScreenType(2560.0), ScreenType.wideDesktop);
+      expect(
+          ResponsiveBreakpoints.getScreenType(1440.0), ScreenType.wideDesktop);
+      expect(
+          ResponsiveBreakpoints.getScreenType(1920.0), ScreenType.wideDesktop);
+      expect(
+          ResponsiveBreakpoints.getScreenType(2560.0), ScreenType.wideDesktop);
     });
 
     test('Responsive container max width constants conform to ergonomics', () {
@@ -76,7 +79,8 @@ void main() {
   });
 
   group('Common Widget Rendering Tests across Viewports', () {
-    testWidgets('ResponsiveContainer bounds content width correctly', (WidgetTester tester) async {
+    testWidgets('ResponsiveContainer bounds content width correctly',
+        (WidgetTester tester) async {
       // Simulate Desktop viewport (1280x800)
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1.0;
@@ -95,13 +99,17 @@ void main() {
       final constrainedBoxFinder = find.byType(ConstrainedBox);
       expect(constrainedBoxFinder, findsWidgets);
 
-      final ConstrainedBox constrainedBox = tester.widgetList<ConstrainedBox>(constrainedBoxFinder).firstWhere(
-        (box) => box.constraints.maxWidth == ResponsiveBreakpoints.maxContentWidthReading,
-      );
+      final ConstrainedBox constrainedBox =
+          tester.widgetList<ConstrainedBox>(constrainedBoxFinder).firstWhere(
+                (box) =>
+                    box.constraints.maxWidth ==
+                    ResponsiveBreakpoints.maxContentWidthReading,
+              );
       expect(constrainedBox.constraints.maxWidth, 680.0);
     });
 
-    testWidgets('NetraButton renders with primary variant and reacts to tap', (WidgetTester tester) async {
+    testWidgets('NetraButton renders with primary variant and reacts to tap',
+        (WidgetTester tester) async {
       bool tapped = false;
 
       await tester.pumpWidget(
@@ -120,7 +128,8 @@ void main() {
       expect(tapped, true);
     });
 
-    testWidgets('NetraDisclaimerBanner renders mandatory medical guidance text', (WidgetTester tester) async {
+    testWidgets('NetraDisclaimerBanner renders mandatory medical guidance text',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(

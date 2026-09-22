@@ -4,7 +4,8 @@ import 'permission_service.dart';
 /// Privacy-first location service for NETRA.
 /// Coordinates are coarse by default to prevent precise donor tracking.
 abstract class LocationService {
-  Future<ApproximateLocation?> getCurrentLocation({bool approximateOnly = true});
+  Future<ApproximateLocation?> getCurrentLocation(
+      {bool approximateOnly = true});
   Future<List<ApproximateLocation>> searchLocations(String query);
 }
 
@@ -16,7 +17,8 @@ class DefaultLocationService implements LocationService {
       : _permissionService = permissionService ?? DefaultPermissionService();
 
   @override
-  Future<ApproximateLocation?> getCurrentLocation({bool approximateOnly = true}) async {
+  Future<ApproximateLocation?> getCurrentLocation(
+      {bool approximateOnly = true}) async {
     final permission = await _permissionService.checkLocationPermission();
     if (permission != LocationPermissionStatus.granted) {
       final requested = await _permissionService.requestLocationPermission();

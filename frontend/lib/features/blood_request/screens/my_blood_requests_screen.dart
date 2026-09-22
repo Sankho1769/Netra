@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/blood_request.dart';
 import '../state/blood_request_controller.dart';
 import '../widgets/blood_request_card.dart';
 import 'blood_request_details_screen.dart';
@@ -40,7 +39,8 @@ class _MyBloodRequestsScreenState extends State<MyBloodRequestsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Blood Requests', style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text('My Blood Requests',
+            style: TextStyle(fontWeight: FontWeight.w700)),
       ),
       body: _controller.isLoading && _controller.myRequests.isEmpty
           ? const Center(child: CircularProgressIndicator())
@@ -51,7 +51,8 @@ class _MyBloodRequestsScreenState extends State<MyBloodRequestsScreen> {
                       physics: const AlwaysScrollableScrollPhysics(),
                       children: [
                         const SizedBox(height: 80),
-                        Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.shade400),
+                        Icon(Icons.inbox_outlined,
+                            size: 64, color: Colors.grey.shade400),
                         const SizedBox(height: 16),
                         const Center(
                           child: Text(

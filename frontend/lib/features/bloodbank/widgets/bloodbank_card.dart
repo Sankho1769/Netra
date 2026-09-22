@@ -58,7 +58,8 @@ class BloodBankCard extends StatelessWidget {
                       NetraSpacing.gapH4,
                       Text(
                         '${bank.address}, ${bank.city}',
-                        style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary),
+                        style: NetraTypography.bodySmall
+                            .copyWith(color: NetraColors.textSecondary),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -72,29 +73,37 @@ class BloodBankCard extends StatelessWidget {
               children: [
                 if (bank.distanceKm != null) ...[
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: NetraColors.backgroundGray,
-                      borderRadius: BorderRadius.circular(NetraSpacing.radiusXs),
+                      borderRadius:
+                          BorderRadius.circular(NetraSpacing.radiusXs),
                       border: Border.all(color: NetraColors.borderSubtle),
                     ),
                     child: Text(
                       bank.formattedDistance,
-                      style: NetraTypography.labelSmall.copyWith(color: NetraColors.textPrimary),
+                      style: NetraTypography.labelSmall
+                          .copyWith(color: NetraColors.textPrimary),
                     ),
                   ),
                   NetraSpacing.gapW8,
                 ],
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: isOpen ? NetraColors.eligibleGreenBg : NetraColors.ineligibleRedBg,
+                    color: isOpen
+                        ? NetraColors.eligibleGreenBg
+                        : NetraColors.ineligibleRedBg,
                     borderRadius: BorderRadius.circular(NetraSpacing.radiusXs),
                   ),
                   child: Text(
                     bank.operatingStatus.displayName,
                     style: NetraTypography.labelSmall.copyWith(
-                      color: isOpen ? NetraColors.eligibleGreen : NetraColors.ineligibleRed,
+                      color: isOpen
+                          ? NetraColors.eligibleGreen
+                          : NetraColors.ineligibleRed,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

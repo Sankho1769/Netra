@@ -12,7 +12,8 @@ class EventCapacityIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double fraction = capacity > 0 ? (currentCount / capacity).clamp(0.0, 1.0) : 0.0;
+    final double fraction =
+        capacity > 0 ? (currentCount / capacity).clamp(0.0, 1.0) : 0.0;
     final int remaining = capacity > currentCount ? capacity - currentCount : 0;
     final bool isFull = remaining == 0;
 

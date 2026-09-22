@@ -50,7 +50,8 @@ class _DonorMatchDetailScreenState extends State<DonorMatchDetailScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString().replaceFirst('ValidationException: ', '');
+          _errorMessage =
+              e.toString().replaceFirst('ValidationException: ', '');
           _isLoading = false;
         });
       }
@@ -98,7 +99,8 @@ class _DonorMatchDetailScreenState extends State<DonorMatchDetailScreen> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Match accepted successfully. Blood bank staff will coordinate next steps.'),
+            content: Text(
+                'Match accepted successfully. Blood bank staff will coordinate next steps.'),
             backgroundColor: Color(0xFF16A34A),
           ),
         );
@@ -108,7 +110,8 @@ class _DonorMatchDetailScreenState extends State<DonorMatchDetailScreen> {
         setState(() => _isProcessingAction = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString().replaceFirst('ValidationException: ', '')),
+            content:
+                Text(e.toString().replaceFirst('ValidationException: ', '')),
             backgroundColor: const Color(0xFFDC2626),
           ),
         );
@@ -164,7 +167,8 @@ class _DonorMatchDetailScreenState extends State<DonorMatchDetailScreen> {
         setState(() => _isProcessingAction = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString().replaceFirst('ValidationException: ', '')),
+            content:
+                Text(e.toString().replaceFirst('ValidationException: ', '')),
             backgroundColor: const Color(0xFFDC2626),
           ),
         );
@@ -186,7 +190,8 @@ class _DonorMatchDetailScreenState extends State<DonorMatchDetailScreen> {
           foregroundColor: Colors.white,
         ),
         body: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: Color(0xFFDC2626)))
+            ? const Center(
+                child: CircularProgressIndicator(color: Color(0xFFDC2626)))
             : _errorMessage != null
                 ? _buildErrorState()
                 : _buildContent(),
@@ -196,7 +201,8 @@ class _DonorMatchDetailScreenState extends State<DonorMatchDetailScreen> {
 
   Widget _buildContent() {
     final detail = _detail!;
-    final bool canAct = detail.responseStatus == DonorMatchStatus.matched && !detail.isExpired;
+    final bool canAct =
+        detail.responseStatus == DonorMatchStatus.matched && !detail.isExpired;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -210,7 +216,8 @@ class _DonorMatchDetailScreenState extends State<DonorMatchDetailScreen> {
           // Status & Clinical Card
           Card(
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -221,7 +228,10 @@ class _DonorMatchDetailScreenState extends State<DonorMatchDetailScreen> {
                     children: [
                       Text(
                         'Status',
-                        style: TextStyle(fontSize: 14, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                        style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w500),
                       ),
                       MatchStatusBadge(status: detail.responseStatus),
                     ],
@@ -251,14 +261,17 @@ class _DonorMatchDetailScreenState extends State<DonorMatchDetailScreen> {
                           children: [
                             Text(
                               '${detail.unitsRequired} Unit${detail.unitsRequired > 1 ? 's' : ''} Needed',
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Urgency: ${detail.urgency}',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: detail.urgency == 'CRITICAL' ? const Color(0xFFDC2626) : Colors.grey.shade700,
+                                color: detail.urgency == 'CRITICAL'
+                                    ? const Color(0xFFDC2626)
+                                    : Colors.grey.shade700,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -276,15 +289,19 @@ class _DonorMatchDetailScreenState extends State<DonorMatchDetailScreen> {
           // Hospital & Location Card
           Card(
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Location Details', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                  const Text('Location Details',
+                      style:
+                          TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
-                  _buildDetailRow(Icons.local_hospital_outlined, 'Hospital', detail.hospitalName),
+                  _buildDetailRow(Icons.local_hospital_outlined, 'Hospital',
+                      detail.hospitalName),
                   if (detail.city.isNotEmpty || detail.state.isNotEmpty)
                     _buildDetailRow(
                       Icons.location_on_outlined,
@@ -306,13 +323,16 @@ class _DonorMatchDetailScreenState extends State<DonorMatchDetailScreen> {
           // Match Timeline Card
           Card(
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Timeline & Expiration', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                  const Text('Timeline & Expiration',
+                      style:
+                          TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   _buildDetailRow(
                     Icons.schedule_outlined,
@@ -353,14 +373,16 @@ class _DonorMatchDetailScreenState extends State<DonorMatchDetailScreen> {
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
                         )
                       : const Text('Accept Match Assignment'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF16A34A),
                     foregroundColor: Colors.white,
                     minimumSize: const Size.fromHeight(48),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -372,7 +394,8 @@ class _DonorMatchDetailScreenState extends State<DonorMatchDetailScreen> {
                     foregroundColor: const Color(0xFFDC2626),
                     side: const BorderSide(color: Color(0xFFDC2626)),
                     minimumSize: const Size.fromHeight(48),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
               ],
@@ -387,14 +410,16 @@ class _DonorMatchDetailScreenState extends State<DonorMatchDetailScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.lock_outline, color: Colors.grey.shade600, size: 20),
+                  Icon(Icons.lock_outline,
+                      color: Colors.grey.shade600, size: 20),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       detail.responseStatus.isTerminal
                           ? 'This match is in a terminal state (${detail.responseStatus.displayName}) and cannot be modified.'
                           : 'This match has expired.',
-                      style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                      style:
+                          TextStyle(color: Colors.grey.shade700, fontSize: 13),
                     ),
                   ),
                 ],
@@ -415,7 +440,8 @@ class _DonorMatchDetailScreenState extends State<DonorMatchDetailScreen> {
           const SizedBox(width: 10),
           SizedBox(
             width: 130,
-            child: Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+            child: Text(label,
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
           ),
           Expanded(
             child: Text(

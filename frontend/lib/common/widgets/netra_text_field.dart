@@ -19,6 +19,7 @@ class NetraTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final bool autofocus;
   final int maxLines;
+  final FormFieldValidator<String>? validator;
 
   const NetraTextField({
     super.key,
@@ -36,6 +37,7 @@ class NetraTextField extends StatelessWidget {
     this.suffixIcon,
     this.autofocus = false,
     this.maxLines = 1,
+    this.validator,
   });
 
   @override
@@ -47,7 +49,9 @@ class NetraTextField extends StatelessWidget {
         Text(
           label,
           style: NetraTypography.titleSmall.copyWith(
-            color: errorText != null ? NetraColors.errorRed : NetraColors.textPrimary,
+            color: errorText != null
+                ? NetraColors.errorRed
+                : NetraColors.textPrimary,
           ),
         ),
         NetraSpacing.gapH8,
@@ -60,6 +64,7 @@ class NetraTextField extends StatelessWidget {
           readOnly: readOnly,
           autofocus: autofocus,
           maxLines: maxLines,
+          validator: validator,
           style: NetraTypography.bodyLarge,
           decoration: InputDecoration(
             hintText: hint,
@@ -68,7 +73,9 @@ class NetraTextField extends StatelessWidget {
             prefixIcon: prefixIcon,
             suffixIcon: suffixIcon,
             filled: true,
-            fillColor: readOnly ? NetraColors.backgroundGray : NetraColors.surfaceWhite,
+            fillColor: readOnly
+                ? NetraColors.backgroundGray
+                : NetraColors.surfaceWhite,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: NetraSpacing.lg,
               vertical: NetraSpacing.md,
@@ -80,23 +87,29 @@ class NetraTextField extends StatelessWidget {
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
               borderSide: BorderSide(
-                color: errorText != null ? NetraColors.errorRed : NetraColors.borderGray,
+                color: errorText != null
+                    ? NetraColors.errorRed
+                    : NetraColors.borderGray,
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
               borderSide: BorderSide(
-                color: errorText != null ? NetraColors.errorRed : NetraColors.primaryRed,
+                color: errorText != null
+                    ? NetraColors.errorRed
+                    : NetraColors.primaryRed,
                 width: 2.0,
               ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
-              borderSide: const BorderSide(color: NetraColors.errorRed, width: 1.5),
+              borderSide:
+                  const BorderSide(color: NetraColors.errorRed, width: 1.5),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
-              borderSide: const BorderSide(color: NetraColors.errorRed, width: 2.0),
+              borderSide:
+                  const BorderSide(color: NetraColors.errorRed, width: 2.0),
             ),
           ),
         ),

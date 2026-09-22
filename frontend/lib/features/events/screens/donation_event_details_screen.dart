@@ -4,7 +4,6 @@ import '../../../common/widgets/netra_loading_indicator.dart';
 import '../../../common/widgets/netra_error_view.dart';
 import '../../../common/widgets/netra_button.dart';
 import '../../../common/widgets/netra_disclaimer_banner.dart';
-import '../models/donation_event.dart';
 import '../models/event_registration.dart';
 import '../state/donation_event_controller.dart';
 import '../widgets/event_capacity_indicator.dart';
@@ -21,10 +20,12 @@ class DonationEventDetailsScreen extends StatefulWidget {
   });
 
   @override
-  State<DonationEventDetailsScreen> createState() => _DonationEventDetailsScreenState();
+  State<DonationEventDetailsScreen> createState() =>
+      _DonationEventDetailsScreenState();
 }
 
-class _DonationEventDetailsScreenState extends State<DonationEventDetailsScreen> {
+class _DonationEventDetailsScreenState
+    extends State<DonationEventDetailsScreen> {
   late final DonationEventController _controller;
 
   @override
@@ -43,7 +44,20 @@ class _DonationEventDetailsScreenState extends State<DonationEventDetailsScreen>
   }
 
   String _formatDateTime(DateTime dt) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     final month = months[dt.month - 1];
     final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
     final minute = dt.minute.toString().padLeft(2, '0');
@@ -58,7 +72,8 @@ class _DonationEventDetailsScreenState extends State<DonationEventDetailsScreen>
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_controller.actionSuccessMessage ?? "You're registered for this camp!"),
+          content: Text(_controller.actionSuccessMessage ??
+              "You're registered for this camp!"),
           backgroundColor: Colors.green.shade800,
           behavior: SnackBarBehavior.floating,
         ),
@@ -79,9 +94,12 @@ class _DonationEventDetailsScreenState extends State<DonationEventDetailsScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Cancel Registration?'),
-        content: const Text('Are you sure you want to cancel your slot for this donation camp? Your slot will be released to other donors.'),
+        content: const Text(
+            'Are you sure you want to cancel your slot for this donation camp? Your slot will be released to other donors.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Keep Registration')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Keep Registration')),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
@@ -98,7 +116,8 @@ class _DonationEventDetailsScreenState extends State<DonationEventDetailsScreen>
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_controller.actionSuccessMessage ?? 'Registration cancelled.'),
+            content: Text(
+                _controller.actionSuccessMessage ?? 'Registration cancelled.'),
             backgroundColor: Colors.grey.shade800,
             behavior: SnackBarBehavior.floating,
           ),
@@ -115,11 +134,14 @@ class _DonationEventDetailsScreenState extends State<DonationEventDetailsScreen>
         if (_controller.isLoading) {
           return const ResponsiveScaffold(
             title: 'Camp Details',
-            body: Center(child: NetraLoadingIndicator(message: 'Loading camp details...')),
+            body: Center(
+                child:
+                    NetraLoadingIndicator(message: 'Loading camp details...')),
           );
         }
 
-        if (_controller.errorMessage != null && _controller.currentEvent == null) {
+        if (_controller.errorMessage != null &&
+            _controller.currentEvent == null) {
           return ResponsiveScaffold(
             title: 'Camp Details',
             body: NetraErrorView(
@@ -138,7 +160,8 @@ class _DonationEventDetailsScreenState extends State<DonationEventDetailsScreen>
         }
 
         final reg = _controller.currentRegistration;
-        final bool isRegistered = reg != null && reg.status == EventRegistrationStatus.registered;
+        final bool isRegistered =
+            reg != null && reg.status == EventRegistrationStatus.registered;
 
         return ResponsiveScaffold(
           title: event.title,
@@ -168,18 +191,23 @@ class _DonationEventDetailsScreenState extends State<DonationEventDetailsScreen>
                 // Title
                 Text(
                   event.title,
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: -0.3),
+                  style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.3),
                 ),
                 const SizedBox(height: 6),
 
                 // Blood Bank Info
                 Row(
                   children: [
-                    const Icon(Icons.local_hospital, size: 16, color: Colors.red),
+                    const Icon(Icons.local_hospital,
+                        size: 16, color: Colors.red),
                     const SizedBox(width: 6),
                     Text(
                       'Organized by ${event.bloodBankName}',
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -188,7 +216,8 @@ class _DonationEventDetailsScreenState extends State<DonationEventDetailsScreen>
                 // Medical Pre-Screening Disclaimer
                 const NetraDisclaimerBanner(
                   title: 'Pre-Screening Only',
-                  message: 'Registration for a donation camp does not guarantee medical eligibility or completed donation. Final medical screening is conducted on-site by blood bank professionals.',
+                  message:
+                      'Registration for a donation camp does not guarantee medical eligibility or completed donation. Final medical screening is conducted on-site by blood bank professionals.',
                 ),
                 const SizedBox(height: 16),
 
@@ -207,7 +236,8 @@ class _DonationEventDetailsScreenState extends State<DonationEventDetailsScreen>
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.check_circle, color: Colors.green.shade800),
+                            Icon(Icons.check_circle,
+                                color: Colors.green.shade800),
                             const SizedBox(width: 8),
                             Text(
                               "You're Registered for this Camp",
@@ -222,11 +252,14 @@ class _DonationEventDetailsScreenState extends State<DonationEventDetailsScreen>
                         const SizedBox(height: 6),
                         Text(
                           'Registered on: ${_formatDateTime(reg.registeredAt.toLocal())}',
-                          style: TextStyle(fontSize: 13, color: Colors.green.shade800),
+                          style: TextStyle(
+                              fontSize: 13, color: Colors.green.shade800),
                         ),
                         const SizedBox(height: 10),
                         OutlinedButton.icon(
-                          onPressed: _controller.isActionLoading ? null : _handleCancelRegistration,
+                          onPressed: _controller.isActionLoading
+                              ? null
+                              : _handleCancelRegistration,
                           icon: const Icon(Icons.cancel_outlined, size: 16),
                           label: const Text('Cancel My Registration'),
                           style: OutlinedButton.styleFrom(
@@ -266,7 +299,8 @@ class _DonationEventDetailsScreenState extends State<DonationEventDetailsScreen>
                 const SizedBox(height: 8),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.calendar_today, color: Colors.blueGrey),
+                  leading:
+                      const Icon(Icons.calendar_today, color: Colors.blueGrey),
                   title: const Text('Camp Date & Time'),
                   subtitle: Text(
                     'Starts: ${_formatDateTime(event.startAt.toLocal())}\nEnds: ${_formatDateTime(event.endAt.toLocal())}',
@@ -276,7 +310,8 @@ class _DonationEventDetailsScreenState extends State<DonationEventDetailsScreen>
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.pin_drop, color: Colors.blueGrey),
                   title: Text(event.venueName),
-                  subtitle: Text('${event.address}, ${event.city}, ${event.state} - ${event.postalCode}'),
+                  subtitle: Text(
+                      '${event.address}, ${event.city}, ${event.state} - ${event.postalCode}'),
                 ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
@@ -287,7 +322,8 @@ class _DonationEventDetailsScreenState extends State<DonationEventDetailsScreen>
                   ),
                 ),
 
-                if (event.description != null && event.description!.isNotEmpty) ...[
+                if (event.description != null &&
+                    event.description!.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   const Text(
                     'About this Camp',
@@ -296,7 +332,8 @@ class _DonationEventDetailsScreenState extends State<DonationEventDetailsScreen>
                   const SizedBox(height: 6),
                   Text(
                     event.description!,
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade800, height: 1.4),
+                    style: TextStyle(
+                        fontSize: 14, color: Colors.grey.shade800, height: 1.4),
                   ),
                 ],
 
@@ -314,7 +351,9 @@ class _DonationEventDetailsScreenState extends State<DonationEventDetailsScreen>
                               ? 'Registration Closed'
                               : 'Register for Camp',
                       isLoading: _controller.isActionLoading,
-                      onPressed: (event.isRegistrationOpen && event.remainingCapacity > 0 && !_controller.isActionLoading)
+                      onPressed: (event.isRegistrationOpen &&
+                              event.remainingCapacity > 0 &&
+                              !_controller.isActionLoading)
                           ? _handleRegister
                           : null,
                     ),

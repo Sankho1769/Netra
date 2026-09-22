@@ -64,7 +64,8 @@ class YesNoSelector extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: isSelected ? NetraColors.backgroundRed : NetraColors.surfaceWhite,
+          color:
+              isSelected ? NetraColors.backgroundRed : NetraColors.surfaceWhite,
           borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
           border: Border.all(
             color: isSelected ? NetraColors.primaryRed : NetraColors.borderGray,
@@ -77,14 +78,18 @@ class YesNoSelector extends StatelessWidget {
             Icon(
               icon,
               size: 20,
-              color: isSelected ? NetraColors.primaryRed : NetraColors.textSecondary,
+              color: isSelected
+                  ? NetraColors.primaryRed
+                  : NetraColors.textSecondary,
             ),
             NetraSpacing.gapW8,
             Text(
               label,
               style: NetraTypography.titleSmall.copyWith(
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? NetraColors.primaryRed : NetraColors.textPrimary,
+                color: isSelected
+                    ? NetraColors.primaryRed
+                    : NetraColors.textPrimary,
               ),
             ),
           ],

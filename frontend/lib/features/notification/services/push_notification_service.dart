@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/notification_model.dart';
 import 'notification_api_service.dart';
 
 class PushNotificationService {
@@ -9,7 +8,8 @@ class PushNotificationService {
       : _apiService = apiService ?? NotificationApiService();
 
   /// Registers client device push token with the NETRA backend.
-  Future<void> registerDeviceToken(String token, {String platform = 'ANDROID'}) async {
+  Future<void> registerDeviceToken(String token,
+      {String platform = 'ANDROID'}) async {
     try {
       await _apiService.registerDeviceToken(
         token: token,

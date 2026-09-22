@@ -10,7 +10,9 @@ void main() {
       controller = EligibilityController(apiService: EligibilityApiService());
     });
 
-    test('Initial step is Step 1 of 6 with zero pre-defaulted answers (Rule 32)', () {
+    test(
+        'Initial step is Step 1 of 6 with zero pre-defaulted answers (Rule 32)',
+        () {
       expect(controller.currentStep, 1);
       expect(controller.totalSteps, 6);
       expect(controller.result, isNull);
@@ -52,7 +54,8 @@ void main() {
       expect(controller.errors['WEIGHT_KG'], contains('valid weight'));
     });
 
-    test('Step 2 validation fails if previous donation is unanswered (Rule 32)', () {
+    test('Step 2 validation fails if previous donation is unanswered (Rule 32)',
+        () {
       final canProceed = controller.validateStep(2);
       expect(canProceed, false);
       expect(controller.errors.containsKey('PREVIOUS_DONATION'), true);
@@ -68,7 +71,9 @@ void main() {
       expect(controller.daysSinceLastDonation, inInclusiveRange(89, 91));
     });
 
-    test('Step 3 validation enforces explicit answers for all health questions (Rule 32)', () {
+    test(
+        'Step 3 validation enforces explicit answers for all health questions (Rule 32)',
+        () {
       controller.setAnswer('BIOLOGICAL_SEX', 'MALE');
 
       // Unanswered -> Fails
@@ -86,7 +91,9 @@ void main() {
       expect(controller.errors.isEmpty, true);
     });
 
-    test('Step 3 enforces pregnancy/childbirth question for female donors (Rule 32)', () {
+    test(
+        'Step 3 enforces pregnancy/childbirth question for female donors (Rule 32)',
+        () {
       controller.setAnswer('BIOLOGICAL_SEX', 'FEMALE');
       controller.setBoolAnswer('CURRENTLY_FEELING_WELL', true);
       controller.setBoolAnswer('FEVER_OR_ILLNESS_14D', false);
@@ -100,12 +107,15 @@ void main() {
       expect(controller.validateStep(3), true);
     });
 
-    test('Step 4 validation enforces explicit answers for safety questions (Rule 32)', () {
+    test(
+        'Step 4 validation enforces explicit answers for safety questions (Rule 32)',
+        () {
       expect(controller.validateStep(4), false);
       expect(controller.errors.containsKey('TATTOO_OR_PIERCING_6M'), true);
       expect(controller.errors.containsKey('MAJOR_SURGERY_12M'), true);
       expect(controller.errors.containsKey('DENTAL_PROCEDURE_72H'), true);
-      expect(controller.errors.containsKey('CHRONIC_OR_CARDIAC_CONDITION'), true);
+      expect(
+          controller.errors.containsKey('CHRONIC_OR_CARDIAC_CONDITION'), true);
 
       controller.setBoolAnswer('TATTOO_OR_PIERCING_6M', false);
       controller.setBoolAnswer('MAJOR_SURGERY_12M', false);
@@ -115,7 +125,9 @@ void main() {
       expect(controller.validateStep(4), true);
     });
 
-    test('Step 5 validation enforces explicit answers for readiness questions (Rule 32)', () {
+    test(
+        'Step 5 validation enforces explicit answers for readiness questions (Rule 32)',
+        () {
       expect(controller.validateStep(5), false);
       expect(controller.errors.containsKey('SLEEP_HOURS_LAST_NIGHT'), true);
       expect(controller.errors.containsKey('MEAL_WITHIN_4_HOURS'), true);
@@ -128,7 +140,9 @@ void main() {
       expect(controller.validateStep(5), true);
     });
 
-    test('Step progression moves through each step upon answering explicitly to Step 6', () {
+    test(
+        'Step progression moves through each step upon answering explicitly to Step 6',
+        () {
       // Step 1
       controller.setAnswer('AGE', '24');
       controller.setAnswer('WEIGHT_KG', '60');

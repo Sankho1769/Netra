@@ -59,7 +59,9 @@ class _AuthTextFieldState extends State<AuthTextField> {
     if (widget.isPassword) {
       effectiveSuffixIcon = IconButton(
         icon: Icon(
-          _obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+          _obscureText
+              ? Icons.visibility_outlined
+              : Icons.visibility_off_outlined,
           color: NetraColors.textSecondary,
           size: 20,
         ),
@@ -79,7 +81,9 @@ class _AuthTextFieldState extends State<AuthTextField> {
         Text(
           widget.label,
           style: NetraTypography.titleSmall.copyWith(
-            color: widget.errorText != null ? NetraColors.errorRed : NetraColors.textPrimary,
+            color: widget.errorText != null
+                ? NetraColors.errorRed
+                : NetraColors.textPrimary,
           ),
         ),
         NetraSpacing.gapH8,
@@ -101,7 +105,9 @@ class _AuthTextFieldState extends State<AuthTextField> {
             prefixIcon: widget.prefixIcon,
             suffixIcon: effectiveSuffixIcon,
             filled: true,
-            fillColor: widget.enabled ? NetraColors.surfaceWhite : NetraColors.backgroundGray,
+            fillColor: widget.enabled
+                ? NetraColors.surfaceWhite
+                : NetraColors.backgroundGray,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: NetraSpacing.lg,
               vertical: NetraSpacing.md,
@@ -113,23 +119,29 @@ class _AuthTextFieldState extends State<AuthTextField> {
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
               borderSide: BorderSide(
-                color: widget.errorText != null ? NetraColors.errorRed : NetraColors.borderGray,
+                color: widget.errorText != null
+                    ? NetraColors.errorRed
+                    : NetraColors.borderGray,
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
               borderSide: BorderSide(
-                color: widget.errorText != null ? NetraColors.errorRed : NetraColors.primaryRed,
+                color: widget.errorText != null
+                    ? NetraColors.errorRed
+                    : NetraColors.primaryRed,
                 width: 2.0,
               ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
-              borderSide: const BorderSide(color: NetraColors.errorRed, width: 1.5),
+              borderSide:
+                  const BorderSide(color: NetraColors.errorRed, width: 1.5),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
-              borderSide: const BorderSide(color: NetraColors.errorRed, width: 2.0),
+              borderSide:
+                  const BorderSide(color: NetraColors.errorRed, width: 2.0),
             ),
           ),
         ),

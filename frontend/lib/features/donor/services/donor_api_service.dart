@@ -7,7 +7,9 @@ class DonorApiService {
 
   DonorApiService({ApiClient? client, String? baseUrl})
       : _client = client ??
-            ApiClient(baseUrl: baseUrl ?? 'http://localhost:8080/api/v1/donor/profile');
+            ApiClient(
+                baseUrl:
+                    baseUrl ?? 'http://localhost:8080/api/v1/donor/profile');
 
   Future<DonorProfile?> getDonorProfile(String accessToken) async {
     try {
@@ -21,7 +23,8 @@ class DonorApiService {
       return null;
     } catch (e) {
       if (e is NetworkException) rethrow;
-      throw const ValidationException('Failed to load donor profile. Please try again.');
+      throw const ValidationException(
+          'Failed to load donor profile. Please try again.');
     }
   }
 
@@ -38,7 +41,8 @@ class DonorApiService {
       return DonorProfile.fromJson(response as Map<String, dynamic>);
     } catch (e) {
       if (e is NetworkException) rethrow;
-      throw const ValidationException('Failed to create donor profile. Please check your inputs.');
+      throw const ValidationException(
+          'Failed to create donor profile. Please check your inputs.');
     }
   }
 
@@ -55,7 +59,8 @@ class DonorApiService {
       return DonorProfile.fromJson(response as Map<String, dynamic>);
     } catch (e) {
       if (e is NetworkException) rethrow;
-      throw const ValidationException('Failed to update donor profile. Please try again.');
+      throw const ValidationException(
+          'Failed to update donor profile. Please try again.');
     }
   }
 }

@@ -66,15 +66,18 @@ class DonorProfileScreen extends StatelessWidget {
                 color: NetraColors.backgroundRed,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.volunteer_activism_rounded, color: NetraColors.primaryRed, size: 40),
+              child: const Icon(Icons.volunteer_activism_rounded,
+                  color: NetraColors.primaryRed, size: 40),
             ),
             NetraSpacing.gapH20,
-            Text("No Donor Profile Found", style: NetraTypography.headlineSmall),
+            Text("No Donor Profile Found",
+                style: NetraTypography.headlineSmall),
             NetraSpacing.gapH8,
             Text(
               "Set up your blood group and donation availability to join the lifesaving community.",
               textAlign: TextAlign.center,
-              style: NetraTypography.bodyMedium.copyWith(color: NetraColors.textSecondary),
+              style: NetraTypography.bodyMedium
+                  .copyWith(color: NetraColors.textSecondary),
             ),
             NetraSpacing.gapH24,
             NetraButton(
@@ -110,7 +113,9 @@ class DonorProfileScreen extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
             side: BorderSide(
-              color: context.isMobile ? Colors.transparent : NetraColors.borderGray,
+              color: context.isMobile
+                  ? Colors.transparent
+                  : NetraColors.borderGray,
             ),
           ),
           child: Padding(
@@ -124,7 +129,9 @@ class DonorProfileScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: NetraColors.backgroundRed,
                     borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
-                    border: BorderSide(color: NetraColors.primaryRed.withOpacity(0.3), width: 1.5),
+                    border: Border.all(
+                        color: NetraColors.primaryRed.withOpacity(0.3),
+                        width: 1.5),
                   ),
                   alignment: Alignment.center,
                   child: Text(
@@ -147,12 +154,18 @@ class DonorProfileScreen extends StatelessWidget {
                         runSpacing: 4,
                         children: [
                           NetraChip(
-                            label: isVerified ? "Clinically Verified" : "Self-reported",
-                            type: isVerified ? NetraChipType.statusSuccess : NetraChipType.outline,
+                            label: isVerified
+                                ? "Clinically Verified"
+                                : "Self-reported",
+                            type: isVerified
+                                ? NetraChipType.statusSuccess
+                                : NetraChipType.outline,
                           ),
                           NetraChip(
                             label: profile.availabilityStatus,
-                            type: isAvailable ? NetraChipType.statusSuccess : NetraChipType.neutral,
+                            type: isAvailable
+                                ? NetraChipType.statusSuccess
+                                : NetraChipType.neutral,
                           ),
                         ],
                       ),
@@ -171,17 +184,19 @@ class DonorProfileScreen extends StatelessWidget {
           decoration: BoxDecoration(
             color: NetraColors.backgroundGray,
             borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
-            border: const BorderSide(color: NetraColors.borderGray),
+            border: Border.all(color: NetraColors.borderGray),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.shield_outlined, color: NetraColors.textSecondary, size: 20),
+              const Icon(Icons.shield_outlined,
+                  color: NetraColors.textSecondary, size: 20),
               NetraSpacing.gapW12,
               Expanded(
                 child: Text(
                   "Blood group verification is completed by authorized clinical staff during donation screening. Self-reported records are clearly flagged for clinical safety.",
-                  style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary),
+                  style: NetraTypography.bodySmall
+                      .copyWith(color: NetraColors.textSecondary),
                 ),
               ),
             ],
@@ -204,21 +219,25 @@ class DonorProfileScreen extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.fact_check_outlined, color: NetraColors.primaryRed, size: 20),
+                    const Icon(Icons.fact_check_outlined,
+                        color: NetraColors.primaryRed, size: 20),
                     NetraSpacing.gapW12,
-                    Text("Pre-Donation Screening", style: NetraTypography.titleMedium),
+                    Text("Pre-Donation Screening",
+                        style: NetraTypography.titleMedium),
                   ],
                 ),
                 NetraSpacing.gapH8,
                 Text(
                   "Eligibility self-check is a confidential pre-screening tool based on national standards. Results are temporary and do not constitute permanent clinical clearance.",
-                  style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary),
+                  style: NetraTypography.bodySmall
+                      .copyWith(color: NetraColors.textSecondary),
                 ),
                 NetraSpacing.gapH16,
                 OutlinedButton.icon(
                   onPressed: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const EligibilityIntroScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => const EligibilityIntroScreen()),
                     );
                   },
                   icon: const Icon(Icons.play_arrow_rounded, size: 18),
@@ -249,24 +268,29 @@ class DonorProfileScreen extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.mark_email_unread_outlined, color: NetraColors.primaryRed, size: 20),
+                    const Icon(Icons.mark_email_unread_outlined,
+                        color: NetraColors.primaryRed, size: 20),
                     NetraSpacing.gapW12,
-                    Text("Blood Request Matches", style: NetraTypography.titleMedium),
+                    Text("Blood Request Matches",
+                        style: NetraTypography.titleMedium),
                   ],
                 ),
                 NetraSpacing.gapH8,
                 Text(
                   "Review blood requests matching your profile and respond with acceptance or decline.",
-                  style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary),
+                  style: NetraTypography.bodySmall
+                      .copyWith(color: NetraColors.textSecondary),
                 ),
                 NetraSpacing.gapH16,
                 OutlinedButton.icon(
                   onPressed: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const DonorIncomingMatchesScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => const DonorIncomingMatchesScreen()),
                     );
                   },
-                  icon: const Icon(Icons.assignment_turned_in_outlined, size: 18),
+                  icon:
+                      const Icon(Icons.assignment_turned_in_outlined, size: 18),
                   label: const Text("View Matched Requests"),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: NetraColors.primaryRed,
@@ -292,9 +316,11 @@ class DonorProfileScreen extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.history_edu_outlined, color: NetraColors.textSecondary, size: 20),
+                    const Icon(Icons.history_edu_outlined,
+                        color: NetraColors.textSecondary, size: 20),
                     NetraSpacing.gapW12,
-                    Text("Last Verified Donation", style: NetraTypography.titleMedium),
+                    Text("Last Verified Donation",
+                        style: NetraTypography.titleMedium),
                   ],
                 ),
                 NetraSpacing.gapH8,
@@ -304,13 +330,16 @@ class DonorProfileScreen extends StatelessWidget {
                       : "Not available (No verified donations recorded yet)",
                   style: NetraTypography.bodyMedium.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: profile.lastDonationDate != null ? NetraColors.textPrimary : NetraColors.textSecondary,
+                    color: profile.lastDonationDate != null
+                        ? NetraColors.textPrimary
+                        : NetraColors.textSecondary,
                   ),
                 ),
                 NetraSpacing.gapH4,
                 Text(
                   "Verified donation dates are recorded directly by blood bank staff upon donation completion.",
-                  style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary),
+                  style: NetraTypography.bodySmall
+                      .copyWith(color: NetraColors.textSecondary),
                 ),
               ],
             ),

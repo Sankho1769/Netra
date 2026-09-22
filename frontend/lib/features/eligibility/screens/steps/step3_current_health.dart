@@ -36,7 +36,8 @@ class Step3CurrentHealth extends StatelessWidget {
           _buildHealthQuestion(
             context,
             title: "Are you currently feeling well and in good health?",
-            whyText: "Donors must feel healthy and energetic on donation day to avoid vasovagal dizziness or fatigue.",
+            whyText:
+                "Donors must feel healthy and energetic on donation day to avoid vasovagal dizziness or fatigue.",
             source: "NBTC Guidelines Sec 4.1",
             questionKey: "CURRENTLY_FEELING_WELL",
           ),
@@ -46,7 +47,8 @@ class Step3CurrentHealth extends StatelessWidget {
           _buildHealthQuestion(
             context,
             title: "Fever, cold, cough, or infection in the past 14 days?",
-            whyText: "A 14-day symptom-free deferral allows your immune system to fully recover and prevents transmission of active viruses.",
+            whyText:
+                "A 14-day symptom-free deferral allows your immune system to fully recover and prevents transmission of active viruses.",
             source: "NBTC Guidelines Sec 4.2",
             questionKey: "FEVER_OR_ILLNESS_14D",
           ),
@@ -56,18 +58,22 @@ class Step3CurrentHealth extends StatelessWidget {
           _buildHealthQuestion(
             context,
             title: "Are you taking antibiotics or blood thinners?",
-            whyText: "Certain active medications in the bloodstream can impact vulnerable patients receiving transfusions. Medical staff will review specific drug safety.",
+            whyText:
+                "Certain active medications in the bloodstream can impact vulnerable patients receiving transfusions. Medical staff will review specific drug safety.",
             source: "NBTC Guidelines Sec 4.4",
             questionKey: "CURRENT_MEDICATION",
           ),
           NetraSpacing.gapH20,
 
           // Q4: Pregnancy / Childbirth (if applicable)
-          if (isFemale || controller.getAnswer('BIOLOGICAL_SEX') == 'OTHER') ...[
+          if (isFemale ||
+              controller.getAnswer('BIOLOGICAL_SEX') == 'OTHER') ...[
             _buildHealthQuestion(
               context,
-              title: "Are you pregnant, nursing, or delivered in the last 12 months?",
-              whyText: "Maternal iron stores need protection during and following pregnancy and lactation. Guidelines recommend waiting 12 months post-delivery.",
+              title:
+                  "Are you pregnant, nursing, or delivered in the last 12 months?",
+              whyText:
+                  "Maternal iron stores need protection during and following pregnancy and lactation. Guidelines recommend waiting 12 months post-delivery.",
               source: "NBTC Guidelines Sec 4.5",
               questionKey: "PREGNANCY_OR_CHILDBIRTH",
             ),
@@ -112,9 +118,12 @@ class Step3CurrentHealth extends StatelessWidget {
                 padding: NetraSpacing.paddingXs,
                 child: Row(
                   children: [
-                    const Icon(Icons.help_outline_rounded, size: 16, color: NetraColors.primaryRed),
+                    const Icon(Icons.help_outline_rounded,
+                        size: 16, color: NetraColors.primaryRed),
                     NetraSpacing.gapW4,
-                    Text("Why", style: NetraTypography.labelSmall.copyWith(color: NetraColors.primaryRed)),
+                    Text("Why",
+                        style: NetraTypography.labelSmall
+                            .copyWith(color: NetraColors.primaryRed)),
                   ],
                 ),
               ),
@@ -130,7 +139,8 @@ class Step3CurrentHealth extends StatelessWidget {
           NetraSpacing.gapH8,
           Text(
             error,
-            style: NetraTypography.bodySmall.copyWith(color: NetraColors.errorRed),
+            style:
+                NetraTypography.bodySmall.copyWith(color: NetraColors.errorRed),
           ),
         ],
       ],

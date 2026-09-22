@@ -14,7 +14,20 @@ class DonationEventCard extends StatelessWidget {
   });
 
   String _formatDate(DateTime dt) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     final weekday = days[dt.weekday - 1];
     final month = months[dt.month - 1];
@@ -56,14 +69,16 @@ class DonationEventCard extends StatelessWidget {
                   EventStatusBadge(status: event.status),
                   if (event.distanceKm != null)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.blue.shade50,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.near_me, size: 12, color: Colors.blue.shade700),
+                          Icon(Icons.near_me,
+                              size: 12, color: Colors.blue.shade700),
                           const SizedBox(width: 4),
                           Text(
                             '${event.distanceKm} km away',
@@ -96,7 +111,8 @@ class DonationEventCard extends StatelessWidget {
               // Blood Bank name
               Row(
                 children: [
-                  Icon(Icons.local_hospital_outlined, size: 14, color: Colors.grey.shade700),
+                  Icon(Icons.local_hospital_outlined,
+                      size: 14, color: Colors.grey.shade700),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
@@ -117,12 +133,14 @@ class DonationEventCard extends StatelessWidget {
               // Venue & City
               Row(
                 children: [
-                  Icon(Icons.location_on_outlined, size: 14, color: Colors.grey.shade700),
+                  Icon(Icons.location_on_outlined,
+                      size: 14, color: Colors.grey.shade700),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       '${event.venueName}, ${event.city}',
-                      style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                      style:
+                          TextStyle(fontSize: 13, color: Colors.grey.shade600),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -134,7 +152,8 @@ class DonationEventCard extends StatelessWidget {
               // Date & Time
               Row(
                 children: [
-                  Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey.shade700),
+                  Icon(Icons.calendar_today_outlined,
+                      size: 14, color: Colors.grey.shade700),
                   const SizedBox(width: 4),
                   Text(
                     '$dateStr ($startTimeStr - $endTimeStr)',

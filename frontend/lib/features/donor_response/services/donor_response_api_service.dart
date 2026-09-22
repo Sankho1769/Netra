@@ -12,7 +12,8 @@ class DonorResponseApiService {
     ApiClient? client,
     SecureTokenStorage? tokenStorage,
     String? baseUrl,
-  })  : _client = client ?? ApiClient(baseUrl: baseUrl ?? 'http://localhost:8080/api/v1'),
+  })  : _client = client ??
+            ApiClient(baseUrl: baseUrl ?? 'http://localhost:8080/api/v1'),
         _tokenStorage = tokenStorage ?? PlatformSecureTokenStorage();
 
   Future<Map<String, String>> _authHeaders() async {
@@ -28,7 +29,10 @@ class DonorResponseApiService {
     if (e is NetworkException) {
       return e.message;
     }
-    final str = e.toString().replaceFirst('Exception: ', '').replaceFirst('ValidationException: ', '');
+    final str = e
+        .toString()
+        .replaceFirst('Exception: ', '')
+        .replaceFirst('ValidationException: ', '');
     if (str.toLowerCase().contains('sql') ||
         str.toLowerCase().contains('database') ||
         str.toLowerCase().contains('hibernate') ||
@@ -36,7 +40,9 @@ class DonorResponseApiService {
         str.toLowerCase().contains('internal')) {
       return 'A system error occurred. Please try again later.';
     }
-    return str.isEmpty ? 'An unexpected error occurred. Please try again.' : str;
+    return str.isEmpty
+        ? 'An unexpected error occurred. Please try again.'
+        : str;
   }
 
   /// Fetches persistent matches assigned to the authenticated donor.
@@ -61,12 +67,14 @@ class DonorResponseApiService {
   Future<DonorMatchDetail> getMatchDetail(String matchId) async {
     try {
       final headers = await _authHeaders();
-      final response = await _client.get('/donor/matches/$matchId', headers: headers);
+      final response =
+          await _client.get('/donor/matches/$matchId', headers: headers);
 
       if (response is Map<String, dynamic>) {
         return DonorMatchDetail.fromJson(response);
       }
-      throw const ValidationException('Unexpected response format from server.');
+      throw const ValidationException(
+          'Unexpected response format from server.');
     } catch (e) {
       if (e is NetworkException) rethrow;
       throw ValidationException(_sanitizeErrorMessage(e));
@@ -85,7 +93,8 @@ class DonorResponseApiService {
       if (response is Map<String, dynamic>) {
         return DonorMatchDetail.fromJson(response);
       }
-      throw const ValidationException('Unexpected response format upon accepting match.');
+      throw const ValidationException(
+          'Unexpected response format upon accepting match.');
     } catch (e) {
       if (e is NetworkException) rethrow;
       throw ValidationException(_sanitizeErrorMessage(e));
@@ -104,7 +113,8 @@ class DonorResponseApiService {
       if (response is Map<String, dynamic>) {
         return DonorMatchDetail.fromJson(response);
       }
-      throw const ValidationException('Unexpected response format upon declining match.');
+      throw const ValidationException(
+          'Unexpected response format upon declining match.');
     } catch (e) {
       if (e is NetworkException) rethrow;
       throw ValidationException(_sanitizeErrorMessage(e));
@@ -113,7 +123,8 @@ class DonorResponseApiService {
 
   /// Creates a persistent donor match record for the intended candidate.
   /// Authorized for request owner or administrator.
-  Future<RequesterDonorMatch> createMatch(String requestId, String candidateReference) async {
+  Future<RequesterDonorMatch> createMatch(
+      String requestId, String candidateReference) async {
     try {
       final headers = await _authHeaders();
       final response = await _client.post(
@@ -125,7 +136,8 @@ class DonorResponseApiService {
       if (response is Map<String, dynamic>) {
         return RequesterDonorMatch.fromJson(response);
       }
-      throw const ValidationException('Unexpected response format upon creating match.');
+      throw const ValidationException(
+          'Unexpected response format upon creating match.');
     } catch (e) {
       if (e is NetworkException) rethrow;
       throw ValidationException(_sanitizeErrorMessage(e));

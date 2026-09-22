@@ -43,7 +43,8 @@ class DonorResponseCard extends StatelessWidget {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: const Color(0xFFDC2626),
                           borderRadius: BorderRadius.circular(6),
@@ -60,7 +61,8 @@ class DonorResponseCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       if (isCritical)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: Colors.red.shade50,
                             borderRadius: BorderRadius.circular(6),
@@ -68,7 +70,8 @@ class DonorResponseCard extends StatelessWidget {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.warning_amber_rounded, size: 14, color: Colors.red.shade700),
+                              Icon(Icons.warning_amber_rounded,
+                                  size: 14, color: Colors.red.shade700),
                               const SizedBox(width: 4),
                               Text(
                                 'CRITICAL',
@@ -91,7 +94,8 @@ class DonorResponseCard extends StatelessWidget {
               // Hospital & Location
               Row(
                 children: [
-                  const Icon(Icons.local_hospital_outlined, size: 18, color: Colors.grey),
+                  const Icon(Icons.local_hospital_outlined,
+                      size: 18, color: Colors.grey),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -110,11 +114,15 @@ class DonorResponseCard extends StatelessWidget {
               // City and Distance
               Row(
                 children: [
-                  const Icon(Icons.place_outlined, size: 16, color: Colors.grey),
+                  const Icon(Icons.place_outlined,
+                      size: 16, color: Colors.grey),
                   const SizedBox(width: 6),
                   Text(
-                    match.city.isNotEmpty ? '${match.city}, ${match.state}' : 'Location provided upon clearance',
-                    style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade700),
+                    match.city.isNotEmpty
+                        ? '${match.city}, ${match.state}'
+                        : 'Location provided upon clearance',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: Colors.grey.shade700),
                   ),
                   if (match.distanceKm != null) ...[
                     const SizedBox(width: 12),
@@ -137,13 +145,18 @@ class DonorResponseCard extends StatelessWidget {
                 children: [
                   Text(
                     '${match.unitsRequired} unit(s) requested',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w500),
                   ),
                   Text(
-                    match.isExpired ? 'Expired' : 'Expires in ${_formatRemainingTime(match.expiresAt)}',
+                    match.isExpired
+                        ? 'Expired'
+                        : 'Expires in ${_formatRemainingTime(match.expiresAt)}',
                     style: TextStyle(
                       fontSize: 11,
-                      color: match.isExpired ? Colors.red.shade700 : Colors.grey.shade600,
+                      color: match.isExpired
+                          ? Colors.red.shade700
+                          : Colors.grey.shade600,
                       fontStyle: FontStyle.italic,
                     ),
                   ),

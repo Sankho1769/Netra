@@ -18,7 +18,8 @@ class RequesterMatchListScreen extends StatefulWidget {
   });
 
   @override
-  State<RequesterMatchListScreen> createState() => _RequesterMatchListScreenState();
+  State<RequesterMatchListScreen> createState() =>
+      _RequesterMatchListScreenState();
 }
 
 enum MatchFilterType {
@@ -61,7 +62,8 @@ class _RequesterMatchListScreenState extends State<RequesterMatchListScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString().replaceFirst('ValidationException: ', '');
+          _errorMessage =
+              e.toString().replaceFirst('ValidationException: ', '');
           _isLoading = false;
         });
       }
@@ -71,15 +73,24 @@ class _RequesterMatchListScreenState extends State<RequesterMatchListScreen> {
   List<RequesterDonorMatch> get _filteredMatches {
     switch (_selectedFilter) {
       case MatchFilterType.pending:
-        return _matches.where((m) => m.responseStatus == DonorMatchStatus.matched).toList();
+        return _matches
+            .where((m) => m.responseStatus == DonorMatchStatus.matched)
+            .toList();
       case MatchFilterType.accepted:
-        return _matches.where((m) => m.responseStatus == DonorMatchStatus.accepted).toList();
+        return _matches
+            .where((m) => m.responseStatus == DonorMatchStatus.accepted)
+            .toList();
       case MatchFilterType.declined:
-        return _matches.where((m) => m.responseStatus == DonorMatchStatus.declined).toList();
+        return _matches
+            .where((m) => m.responseStatus == DonorMatchStatus.declined)
+            .toList();
       case MatchFilterType.expiredOrCancelled:
-        return _matches.where((m) => m.responseStatus == DonorMatchStatus.expired || m.responseStatus == DonorMatchStatus.cancelled).toList();
+        return _matches
+            .where((m) =>
+                m.responseStatus == DonorMatchStatus.expired ||
+                m.responseStatus == DonorMatchStatus.cancelled)
+            .toList();
       case MatchFilterType.all:
-      default:
         return _matches;
     }
   }
@@ -174,7 +185,8 @@ class _RequesterMatchListScreenState extends State<RequesterMatchListScreen> {
             label: Text('All (${_matches.length})'),
             selected: _selectedFilter == MatchFilterType.all,
             onSelected: (selected) {
-              if (selected) setState(() => _selectedFilter = MatchFilterType.all);
+              if (selected)
+                setState(() => _selectedFilter = MatchFilterType.all);
             },
           ),
           const SizedBox(width: 8),
@@ -184,7 +196,8 @@ class _RequesterMatchListScreenState extends State<RequesterMatchListScreen> {
             ),
             selected: _selectedFilter == MatchFilterType.pending,
             onSelected: (selected) {
-              setState(() => _selectedFilter = selected ? MatchFilterType.pending : MatchFilterType.all);
+              setState(() => _selectedFilter =
+                  selected ? MatchFilterType.pending : MatchFilterType.all);
             },
           ),
           const SizedBox(width: 8),
@@ -194,7 +207,8 @@ class _RequesterMatchListScreenState extends State<RequesterMatchListScreen> {
             ),
             selected: _selectedFilter == MatchFilterType.accepted,
             onSelected: (selected) {
-              setState(() => _selectedFilter = selected ? MatchFilterType.accepted : MatchFilterType.all);
+              setState(() => _selectedFilter =
+                  selected ? MatchFilterType.accepted : MatchFilterType.all);
             },
           ),
           const SizedBox(width: 8),
@@ -204,7 +218,8 @@ class _RequesterMatchListScreenState extends State<RequesterMatchListScreen> {
             ),
             selected: _selectedFilter == MatchFilterType.declined,
             onSelected: (selected) {
-              setState(() => _selectedFilter = selected ? MatchFilterType.declined : MatchFilterType.all);
+              setState(() => _selectedFilter =
+                  selected ? MatchFilterType.declined : MatchFilterType.all);
             },
           ),
           const SizedBox(width: 8),
@@ -214,7 +229,9 @@ class _RequesterMatchListScreenState extends State<RequesterMatchListScreen> {
             ),
             selected: _selectedFilter == MatchFilterType.expiredOrCancelled,
             onSelected: (selected) {
-              setState(() => _selectedFilter = selected ? MatchFilterType.expiredOrCancelled : MatchFilterType.all);
+              setState(() => _selectedFilter = selected
+                  ? MatchFilterType.expiredOrCancelled
+                  : MatchFilterType.all);
             },
           ),
         ],
@@ -233,13 +250,15 @@ class _RequesterMatchListScreenState extends State<RequesterMatchListScreen> {
         return Card(
           elevation: 2,
           margin: const EdgeInsets.symmetric(vertical: 6),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           child: InkWell(
             borderRadius: BorderRadius.circular(10),
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => RequesterMatchDetailScreen(match: match),
+                  builder: (context) =>
+                      RequesterMatchDetailScreen(match: match),
                 ),
               );
             },
@@ -253,7 +272,8 @@ class _RequesterMatchListScreenState extends State<RequesterMatchListScreen> {
                     children: [
                       Text(
                         match.donorDisplayName,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                       MatchStatusBadge(status: match.responseStatus),
                     ],
@@ -262,7 +282,8 @@ class _RequesterMatchListScreenState extends State<RequesterMatchListScreen> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFEE2E2),
                           borderRadius: BorderRadius.circular(6),
@@ -279,7 +300,8 @@ class _RequesterMatchListScreenState extends State<RequesterMatchListScreen> {
                       if (match.isVerified) ...[
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: const Color(0xFFDCFCE7),
                             borderRadius: BorderRadius.circular(6),
@@ -298,7 +320,8 @@ class _RequesterMatchListScreenState extends State<RequesterMatchListScreen> {
                       if (match.distanceKm != null)
                         Text(
                           '${match.distanceKm!.toStringAsFixed(1)} km away',
-                          style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
+                          style: TextStyle(
+                              fontSize: 12.5, color: Colors.grey.shade600),
                         ),
                     ],
                   ),
@@ -306,7 +329,8 @@ class _RequesterMatchListScreenState extends State<RequesterMatchListScreen> {
                     const SizedBox(height: 8),
                     Text(
                       'Responded: ${match.respondedAt!.toLocal().toString().substring(0, 16)}',
-                      style: TextStyle(fontSize: 11.5, color: Colors.grey.shade500),
+                      style: TextStyle(
+                          fontSize: 11.5, color: Colors.grey.shade500),
                     ),
                   ],
                 ],
@@ -325,7 +349,8 @@ class _RequesterMatchListScreenState extends State<RequesterMatchListScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.person_search_outlined, size: 64, color: Colors.grey.shade400),
+            Icon(Icons.person_search_outlined,
+                size: 64, color: Colors.grey.shade400),
             const SizedBox(height: 16),
             Text(
               _selectedFilter == MatchFilterType.all

@@ -30,9 +30,22 @@ class Step6ReviewAnswers extends StatelessWidget {
       title: "Basic Information",
       stepTarget: 1,
       items: [
-        {"label": "Age", "value": answers['AGE'] != null ? "${answers['AGE']} years" : "Not provided"},
-        {"label": "Weight", "value": answers['WEIGHT_KG'] != null ? "${answers['WEIGHT_KG']} kg" : "Not provided"},
-        {"label": "Biological Sex", "value": answers['BIOLOGICAL_SEX'] ?? "Not selected"},
+        {
+          "label": "Age",
+          "value": answers['AGE'] != null
+              ? "${answers['AGE']} years"
+              : "Not provided"
+        },
+        {
+          "label": "Weight",
+          "value": answers['WEIGHT_KG'] != null
+              ? "${answers['WEIGHT_KG']} kg"
+              : "Not provided"
+        },
+        {
+          "label": "Biological Sex",
+          "value": answers['BIOLOGICAL_SEX'] ?? "Not selected"
+        },
       ],
     );
 
@@ -44,10 +57,15 @@ class Step6ReviewAnswers extends StatelessWidget {
           "label": "Donated before",
           "value": answers['PREVIOUS_DONATION'] == null
               ? "Not answered"
-              : (answers['PREVIOUS_DONATION'] == 'true' ? "Yes" : "First-time donor")
+              : (answers['PREVIOUS_DONATION'] == 'true'
+                  ? "Yes"
+                  : "First-time donor")
         },
         if (answers['PREVIOUS_DONATION'] == 'true')
-          {"label": "Last donation date", "value": answers['LAST_DONATION_DATE'] ?? "Not entered"},
+          {
+            "label": "Last donation date",
+            "value": answers['LAST_DONATION_DATE'] ?? "Not entered"
+          },
       ],
     );
 
@@ -55,11 +73,23 @@ class Step6ReviewAnswers extends StatelessWidget {
       title: "Current Health",
       stepTarget: 3,
       items: [
-        {"label": "Feeling well today", "value": _formatBoolAnswer(answers['CURRENTLY_FEELING_WELL'])},
-        {"label": "Fever/illness in 14d", "value": _formatBoolAnswer(answers['FEVER_OR_ILLNESS_14D'])},
-        {"label": "Current medication", "value": _formatBoolAnswer(answers['CURRENT_MEDICATION'])},
+        {
+          "label": "Feeling well today",
+          "value": _formatBoolAnswer(answers['CURRENTLY_FEELING_WELL'])
+        },
+        {
+          "label": "Fever/illness in 14d",
+          "value": _formatBoolAnswer(answers['FEVER_OR_ILLNESS_14D'])
+        },
+        {
+          "label": "Current medication",
+          "value": _formatBoolAnswer(answers['CURRENT_MEDICATION'])
+        },
         if (answers.containsKey('PREGNANCY_OR_CHILDBIRTH'))
-          {"label": "Pregnancy/lactation", "value": _formatBoolAnswer(answers['PREGNANCY_OR_CHILDBIRTH'])},
+          {
+            "label": "Pregnancy/lactation",
+            "value": _formatBoolAnswer(answers['PREGNANCY_OR_CHILDBIRTH'])
+          },
       ],
     );
 
@@ -67,10 +97,22 @@ class Step6ReviewAnswers extends StatelessWidget {
       title: "Donation Safety",
       stepTarget: 4,
       items: [
-        {"label": "Tattoo/piercing (6m)", "value": _formatBoolAnswer(answers['TATTOO_OR_PIERCING_6M'])},
-        {"label": "Surgery history (12m)", "value": _formatBoolAnswer(answers['MAJOR_SURGERY_12M'])},
-        {"label": "Dental procedure (72h)", "value": _formatBoolAnswer(answers['DENTAL_PROCEDURE_72H'])},
-        {"label": "Cardiac/chronic condition", "value": _formatBoolAnswer(answers['CHRONIC_OR_CARDIAC_CONDITION'])},
+        {
+          "label": "Tattoo/piercing (6m)",
+          "value": _formatBoolAnswer(answers['TATTOO_OR_PIERCING_6M'])
+        },
+        {
+          "label": "Surgery history (12m)",
+          "value": _formatBoolAnswer(answers['MAJOR_SURGERY_12M'])
+        },
+        {
+          "label": "Dental procedure (72h)",
+          "value": _formatBoolAnswer(answers['DENTAL_PROCEDURE_72H'])
+        },
+        {
+          "label": "Cardiac/chronic condition",
+          "value": _formatBoolAnswer(answers['CHRONIC_OR_CARDIAC_CONDITION'])
+        },
       ],
     );
 
@@ -78,9 +120,18 @@ class Step6ReviewAnswers extends StatelessWidget {
       title: "Readiness Check",
       stepTarget: 5,
       items: [
-        {"label": "Adequate sleep (4-6h)", "value": _formatBoolAnswer(answers['SLEEP_HOURS_LAST_NIGHT'])},
-        {"label": "Meal within 4 hours", "value": _formatBoolAnswer(answers['MEAL_WITHIN_4_HOURS'])},
-        {"label": "Adequate hydration", "value": _formatBoolAnswer(answers['HYDRATED_TODAY'])},
+        {
+          "label": "Adequate sleep (4-6h)",
+          "value": _formatBoolAnswer(answers['SLEEP_HOURS_LAST_NIGHT'])
+        },
+        {
+          "label": "Meal within 4 hours",
+          "value": _formatBoolAnswer(answers['MEAL_WITHIN_4_HOURS'])
+        },
+        {
+          "label": "Adequate hydration",
+          "value": _formatBoolAnswer(answers['HYDRATED_TODAY'])
+        },
       ],
     );
 
@@ -186,10 +237,12 @@ class Step6ReviewAnswers extends StatelessWidget {
                 onTap: () => controller.jumpToStep(stepTarget),
                 borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: Text(
                     "Edit",
-                    style: NetraTypography.labelSmall.copyWith(color: NetraColors.primaryRed),
+                    style: NetraTypography.labelSmall
+                        .copyWith(color: NetraColors.primaryRed),
                   ),
                 ),
               ),
@@ -197,7 +250,9 @@ class Step6ReviewAnswers extends StatelessWidget {
           ),
           const Divider(height: 16, color: NetraColors.borderGray),
           ...items.map((item) {
-            final isUnanswered = item['value'] == "Not answered" || item['value'] == "Not provided" || item['value'] == "Not selected";
+            final isUnanswered = item['value'] == "Not answered" ||
+                item['value'] == "Not provided" ||
+                item['value'] == "Not selected";
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
@@ -210,7 +265,9 @@ class Step6ReviewAnswers extends StatelessWidget {
                   Text(
                     item['value']!,
                     style: NetraTypography.titleSmall.copyWith(
-                      color: isUnanswered ? NetraColors.errorRed : NetraColors.textPrimary,
+                      color: isUnanswered
+                          ? NetraColors.errorRed
+                          : NetraColors.textPrimary,
                     ),
                   ),
                 ],

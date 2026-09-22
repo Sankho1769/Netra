@@ -13,7 +13,9 @@ class MatchingApiService {
     SecureTokenStorage? tokenStorage,
     String? baseUrl,
   })  : _client = client ??
-            ApiClient(baseUrl: baseUrl ?? 'http://localhost:8080/api/v1/blood-requests'),
+            ApiClient(
+                baseUrl:
+                    baseUrl ?? 'http://localhost:8080/api/v1/blood-requests'),
         _tokenStorage = tokenStorage ?? PlatformSecureTokenStorage();
 
   /// Fetches ranked donor candidates matching the specified blood request.
@@ -48,7 +50,8 @@ class MatchingApiService {
       if (response is Map<String, dynamic>) {
         return DonorMatchResponse.fromJson(response);
       }
-      throw const ValidationException('Unexpected response format from matching engine.');
+      throw const ValidationException(
+          'Unexpected response format from matching engine.');
     } catch (e) {
       if (e is NetworkException) rethrow;
       throw ValidationException(e.toString());

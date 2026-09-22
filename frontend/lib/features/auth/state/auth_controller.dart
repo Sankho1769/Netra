@@ -20,7 +20,8 @@ class AuthController extends ChangeNotifier {
   AuthStatus get status => _status;
   User? get currentUser => _currentUser;
   String? get errorMessage => _errorMessage;
-  bool get isAuthenticated => _status == AuthStatus.authenticated && _currentUser != null;
+  bool get isAuthenticated =>
+      _status == AuthStatus.authenticated && _currentUser != null;
 
   /// Restores existing session on app launch. Never hangs infinitely.
   Future<void> initialize() async {
@@ -61,7 +62,8 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final bundle = await _apiService.login(LoginRequest(email: email, password: password));
+      final bundle = await _apiService
+          .login(LoginRequest(email: email, password: password));
       await _tokenStorage.saveTokens(
         accessToken: bundle.tokens.accessToken,
         refreshToken: bundle.tokens.refreshToken,
@@ -91,7 +93,8 @@ class AuthController extends ChangeNotifier {
 
     try {
       final bundle = await _apiService.register(
-        RegisterRequest(fullName: fullName, email: email, phone: phone, password: password),
+        RegisterRequest(
+            fullName: fullName, email: email, phone: phone, password: password),
       );
       await _tokenStorage.saveTokens(
         accessToken: bundle.tokens.accessToken,
@@ -115,7 +118,8 @@ class AuthController extends ChangeNotifier {
     final accessToken = await _tokenStorage.getAccessToken();
 
     // Call server to invalidate refresh session
-    await _apiService.logout(refreshToken: refreshToken, accessToken: accessToken);
+    await _apiService.logout(
+        refreshToken: refreshToken, accessToken: accessToken);
 
     // Clear local storage
     await _tokenStorage.clearTokens();

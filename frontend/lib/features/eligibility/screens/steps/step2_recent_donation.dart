@@ -16,7 +16,8 @@ class Step2RecentDonation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final errors = controller.errors;
-    final bool hasDonatedBefore = controller.getBoolAnswer('PREVIOUS_DONATION') == true;
+    final bool hasDonatedBefore =
+        controller.getBoolAnswer('PREVIOUS_DONATION') == true;
     final daysElapsed = controller.daysSinceLastDonation;
     final isFemale = controller.getAnswer('BIOLOGICAL_SEX') == 'FEMALE';
     final int requiredInterval = isFemale ? 120 : 90;
@@ -60,11 +61,13 @@ class Step2RecentDonation extends StatelessWidget {
                   padding: NetraSpacing.paddingXs,
                   child: Row(
                     children: [
-                      const Icon(Icons.help_outline_rounded, size: 16, color: NetraColors.primaryRed),
+                      const Icon(Icons.help_outline_rounded,
+                          size: 16, color: NetraColors.primaryRed),
                       NetraSpacing.gapW4,
                       Text(
                         "Why we ask",
-                        style: NetraTypography.labelSmall.copyWith(color: NetraColors.primaryRed),
+                        style: NetraTypography.labelSmall
+                            .copyWith(color: NetraColors.primaryRed),
                       ),
                     ],
                   ),
@@ -86,7 +89,8 @@ class Step2RecentDonation extends StatelessWidget {
             NetraSpacing.gapH8,
             Text(
               errors['PREVIOUS_DONATION']!,
-              style: NetraTypography.bodySmall.copyWith(color: NetraColors.errorRed),
+              style: NetraTypography.bodySmall
+                  .copyWith(color: NetraColors.errorRed),
             ),
           ],
           NetraSpacing.gapH24,
@@ -105,16 +109,19 @@ class Step2RecentDonation extends StatelessWidget {
             NetraSpacing.gapH12,
             InkWell(
               onTap: () async {
-                final initial = DateTime.now().subtract(const Duration(days: 95));
+                final initial =
+                    DateTime.now().subtract(const Duration(days: 95));
                 final picked = await showDatePicker(
                   context: context,
                   initialDate: initial,
-                  firstDate: DateTime.now().subtract(const Duration(days: 365 * 3)),
+                  firstDate:
+                      DateTime.now().subtract(const Duration(days: 365 * 3)),
                   lastDate: DateTime.now(),
                   helpText: "SELECT MOST RECENT DONATION DATE",
                 );
                 if (picked != null) {
-                  controller.setAnswer('LAST_DONATION_DATE', DateFormat('yyyy-MM-dd').format(picked));
+                  controller.setAnswer('LAST_DONATION_DATE',
+                      DateFormat('yyyy-MM-dd').format(picked));
                 }
               },
               borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
@@ -124,28 +131,38 @@ class Step2RecentDonation extends StatelessWidget {
                   color: NetraColors.surfaceWhite,
                   borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
                   border: Border.all(
-                    color: errors['LAST_DONATION_DATE'] != null ? NetraColors.errorRed : NetraColors.borderGray,
+                    color: errors['LAST_DONATION_DATE'] != null
+                        ? NetraColors.errorRed
+                        : NetraColors.borderGray,
                     width: 1,
                   ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.calendar_month_outlined, color: NetraColors.primaryRed),
+                    const Icon(Icons.calendar_month_outlined,
+                        color: NetraColors.primaryRed),
                     NetraSpacing.gapW12,
                     Expanded(
                       child: Text(
                         controller.getAnswer('LAST_DONATION_DATE') != null &&
-                                controller.getAnswer('LAST_DONATION_DATE')!.isNotEmpty
-                            ? DateFormat.yMMMMd().format(DateTime.parse(controller.getAnswer('LAST_DONATION_DATE')!))
+                                controller
+                                    .getAnswer('LAST_DONATION_DATE')!
+                                    .isNotEmpty
+                            ? DateFormat.yMMMMd().format(DateTime.parse(
+                                controller.getAnswer('LAST_DONATION_DATE')!))
                             : "Tap to select donation date",
                         style: NetraTypography.bodyLarge.copyWith(
-                          color: controller.getAnswer('LAST_DONATION_DATE')?.isNotEmpty == true
+                          color: controller
+                                      .getAnswer('LAST_DONATION_DATE')
+                                      ?.isNotEmpty ==
+                                  true
                               ? NetraColors.textPrimary
                               : NetraColors.textMuted,
                         ),
                       ),
                     ),
-                    const Icon(Icons.arrow_drop_down, color: NetraColors.textSecondary),
+                    const Icon(Icons.arrow_drop_down,
+                        color: NetraColors.textSecondary),
                   ],
                 ),
               ),
@@ -154,7 +171,8 @@ class Step2RecentDonation extends StatelessWidget {
               NetraSpacing.gapH8,
               Text(
                 errors['LAST_DONATION_DATE']!,
-                style: NetraTypography.bodySmall.copyWith(color: NetraColors.errorRed),
+                style: NetraTypography.bodySmall
+                    .copyWith(color: NetraColors.errorRed),
               ),
             ],
 

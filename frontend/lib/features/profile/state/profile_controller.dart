@@ -31,7 +31,8 @@ class ProfileController extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateProfile(String accessToken, UpdateUserProfileRequest request) async {
+  Future<bool> updateProfile(
+      String accessToken, UpdateUserProfileRequest request) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();

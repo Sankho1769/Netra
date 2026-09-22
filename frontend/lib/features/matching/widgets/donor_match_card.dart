@@ -32,7 +32,9 @@ class DonorMatchCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: isExact ? const Color(0xFFDC2626).withOpacity(0.3) : Colors.grey.shade300,
+          color: isExact
+              ? const Color(0xFFDC2626).withOpacity(0.3)
+              : Colors.grey.shade300,
           width: isExact ? 1.5 : 1.0,
         ),
       ),
@@ -86,11 +88,13 @@ class DonorMatchCard extends StatelessWidget {
               children: [
                 // Blood Group Badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFEE2E2),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFFDC2626), width: 1),
+                    border:
+                        Border.all(color: const Color(0xFFDC2626), width: 1),
                   ),
                   child: Text(
                     match.bloodGroup,
@@ -117,7 +121,8 @@ class DonorMatchCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.near_me, size: 16, color: Color(0xFF4B5563)),
+                    const Icon(Icons.near_me,
+                        size: 16, color: Color(0xFF4B5563)),
                     const SizedBox(width: 4),
                     Text(
                       '${match.distanceKm.toStringAsFixed(1)} km away',
@@ -131,7 +136,8 @@ class DonorMatchCard extends StatelessWidget {
                 ),
                 if (isMatched)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: const Color(0xFFDCFCE7),
                       borderRadius: BorderRadius.circular(6),
@@ -159,18 +165,22 @@ class DonorMatchCard extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFDC2626),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 6),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6)),
                     ),
                     child: isProcessing
                         ? const SizedBox(
                             width: 14,
                             height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white),
                           )
                         : const Text(
                             'Select Donor',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.bold),
                           ),
                   ),
               ],
@@ -242,7 +252,8 @@ class DonorMatchCard extends StatelessWidget {
       ),
       child: Text(
         '${quality.displayName} Quality',
-        style: TextStyle(color: text, fontSize: 11, fontWeight: FontWeight.w600),
+        style:
+            TextStyle(color: text, fontSize: 11, fontWeight: FontWeight.w600),
       ),
     );
   }

@@ -54,8 +54,13 @@ class ApproximateLocation {
     this.isApproximate = true,
   });
 
+  double? get latitude => coordinates?.latitude;
+  double? get longitude => coordinates?.longitude;
+
   String get displayName {
-    final parts = [city, district, state].where((p) => p != null && p.isNotEmpty).toList();
+    final parts = [city, district, state]
+        .where((p) => p != null && p.isNotEmpty)
+        .toList();
     if (parts.isEmpty) {
       return postalCode ?? 'Current Area';
     }

@@ -20,7 +20,8 @@ class CreateDonationEventScreen extends StatefulWidget {
   });
 
   @override
-  State<CreateDonationEventScreen> createState() => _CreateDonationEventScreenState();
+  State<CreateDonationEventScreen> createState() =>
+      _CreateDonationEventScreenState();
 }
 
 class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
@@ -36,9 +37,12 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _stateController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
-  final TextEditingController _latController = TextEditingController(text: '19.0760');
-  final TextEditingController _lonController = TextEditingController(text: '72.8777');
-  final TextEditingController _capacityController = TextEditingController(text: '50');
+  final TextEditingController _latController =
+      TextEditingController(text: '19.0760');
+  final TextEditingController _lonController =
+      TextEditingController(text: '72.8777');
+  final TextEditingController _capacityController =
+      TextEditingController(text: '50');
 
   // Date and time state
   DateTime _startAt = DateTime.now().add(const Duration(days: 7, hours: 9));
@@ -52,7 +56,8 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
   void initState() {
     super.initState();
     _controller = widget.controller ?? DonationEventController();
-    _bloodBankIdController = TextEditingController(text: widget.initialBloodBankId ?? '');
+    _bloodBankIdController =
+        TextEditingController(text: widget.initialBloodBankId ?? '');
   }
 
   @override
@@ -147,7 +152,8 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
       return;
     }
     if (!_regOpenAt.isBefore(_regCloseAt)) {
-      _showError('Registration open time must be before registration close time');
+      _showError(
+          'Registration open time must be before registration close time');
       return;
     }
     if (_regCloseAt.isAfter(_endAt)) {
@@ -158,7 +164,9 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
     final payload = {
       'bloodBankId': _bloodBankIdController.text.trim(),
       'title': _titleController.text.trim(),
-      'description': _descriptionController.text.trim().isNotEmpty ? _descriptionController.text.trim() : null,
+      'description': _descriptionController.text.trim().isNotEmpty
+          ? _descriptionController.text.trim()
+          : null,
       'venueName': _venueNameController.text.trim(),
       'address': _addressController.text.trim(),
       'city': _cityController.text.trim(),
@@ -287,7 +295,8 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                           // Description
                           NetraTextField(
                             label: 'Description',
-                            hint: 'Information about the drive, partners, amenities provided...',
+                            hint:
+                                'Information about the drive, partners, amenities provided...',
                             controller: _descriptionController,
                             maxLines: 3,
                           ),
@@ -356,7 +365,9 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                                 child: NetraTextField(
                                   label: 'Latitude *',
                                   controller: _latController,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                          decimal: true),
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -364,7 +375,9 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                                 child: NetraTextField(
                                   label: 'Longitude *',
                                   controller: _lonController,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                          decimal: true),
                                 ),
                               ),
                             ],
@@ -389,8 +402,10 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                                   label: 'Camp Starts',
                                   value: _startAt,
                                   onTap: () async {
-                                    final picked = await _pickDateTime(_startAt);
-                                    if (picked != null) setState(() => _startAt = picked);
+                                    final picked =
+                                        await _pickDateTime(_startAt);
+                                    if (picked != null)
+                                      setState(() => _startAt = picked);
                                   },
                                 ),
                               ),
@@ -401,7 +416,8 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                                   value: _endAt,
                                   onTap: () async {
                                     final picked = await _pickDateTime(_endAt);
-                                    if (picked != null) setState(() => _endAt = picked);
+                                    if (picked != null)
+                                      setState(() => _endAt = picked);
                                   },
                                 ),
                               ),
@@ -417,8 +433,10 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                                   label: 'Registration Opens',
                                   value: _regOpenAt,
                                   onTap: () async {
-                                    final picked = await _pickDateTime(_regOpenAt);
-                                    if (picked != null) setState(() => _regOpenAt = picked);
+                                    final picked =
+                                        await _pickDateTime(_regOpenAt);
+                                    if (picked != null)
+                                      setState(() => _regOpenAt = picked);
                                   },
                                 ),
                               ),
@@ -428,8 +446,10 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                                   label: 'Registration Closes',
                                   value: _regCloseAt,
                                   onTap: () async {
-                                    final picked = await _pickDateTime(_regCloseAt);
-                                    if (picked != null) setState(() => _regCloseAt = picked);
+                                    final picked =
+                                        await _pickDateTime(_regCloseAt);
+                                    if (picked != null)
+                                      setState(() => _regCloseAt = picked);
                                   },
                                 ),
                               ),
@@ -441,18 +461,22 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                             label: 'Donor Capacity (Max Slots) *',
                             controller: _capacityController,
                             keyboardType: TextInputType.number,
-                            helperText: 'Registration stops automatically when capacity is reached',
+                            helperText:
+                                'Registration stops automatically when capacity is reached',
                           ),
                           const SizedBox(height: 16),
 
                           // Submit immediately option
                           CheckboxListTile(
                             contentPadding: EdgeInsets.zero,
-                            title: const Text('Submit for admin review immediately after creation'),
-                            subtitle: const Text('If unchecked, camp remains in DRAFT state'),
+                            title: const Text(
+                                'Submit for admin review immediately after creation'),
+                            subtitle: const Text(
+                                'If unchecked, camp remains in DRAFT state'),
                             value: _submitForReviewImmediately,
                             onChanged: (val) {
-                              setState(() => _submitForReviewImmediately = val ?? false);
+                              setState(() =>
+                                  _submitForReviewImmediately = val ?? false);
                             },
                           ),
                           const SizedBox(height: 24),
@@ -461,7 +485,9 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                             text: 'Create Camp',
                             isLoading: _controller.isActionLoading,
                             icon: Icons.add_circle_outline,
-                            onPressed: _controller.isActionLoading ? null : _handleCreate,
+                            onPressed: _controller.isActionLoading
+                                ? null
+                                : _handleCreate,
                           ),
                         ],
                       ),
@@ -496,17 +522,20 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
           children: [
             Text(
               label,
-              style: NetraTypography.labelSmall.copyWith(color: NetraColors.textSecondary),
+              style: NetraTypography.labelSmall
+                  .copyWith(color: NetraColors.textSecondary),
             ),
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(Icons.calendar_today, size: 16, color: NetraColors.primaryRed),
+                const Icon(Icons.calendar_today,
+                    size: 16, color: NetraColors.primaryRed),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     _formatDateTime(value),
-                    style: NetraTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                    style: NetraTypography.bodyMedium
+                        .copyWith(fontWeight: FontWeight.w600),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),

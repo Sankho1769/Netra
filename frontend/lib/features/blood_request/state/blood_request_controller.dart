@@ -114,7 +114,8 @@ class BloodRequestController extends ChangeNotifier {
     }
   }
 
-  Future<BloodRequestDetail?> createRequest(Map<String, dynamic> payload) async {
+  Future<BloodRequestDetail?> createRequest(
+      Map<String, dynamic> payload) async {
     _isSubmitting = true;
     _errorMessage = null;
     notifyListeners();
@@ -134,7 +135,8 @@ class BloodRequestController extends ChangeNotifier {
     }
   }
 
-  Future<BloodRequestDetail?> updateRequest(String id, Map<String, dynamic> payload) async {
+  Future<BloodRequestDetail?> updateRequest(
+      String id, Map<String, dynamic> payload) async {
     _isSubmitting = true;
     _errorMessage = null;
     notifyListeners();

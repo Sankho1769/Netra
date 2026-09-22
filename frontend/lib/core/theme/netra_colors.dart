@@ -53,4 +53,12 @@ abstract final class NetraColors {
   static const Color errorRedBg = Color(0xFFFFEBEE);
   static const Color infoBlue = Color(0xFF0288D1);
   static const Color infoBlueBg = Color(0xFFE1F5FE);
+
+  // Semantic Aliases
+  static const Color backgroundGreen = eligibleGreenBg;
+  static const Color successGreen = eligibleGreen;
+  static const Color ineligibleRed = errorRed;
+  static const Color ineligibleRedBg = errorRedBg;
+  static const Color warningOrange = medicalReviewOrange;
+  static const Color warningOrangeBg = medicalReviewOrangeBg;
 }

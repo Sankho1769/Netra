@@ -25,7 +25,9 @@ class NetraAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     Widget? effectiveLeading = leading;
-    if (effectiveLeading == null && showBackButton && Navigator.of(context).canPop()) {
+    if (effectiveLeading == null &&
+        showBackButton &&
+        Navigator.of(context).canPop()) {
       effectiveLeading = IconButton(
         icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
         color: NetraColors.textPrimary,

@@ -67,7 +67,8 @@ class BloodBankController extends ChangeNotifier {
     }
   }
 
-  Future<void> loadBloodBankDetails(String id, {double? userLat, double? userLon}) async {
+  Future<void> loadBloodBankDetails(String id,
+      {double? userLat, double? userLon}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();

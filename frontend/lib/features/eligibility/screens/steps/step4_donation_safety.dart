@@ -33,7 +33,8 @@ class Step4DonationSafety extends StatelessWidget {
           // Q1: Tattoo / Piercing
           _buildSafetyQuestion(
             context,
-            title: "Tattoo, body piercing, or acupuncture in the past 6 months?",
+            title:
+                "Tattoo, body piercing, or acupuncture in the past 6 months?",
             whyText:
                 "Skin-penetrating procedures carry a small window period for blood-borne infections. Standard health policy requires a 6-month deferral.",
             source: "NBTC Guidelines Sec 5.1",
@@ -44,7 +45,8 @@ class Step4DonationSafety extends StatelessWidget {
           // Q2: Surgery
           _buildSafetyQuestion(
             context,
-            title: "Major surgery in the past 12 months (or minor in 6 months)?",
+            title:
+                "Major surgery in the past 12 months (or minor in 6 months)?",
             whyText:
                 "Surgery causes physiological stress and temporary blood loss. Waiting allows complete tissue healing and hemoglobin replenishment.",
             source: "NBTC Guidelines Sec 5.2",
@@ -66,7 +68,8 @@ class Step4DonationSafety extends StatelessWidget {
           // Q4: Chronic / Cardiac
           _buildSafetyQuestion(
             context,
-            title: "History of heart condition, seizures, or bleeding disorders?",
+            title:
+                "History of heart condition, seizures, or bleeding disorders?",
             whyText:
                 "Certain chronic conditions require direct personal clearance by an authorized blood centre medical officer to guarantee your safety during blood collection.",
             source: "NBTC Guidelines Sec 5.4",
@@ -111,9 +114,12 @@ class Step4DonationSafety extends StatelessWidget {
                 padding: NetraSpacing.paddingXs,
                 child: Row(
                   children: [
-                    const Icon(Icons.help_outline_rounded, size: 16, color: NetraColors.primaryRed),
+                    const Icon(Icons.help_outline_rounded,
+                        size: 16, color: NetraColors.primaryRed),
                     NetraSpacing.gapW4,
-                    Text("Why", style: NetraTypography.labelSmall.copyWith(color: NetraColors.primaryRed)),
+                    Text("Why",
+                        style: NetraTypography.labelSmall
+                            .copyWith(color: NetraColors.primaryRed)),
                   ],
                 ),
               ),
@@ -129,7 +135,8 @@ class Step4DonationSafety extends StatelessWidget {
           NetraSpacing.gapH8,
           Text(
             error,
-            style: NetraTypography.bodySmall.copyWith(color: NetraColors.errorRed),
+            style:
+                NetraTypography.bodySmall.copyWith(color: NetraColors.errorRed),
           ),
         ],
       ],

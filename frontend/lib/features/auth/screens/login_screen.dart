@@ -4,6 +4,7 @@ import '../../../core/theme/netra_colors.dart';
 import '../../../core/theme/netra_spacing.dart';
 import '../../../core/theme/netra_typography.dart';
 import '../../../common/widgets/common_widgets.dart';
+import '../models/auth_models.dart';
 import '../state/auth_controller.dart';
 import '../state/auth_scope.dart';
 import '../widgets/auth_text_field.dart';
@@ -61,7 +62,8 @@ class _LoginScreenState extends State<LoginScreen> {
         elevation: 0,
         leading: Navigator.of(context).canPop()
             ? IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: NetraColors.textPrimary),
+                icon: const Icon(Icons.arrow_back_rounded,
+                    color: NetraColors.textPrimary),
                 onPressed: () => Navigator.of(context).pop(),
               )
             : null,
@@ -78,7 +80,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
                   side: BorderSide(
-                    color: context.isMobile ? Colors.transparent : NetraColors.borderGray,
+                    color: context.isMobile
+                        ? Colors.transparent
+                        : NetraColors.borderGray,
                   ),
                 ),
                 child: Padding(
@@ -98,7 +102,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: NetraColors.backgroundRed,
-                              borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+                              borderRadius:
+                                  BorderRadius.circular(NetraSpacing.radiusMd),
                             ),
                             child: const Icon(
                               Icons.water_drop_rounded,
@@ -129,21 +134,26 @@ class _LoginScreenState extends State<LoginScreen> {
                             padding: const EdgeInsets.all(NetraSpacing.md),
                             decoration: BoxDecoration(
                               color: NetraColors.backgroundRed,
-                              borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
-                              border: BorderSide(color: NetraColors.errorRed.withOpacity(0.4)),
+                              borderRadius:
+                                  BorderRadius.circular(NetraSpacing.radiusSm),
+                              border: Border.all(
+                                  color: NetraColors.errorRed.withOpacity(0.4)),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.error_outline_rounded, color: NetraColors.errorRed, size: 20),
+                                const Icon(Icons.error_outline_rounded,
+                                    color: NetraColors.errorRed, size: 20),
                                 NetraSpacing.gapW12,
                                 Expanded(
                                   child: Text(
                                     authController.errorMessage!,
-                                    style: NetraTypography.bodySmall.copyWith(color: NetraColors.errorRed),
+                                    style: NetraTypography.bodySmall
+                                        .copyWith(color: NetraColors.errorRed),
                                   ),
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.close, size: 16, color: NetraColors.errorRed),
+                                  icon: const Icon(Icons.close,
+                                      size: 16, color: NetraColors.errorRed),
                                   padding: EdgeInsets.zero,
                                   constraints: const BoxConstraints(),
                                   onPressed: () => authController.clearError(),
@@ -161,12 +171,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
-                          prefixIcon: const Icon(Icons.email_outlined, size: 20),
+                          prefixIcon:
+                              const Icon(Icons.email_outlined, size: 20),
                           validator: (val) {
                             if (val == null || val.trim().isEmpty) {
                               return "Email is required";
                             }
-                            final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+                            final emailRegex =
+                                RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
                             if (!emailRegex.hasMatch(val.trim())) {
                               return "Enter a valid email address";
                             }
@@ -182,7 +194,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           controller: _passwordController,
                           isPassword: true,
                           textInputAction: TextInputAction.done,
-                          prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
+                          prefixIcon:
+                              const Icon(Icons.lock_outline_rounded, size: 20),
                           onFieldSubmitted: (_) => _handleLogin(authController),
                           validator: (val) {
                             if (val == null || val.isEmpty) {
@@ -197,7 +210,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         NetraButton(
                           text: "Log In",
                           isLoading: isLoading,
-                          onPressed: isLoading ? null : () => _handleLogin(authController),
+                          onPressed: isLoading
+                              ? null
+                              : () => _handleLogin(authController),
                         ),
                         NetraSpacing.gapH16,
 
@@ -207,13 +222,15 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: [
                             Text(
                               "Don't have an account?",
-                              style: NetraTypography.bodyMedium.copyWith(color: NetraColors.textSecondary),
+                              style: NetraTypography.bodyMedium
+                                  .copyWith(color: NetraColors.textSecondary),
                             ),
                             TextButton(
                               onPressed: () {
                                 authController.clearError();
                                 Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                                  MaterialPageRoute(
+                                      builder: (_) => const RegisterScreen()),
                                 );
                               },
                               child: Text(
@@ -234,17 +251,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () {
                             authController.clearError();
                             Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(builder: (_) => const HomeScreen()),
+                              MaterialPageRoute(
+                                  builder: (_) => const HomeScreen()),
                             );
                           },
                           icon: const Icon(Icons.explore_outlined, size: 18),
                           label: const Text("Continue as Guest"),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: NetraColors.textPrimary,
-                            side: const BorderSide(color: NetraColors.borderGray),
+                            side:
+                                const BorderSide(color: NetraColors.borderGray),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+                              borderRadius:
+                                  BorderRadius.circular(NetraSpacing.radiusMd),
                             ),
                           ),
                         ),
@@ -254,11 +274,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.lock_outline, size: 14, color: NetraColors.textSecondary),
+                            const Icon(Icons.lock_outline,
+                                size: 14, color: NetraColors.textSecondary),
                             NetraSpacing.gapW8,
                             Text(
                               "Secure & confidential health platform",
-                              style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary),
+                              style: NetraTypography.bodySmall
+                                  .copyWith(color: NetraColors.textSecondary),
                             ),
                           ],
                         ),

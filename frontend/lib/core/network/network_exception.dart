@@ -1,7 +1,7 @@
 /// Standard network exceptions for NETRA.
 /// Clinical safety and security require deterministic failure handling.
 
-sealed class NetworkException implements Exception {
+abstract class NetworkException implements Exception {
   final String message;
   final int? statusCode;
   final dynamic details;
@@ -14,7 +14,9 @@ sealed class NetworkException implements Exception {
 
 /// Thrown when device has no network connection or the server is unreachable.
 class ConnectionException extends NetworkException {
-  const ConnectionException([String message = 'Unable to reach NETRA server. Please verify your internet connection.'])
+  const ConnectionException(
+      [String message =
+          'Unable to reach NETRA server. Please verify your internet connection.'])
       : super(message);
 }
 
@@ -26,7 +28,8 @@ class ValidationException extends NetworkException {
 
 /// Thrown on HTTP 401 Unauthorized or 403 Forbidden.
 class UnauthorizedException extends NetworkException {
-  const UnauthorizedException([String message = 'Session unauthorized or capability token is invalid.'])
+  const UnauthorizedException(
+      [String message = 'Session unauthorized or capability token is invalid.'])
       : super(message, statusCode: 403);
 }
 
@@ -36,20 +39,31 @@ class NotFoundException extends NetworkException {
       : super(message, statusCode: 404);
 }
 
+/// Thrown on HTTP 409 Conflict (e.g. duplicate registration or concurrent modification).
+class ConflictException extends NetworkException {
+  const ConflictException(
+      [String message = 'Resource conflict or duplicate operation detected.'])
+      : super(message, statusCode: 409);
+}
+
 /// Thrown on HTTP 410 Gone (e.g. expired session).
 class SessionExpiredException extends NetworkException {
-  const SessionExpiredException([String message = 'Screening session has expired. Please start a fresh assessment.'])
+  const SessionExpiredException(
+      [String message =
+          'Screening session has expired. Please start a fresh assessment.'])
       : super(message, statusCode: 410);
 }
 
 /// Thrown on HTTP 429 Too Many Requests.
 class RateLimitException extends NetworkException {
-  const RateLimitException([String message = 'Too many requests. Please pause before trying again.'])
+  const RateLimitException(
+      [String message = 'Too many requests. Please pause before trying again.'])
       : super(message, statusCode: 429);
 }
 
 /// Thrown on HTTP 500+ Internal Server Error.
 class ServerException extends NetworkException {
-  const ServerException([String message = 'Server error occurred. Please try again later.'])
+  const ServerException(
+      [String message = 'Server error occurred. Please try again later.'])
       : super(message, statusCode: 500);
 }

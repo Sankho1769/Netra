@@ -33,8 +33,10 @@ class Step5PreDonationCheck extends StatelessWidget {
           // Q1: Sleep
           _buildCheckQuestion(
             context,
-            title: "Did you have at least 4 to 6 hours of sound sleep last night?",
-            whyText: "Being well rested keeps blood pressure steady and minimizes tiredness after donation.",
+            title:
+                "Did you have at least 4 to 6 hours of sound sleep last night?",
+            whyText:
+                "Being well rested keeps blood pressure steady and minimizes tiredness after donation.",
             source: "Pre-donation Guidance",
             questionKey: "SLEEP_HOURS_LAST_NIGHT",
           ),
@@ -44,7 +46,8 @@ class Step5PreDonationCheck extends StatelessWidget {
           _buildCheckQuestion(
             context,
             title: "Have you had a meal or snack within the last 4 hours?",
-            whyText: "Donating on an empty stomach can trigger hypoglycemia and lightheadedness. A light snack is recommended.",
+            whyText:
+                "Donating on an empty stomach can trigger hypoglycemia and lightheadedness. A light snack is recommended.",
             source: "NBTC Donor Counseling",
             questionKey: "MEAL_WITHIN_4_HOURS",
           ),
@@ -54,7 +57,8 @@ class Step5PreDonationCheck extends StatelessWidget {
           _buildCheckQuestion(
             context,
             title: "Have you had plenty of water or fluids today?",
-            whyText: "Good hydration supports blood volume and makes veins easier to find for a quick, painless donation.",
+            whyText:
+                "Good hydration supports blood volume and makes veins easier to find for a quick, painless donation.",
             source: "Pre-donation Guidance",
             questionKey: "HYDRATED_TODAY",
           ),
@@ -97,9 +101,12 @@ class Step5PreDonationCheck extends StatelessWidget {
                 padding: NetraSpacing.paddingXs,
                 child: Row(
                   children: [
-                    const Icon(Icons.help_outline_rounded, size: 16, color: NetraColors.primaryRed),
+                    const Icon(Icons.help_outline_rounded,
+                        size: 16, color: NetraColors.primaryRed),
                     NetraSpacing.gapW4,
-                    Text("Why", style: NetraTypography.labelSmall.copyWith(color: NetraColors.primaryRed)),
+                    Text("Why",
+                        style: NetraTypography.labelSmall
+                            .copyWith(color: NetraColors.primaryRed)),
                   ],
                 ),
               ),
@@ -115,7 +122,8 @@ class Step5PreDonationCheck extends StatelessWidget {
           NetraSpacing.gapH8,
           Text(
             error,
-            style: NetraTypography.bodySmall.copyWith(color: NetraColors.errorRed),
+            style:
+                NetraTypography.bodySmall.copyWith(color: NetraColors.errorRed),
           ),
         ],
       ],

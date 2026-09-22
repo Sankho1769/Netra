@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 /// Screen categories for responsive NETRA layouts.
 enum ScreenType {
-  compact,     // < 360px (very small phones)
-  mobile,      // 360px - 599px (standard phones)
-  tablet,      // 600px - 1023px (tablets, foldables unfolded)
-  desktop,     // 1024px - 1439px (laptops, small monitors)
+  compact, // < 360px (very small phones)
+  mobile, // 360px - 599px (standard phones)
+  tablet, // 600px - 1023px (tablets, foldables unfolded)
+  desktop, // 1024px - 1439px (laptops, small monitors)
   wideDesktop, // >= 1440px (large desktops, ultrawide)
 }
 

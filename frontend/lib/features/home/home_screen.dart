@@ -56,7 +56,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: NetraColors.primaryRed,
                   borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
                 ),
-                child: const Icon(Icons.water_drop_rounded, color: NetraColors.surfaceWhite, size: 18),
+                child: const Icon(Icons.water_drop_rounded,
+                    color: NetraColors.surfaceWhite, size: 18),
               ),
             ],
           ),
@@ -66,12 +67,13 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
         showBackButton: false,
       ),
-      body: _selectedTab == 0 ? _buildHomeTab(context) : _buildProfileTab(context),
+      body: _selectedTab == 0
+          ? _buildHomeTab(context)
+          : _buildProfileTab(context),
     );
   }
 
   Widget _buildHomeTab(BuildContext context) {
-    final isDesktopOrTablet = !context.isMobile;
     final authController = AuthScope.maybeOf(context);
     final user = authController?.currentUser;
     final displayName = user != null ? user.fullName.split(' ').first : "Donor";
@@ -120,21 +122,25 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: NetraSpacing.paddingSm,
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+                        borderRadius:
+                            BorderRadius.circular(NetraSpacing.radiusMd),
                       ),
-                      child: const Icon(Icons.volunteer_activism_rounded, color: Colors.white, size: 24),
+                      child: const Icon(Icons.volunteer_activism_rounded,
+                          color: Colors.white, size: 24),
                     ),
                     NetraSpacing.gapW12,
                     Text(
                       "Donate Blood",
-                      style: NetraTypography.headlineSmall.copyWith(color: NetraColors.surfaceWhite),
+                      style: NetraTypography.headlineSmall
+                          .copyWith(color: NetraColors.surfaceWhite),
                     ),
                   ],
                 ),
                 NetraSpacing.gapH12,
                 Text(
                   "Thinking of donating? Take a confidential 3-minute self-check to see if you meet general donor criteria.",
-                  style: NetraTypography.bodyMedium.copyWith(color: NetraColors.surfaceWhite),
+                  style: NetraTypography.bodyMedium
+                      .copyWith(color: NetraColors.surfaceWhite),
                 ),
                 NetraSpacing.gapH20,
                 ElevatedButton(
@@ -143,12 +149,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     foregroundColor: NetraColors.primaryRed,
                     minimumSize: const Size(double.infinity, 48),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+                      borderRadius:
+                          BorderRadius.circular(NetraSpacing.radiusMd),
                     ),
                   ),
                   onPressed: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const EligibilityIntroScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => const EligibilityIntroScreen()),
                     );
                   },
                   child: Row(
@@ -156,7 +164,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Text(
                         "Check Eligibility",
-                        style: NetraTypography.labelLarge.copyWith(color: NetraColors.primaryRed),
+                        style: NetraTypography.labelLarge
+                            .copyWith(color: NetraColors.primaryRed),
                       ),
                       NetraSpacing.gapW8,
                       const Icon(Icons.arrow_forward_rounded, size: 16),
@@ -172,7 +181,8 @@ class _HomeScreenState extends State<HomeScreen> {
           InkWell(
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const EmergencyModeScreen()),
+                MaterialPageRoute(
+                    builder: (context) => const EmergencyModeScreen()),
               );
             },
             borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
@@ -196,7 +206,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: const Color(0xFFDC2626),
-                      borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+                      borderRadius:
+                          BorderRadius.circular(NetraSpacing.radiusMd),
                     ),
                     child: const Icon(
                       Icons.emergency_outlined,
@@ -220,10 +231,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             NetraSpacing.gapW8,
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFDC2626),
-                                borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
+                                borderRadius: BorderRadius.circular(
+                                    NetraSpacing.radiusSm),
                               ),
                               child: Text(
                                 "CRITICAL",
@@ -246,7 +259,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                  const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFFDC2626), size: 16),
+                  const Icon(Icons.arrow_forward_ios_rounded,
+                      color: Color(0xFFDC2626), size: 16),
                 ],
               ),
             ),
@@ -270,7 +284,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   iconColor: NetraColors.primaryRed,
                   onTap: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const DonationEventListScreen()),
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              const DonationEventListScreen()),
                     );
                   },
                 ),
@@ -285,7 +301,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   iconColor: const Color(0xFFDC2626),
                   onTap: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const BloodRequestListScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => const BloodRequestListScreen()),
                     );
                   },
                 ),
@@ -304,7 +321,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   iconColor: NetraColors.textPrimary,
                   onTap: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const NearbyBloodBanksScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => const NearbyBloodBanksScreen()),
                     );
                   },
                 ),
@@ -344,7 +362,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         radius: 28,
                         backgroundColor: NetraColors.backgroundRed,
                         child: Text(
-                          user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : 'U',
+                          user.fullName.isNotEmpty
+                              ? user.fullName[0].toUpperCase()
+                              : 'U',
                           style: NetraTypography.headlineSmall.copyWith(
                             color: NetraColors.primaryRed,
                             fontWeight: FontWeight.bold,
@@ -356,12 +376,16 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(user.fullName, style: NetraTypography.titleMedium),
+                            Text(user.fullName,
+                                style: NetraTypography.titleMedium),
                             NetraSpacing.gapH4,
                             Text(user.email, style: NetraTypography.bodySmall),
-                            if (user.phone != null && user.phone!.isNotEmpty) ...[
+                            if (user.phone != null &&
+                                user.phone!.isNotEmpty) ...[
                               NetraSpacing.gapH2,
-                              Text(user.phone!, style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary)),
+                              Text(user.phone!,
+                                  style: NetraTypography.bodySmall.copyWith(
+                                      color: NetraColors.textSecondary)),
                             ],
                           ],
                         ),
@@ -379,7 +403,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           )),
                       NetraChip(
                         label: user.status,
-                        type: user.status == 'ACTIVE' ? NetraChipType.statusSuccess : NetraChipType.neutral,
+                        type: user.status == 'ACTIVE'
+                            ? NetraChipType.statusSuccess
+                            : NetraChipType.neutral,
                       ),
                     ],
                   ),
@@ -389,7 +415,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: Icons.manage_accounts_outlined,
                     onPressed: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                        MaterialPageRoute(
+                            builder: (_) => const ProfileScreen()),
                       );
                     },
                   ),
@@ -406,18 +433,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       const CircleAvatar(
                         radius: 24,
                         backgroundColor: NetraColors.backgroundGray,
-                        child: Icon(Icons.person_outline_rounded, color: NetraColors.textSecondary),
+                        child: Icon(Icons.person_outline_rounded,
+                            color: NetraColors.textSecondary),
                       ),
                       NetraSpacing.gapW16,
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Guest Mode", style: NetraTypography.titleMedium),
+                            Text("Guest Mode",
+                                style: NetraTypography.titleMedium),
                             NetraSpacing.gapH4,
                             Text(
                               "Sign in to track donations and access your profile.",
-                              style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary),
+                              style: NetraTypography.bodySmall
+                                  .copyWith(color: NetraColors.textSecondary),
                             ),
                           ],
                         ),
@@ -456,14 +486,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: NetraColors.backgroundRed,
                   borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
                 ),
-                child: const Icon(Icons.fact_check_outlined, color: NetraColors.primaryRed, size: 20),
+                child: const Icon(Icons.fact_check_outlined,
+                    color: NetraColors.primaryRed, size: 20),
               ),
-              title: Text("Eligibility Check", style: NetraTypography.titleSmall),
-              subtitle: Text("Verify pre-donation suitability", style: NetraTypography.bodySmall),
-              trailing: const Icon(Icons.chevron_right_rounded, color: NetraColors.textSecondary),
+              title:
+                  Text("Eligibility Check", style: NetraTypography.titleSmall),
+              subtitle: Text("Verify pre-donation suitability",
+                  style: NetraTypography.bodySmall),
+              trailing: const Icon(Icons.chevron_right_rounded,
+                  color: NetraColors.textSecondary),
               onTap: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const EligibilityIntroScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const EligibilityIntroScreen()),
                 );
               },
             ),
@@ -478,11 +513,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: NetraColors.backgroundGray,
                   borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
                 ),
-                child: const Icon(Icons.history_rounded, color: NetraColors.textSecondary, size: 20),
+                child: const Icon(Icons.history_rounded,
+                    color: NetraColors.textSecondary, size: 20),
               ),
-              title: Text("Donation History", style: NetraTypography.titleSmall),
-              subtitle: Text("Past contributions and certificates", style: NetraTypography.bodySmall),
-              trailing: const Icon(Icons.chevron_right_rounded, color: NetraColors.textSecondary),
+              title:
+                  Text("Donation History", style: NetraTypography.titleSmall),
+              subtitle: Text("Past contributions and certificates",
+                  style: NetraTypography.bodySmall),
+              trailing: const Icon(Icons.chevron_right_rounded,
+                  color: NetraColors.textSecondary),
               onTap: () {},
             ),
           ),
@@ -524,7 +563,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         TextButton(
                           onPressed: () => Navigator.of(ctx).pop(true),
-                          child: const Text("Log Out Everywhere", style: TextStyle(color: NetraColors.errorRed)),
+                          child: const Text("Log Out Everywhere",
+                              style: TextStyle(color: NetraColors.errorRed)),
                         ),
                       ],
                     ),
@@ -539,10 +579,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                   }
                 },
-                icon: const Icon(Icons.security_rounded, size: 16, color: NetraColors.textSecondary),
+                icon: const Icon(Icons.security_rounded,
+                    size: 16, color: NetraColors.textSecondary),
                 label: Text(
                   "Log out from all devices",
-                  style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary),
+                  style: NetraTypography.bodySmall
+                      .copyWith(color: NetraColors.textSecondary),
                 ),
               ),
             ),
@@ -569,7 +611,9 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Container(
             padding: NetraSpacing.paddingSm,
-            decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(NetraSpacing.radiusSm)),
+            decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(NetraSpacing.radiusSm)),
             child: Icon(icon, color: iconColor, size: 20),
           ),
           NetraSpacing.gapH12,

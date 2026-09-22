@@ -35,13 +35,15 @@ class DonorIncomingMatchesScreen extends StatefulWidget {
   const DonorIncomingMatchesScreen({super.key, this.apiService});
 
   @override
-  State<DonorIncomingMatchesScreen> createState() => _DonorIncomingMatchesScreenState();
+  State<DonorIncomingMatchesScreen> createState() =>
+      _DonorIncomingMatchesScreenState();
 }
 
 /// Backwards compatibility alias
 typedef DonorMatchesScreen = DonorIncomingMatchesScreen;
 
-class _DonorIncomingMatchesScreenState extends State<DonorIncomingMatchesScreen> {
+class _DonorIncomingMatchesScreenState
+    extends State<DonorIncomingMatchesScreen> {
   late final DonorResponseApiService _apiService;
 
   bool _isLoading = true;
@@ -73,7 +75,8 @@ class _DonorIncomingMatchesScreenState extends State<DonorIncomingMatchesScreen>
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString().replaceFirst('ValidationException: ', '');
+          _errorMessage =
+              e.toString().replaceFirst('ValidationException: ', '');
           _isLoading = false;
         });
       }
@@ -83,11 +86,17 @@ class _DonorIncomingMatchesScreenState extends State<DonorIncomingMatchesScreen>
   List<DonorMatchDetail> get _filteredMatches {
     switch (_selectedFilter) {
       case DonorMatchFilterType.pending:
-        return _matches.where((m) => m.responseStatus == DonorMatchStatus.matched).toList();
+        return _matches
+            .where((m) => m.responseStatus == DonorMatchStatus.matched)
+            .toList();
       case DonorMatchFilterType.accepted:
-        return _matches.where((m) => m.responseStatus == DonorMatchStatus.accepted).toList();
+        return _matches
+            .where((m) => m.responseStatus == DonorMatchStatus.accepted)
+            .toList();
       case DonorMatchFilterType.declined:
-        return _matches.where((m) => m.responseStatus == DonorMatchStatus.declined).toList();
+        return _matches
+            .where((m) => m.responseStatus == DonorMatchStatus.declined)
+            .toList();
       case DonorMatchFilterType.expiredOrCancelled:
         return _matches
             .where((m) =>
@@ -95,7 +104,6 @@ class _DonorIncomingMatchesScreenState extends State<DonorIncomingMatchesScreen>
                 m.responseStatus == DonorMatchStatus.cancelled)
             .toList();
       case DonorMatchFilterType.all:
-      default:
         return _matches;
     }
   }
@@ -181,9 +189,15 @@ class _DonorIncomingMatchesScreenState extends State<DonorIncomingMatchesScreen>
   }
 
   Widget _buildFilterChips() {
-    final pendingCount = _matches.where((m) => m.responseStatus == DonorMatchStatus.matched).length;
-    final acceptedCount = _matches.where((m) => m.responseStatus == DonorMatchStatus.accepted).length;
-    final declinedCount = _matches.where((m) => m.responseStatus == DonorMatchStatus.declined).length;
+    final pendingCount = _matches
+        .where((m) => m.responseStatus == DonorMatchStatus.matched)
+        .length;
+    final acceptedCount = _matches
+        .where((m) => m.responseStatus == DonorMatchStatus.accepted)
+        .length;
+    final declinedCount = _matches
+        .where((m) => m.responseStatus == DonorMatchStatus.declined)
+        .length;
     final expiredOrCancelledCount = _matches
         .where((m) =>
             m.responseStatus == DonorMatchStatus.expired ||
@@ -199,7 +213,8 @@ class _DonorIncomingMatchesScreenState extends State<DonorIncomingMatchesScreen>
             label: Text('All (${_matches.length})'),
             selected: _selectedFilter == DonorMatchFilterType.all,
             onSelected: (selected) {
-              if (selected) setState(() => _selectedFilter = DonorMatchFilterType.all);
+              if (selected)
+                setState(() => _selectedFilter = DonorMatchFilterType.all);
             },
           ),
           const SizedBox(width: 8),
@@ -207,7 +222,9 @@ class _DonorIncomingMatchesScreenState extends State<DonorIncomingMatchesScreen>
             label: Text('Pending ($pendingCount)'),
             selected: _selectedFilter == DonorMatchFilterType.pending,
             onSelected: (selected) {
-              setState(() => _selectedFilter = selected ? DonorMatchFilterType.pending : DonorMatchFilterType.all);
+              setState(() => _selectedFilter = selected
+                  ? DonorMatchFilterType.pending
+                  : DonorMatchFilterType.all);
             },
           ),
           const SizedBox(width: 8),
@@ -215,7 +232,9 @@ class _DonorIncomingMatchesScreenState extends State<DonorIncomingMatchesScreen>
             label: Text('Accepted ($acceptedCount)'),
             selected: _selectedFilter == DonorMatchFilterType.accepted,
             onSelected: (selected) {
-              setState(() => _selectedFilter = selected ? DonorMatchFilterType.accepted : DonorMatchFilterType.all);
+              setState(() => _selectedFilter = selected
+                  ? DonorMatchFilterType.accepted
+                  : DonorMatchFilterType.all);
             },
           ),
           const SizedBox(width: 8),
@@ -223,15 +242,20 @@ class _DonorIncomingMatchesScreenState extends State<DonorIncomingMatchesScreen>
             label: Text('Declined ($declinedCount)'),
             selected: _selectedFilter == DonorMatchFilterType.declined,
             onSelected: (selected) {
-              setState(() => _selectedFilter = selected ? DonorMatchFilterType.declined : DonorMatchFilterType.all);
+              setState(() => _selectedFilter = selected
+                  ? DonorMatchFilterType.declined
+                  : DonorMatchFilterType.all);
             },
           ),
           const SizedBox(width: 8),
           FilterChip(
             label: Text('Expired / Cancelled ($expiredOrCancelledCount)'),
-            selected: _selectedFilter == DonorMatchFilterType.expiredOrCancelled,
+            selected:
+                _selectedFilter == DonorMatchFilterType.expiredOrCancelled,
             onSelected: (selected) {
-              setState(() => _selectedFilter = selected ? DonorMatchFilterType.expiredOrCancelled : DonorMatchFilterType.all);
+              setState(() => _selectedFilter = selected
+                  ? DonorMatchFilterType.expiredOrCancelled
+                  : DonorMatchFilterType.all);
             },
           ),
         ],

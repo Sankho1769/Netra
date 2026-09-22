@@ -20,10 +20,12 @@ class EmergencyCreateRequestScreen extends StatefulWidget {
   });
 
   @override
-  State<EmergencyCreateRequestScreen> createState() => _EmergencyCreateRequestScreenState();
+  State<EmergencyCreateRequestScreen> createState() =>
+      _EmergencyCreateRequestScreenState();
 }
 
-class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScreen> {
+class _EmergencyCreateRequestScreenState
+    extends State<EmergencyCreateRequestScreen> {
   late final EmergencyApiService _apiService;
   late final LocationService _locationService;
   final _formKey = GlobalKey<FormState>();
@@ -34,7 +36,8 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
   DateTime? _customRequiredBy;
 
   final TextEditingController _hospitalNameController = TextEditingController();
-  final TextEditingController _hospitalAddressController = TextEditingController();
+  final TextEditingController _hospitalAddressController =
+      TextEditingController();
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _stateController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
@@ -48,7 +51,14 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
   String? _currentSubmissionIdempotencyKey;
 
   final List<String> _bloodGroups = [
-    'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'
+    'A+',
+    'A-',
+    'B+',
+    'B-',
+    'O+',
+    'O-',
+    'AB+',
+    'AB-'
   ];
 
   final List<int> _quickUnits = [1, 2, 3, 4, 5];
@@ -111,14 +121,18 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
     });
 
     try {
-      final loc = await _locationService.getCurrentLocation(approximateOnly: false);
+      final loc =
+          await _locationService.getCurrentLocation(approximateOnly: false);
       if (loc != null && mounted) {
         setState(() {
           if (loc.city != null) _cityController.text = loc.city!;
           if (loc.state != null) _stateController.text = loc.state!;
-          if (loc.postalCode != null) _postalCodeController.text = loc.postalCode!;
-          _latitudeController.text = loc.coordinates.latitude.toStringAsFixed(4);
-          _longitudeController.text = loc.coordinates.longitude.toStringAsFixed(4);
+          if (loc.postalCode != null)
+            _postalCodeController.text = loc.postalCode!;
+          if (loc.latitude != null)
+            _latitudeController.text = loc.latitude!.toStringAsFixed(4);
+          if (loc.longitude != null)
+            _longitudeController.text = loc.longitude!.toStringAsFixed(4);
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -130,7 +144,8 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Location permission denied or unavailable. Please enter details manually.'),
+            content: Text(
+                'Location permission denied or unavailable. Please enter details manually.'),
             backgroundColor: Color(0xFFD97706),
           ),
         );
@@ -139,7 +154,8 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Could not auto-detect location. Please fill manually.'),
+            content:
+                Text('Could not auto-detect location. Please fill manually.'),
             backgroundColor: Color(0xFFD97706),
           ),
         );
@@ -171,7 +187,8 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
     if (lat == null || lat < -90.0 || lat > 90.0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please provide a valid latitude between -90.0 and 90.0.'),
+          content:
+              Text('Please provide a valid latitude between -90.0 and 90.0.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -181,7 +198,8 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
     if (lng == null || lng < -180.0 || lng > 180.0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please provide a valid longitude between -180.0 and 180.0.'),
+          content: Text(
+              'Please provide a valid longitude between -180.0 and 180.0.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -233,7 +251,8 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
       payload['description'] = desc;
     }
 
-    _currentSubmissionIdempotencyKey ??= EmergencyApiService.generateIdempotencyKey();
+    _currentSubmissionIdempotencyKey ??=
+        EmergencyApiService.generateIdempotencyKey();
 
     try {
       final created = await _apiService.createEmergencyRequest(
@@ -253,7 +272,9 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
       if (!mounted) return;
       setState(() {
         _isSubmitting = false;
-        _errorMessage = e is NetworkException ? e.message : 'Failed to create emergency blood request. Please try again.';
+        _errorMessage = e is NetworkException
+            ? e.message
+            : 'Failed to create emergency blood request. Please try again.';
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -288,7 +309,8 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626), size: 24),
+                    const Icon(Icons.warning_amber_rounded,
+                        color: Color(0xFFDC2626), size: 24),
                     NetraSpacing.gapW12,
                     Expanded(
                       child: Text(
@@ -307,7 +329,8 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
               // 1. Blood Group Selection (1-tap chips)
               Text(
                 "Blood Group Needed *",
-                style: NetraTypography.titleMedium.copyWith(fontWeight: FontWeight.bold),
+                style: NetraTypography.titleMedium
+                    .copyWith(fontWeight: FontWeight.bold),
               ),
               NetraSpacing.gapH8,
               Wrap(
@@ -319,7 +342,9 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
                     label: Text(
                       group,
                       style: NetraTypography.labelLarge.copyWith(
-                        color: isSelected ? NetraColors.surfaceWhite : NetraColors.textPrimary,
+                        color: isSelected
+                            ? NetraColors.surfaceWhite
+                            : NetraColors.textPrimary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -327,7 +352,8 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
                     selectedColor: const Color(0xFFDC2626),
                     backgroundColor: NetraColors.backgroundGray,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+                      borderRadius:
+                          BorderRadius.circular(NetraSpacing.radiusMd),
                     ),
                     onSelected: (selected) {
                       if (selected) {
@@ -345,7 +371,8 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
               // 2. Units Required (Quick Selector)
               Text(
                 "Units Required (1-50) *",
-                style: NetraTypography.titleMedium.copyWith(fontWeight: FontWeight.bold),
+                style: NetraTypography.titleMedium
+                    .copyWith(fontWeight: FontWeight.bold),
               ),
               NetraSpacing.gapH8,
               Row(
@@ -355,14 +382,21 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
                     padding: const EdgeInsets.only(right: 8.0),
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                        backgroundColor: isSelected ? const Color(0xFFDC2626) : Colors.transparent,
-                        foregroundColor: isSelected ? NetraColors.surfaceWhite : NetraColors.textPrimary,
+                        backgroundColor: isSelected
+                            ? const Color(0xFFDC2626)
+                            : Colors.transparent,
+                        foregroundColor: isSelected
+                            ? NetraColors.surfaceWhite
+                            : NetraColors.textPrimary,
                         side: BorderSide(
-                          color: isSelected ? const Color(0xFFDC2626) : NetraColors.borderSubtle,
+                          color: isSelected
+                              ? const Color(0xFFDC2626)
+                              : NetraColors.borderSubtle,
                         ),
                         minimumSize: const Size(48, 44),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+                          borderRadius:
+                              BorderRadius.circular(NetraSpacing.radiusMd),
                         ),
                       ),
                       onPressed: () {
@@ -374,7 +408,9 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
                       child: Text(
                         "$u",
                         style: NetraTypography.labelLarge.copyWith(
-                          color: isSelected ? NetraColors.surfaceWhite : NetraColors.textPrimary,
+                          color: isSelected
+                              ? NetraColors.surfaceWhite
+                              : NetraColors.textPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -387,7 +423,8 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
               // 3. Emergency Deadline Selection (within 72h)
               Text(
                 "Required Within *",
-                style: NetraTypography.titleMedium.copyWith(fontWeight: FontWeight.bold),
+                style: NetraTypography.titleMedium
+                    .copyWith(fontWeight: FontWeight.bold),
               ),
               NetraSpacing.gapH8,
               Wrap(
@@ -396,20 +433,25 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
                 children: _quickDeadlines.map((item) {
                   final duration = item['duration'] as Duration;
                   final label = item['label'] as String;
-                  final isSelected = _customRequiredBy == null && _selectedDuration == duration;
+                  final isSelected = _customRequiredBy == null &&
+                      _selectedDuration == duration;
                   return ChoiceChip(
                     label: Text(
                       label,
                       style: NetraTypography.bodySmall.copyWith(
-                        color: isSelected ? NetraColors.surfaceWhite : NetraColors.textPrimary,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected
+                            ? NetraColors.surfaceWhite
+                            : NetraColors.textPrimary,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                     selected: isSelected,
                     selectedColor: const Color(0xFFDC2626),
                     backgroundColor: NetraColors.backgroundGray,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+                      borderRadius:
+                          BorderRadius.circular(NetraSpacing.radiusMd),
                     ),
                     onSelected: (selected) {
                       if (selected) {
@@ -431,7 +473,8 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
                 children: [
                   Text(
                     "Hospital & Location *",
-                    style: NetraTypography.titleMedium.copyWith(fontWeight: FontWeight.bold),
+                    style: NetraTypography.titleMedium
+                        .copyWith(fontWeight: FontWeight.bold),
                   ),
                   TextButton.icon(
                     onPressed: _isDetectingLocation ? null : _detectLocation,
@@ -479,7 +522,9 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
                     child: NetraTextField(
                       controller: _cityController,
                       label: "City",
-                      validator: (val) => (val == null || val.trim().isEmpty) ? "City required" : null,
+                      validator: (val) => (val == null || val.trim().isEmpty)
+                          ? "City required"
+                          : null,
                     ),
                   ),
                   NetraSpacing.gapW12,
@@ -487,7 +532,9 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
                     child: NetraTextField(
                       controller: _stateController,
                       label: "State",
-                      validator: (val) => (val == null || val.trim().isEmpty) ? "State required" : null,
+                      validator: (val) => (val == null || val.trim().isEmpty)
+                          ? "State required"
+                          : null,
                     ),
                   ),
                 ],
@@ -499,7 +546,9 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
                     child: NetraTextField(
                       controller: _postalCodeController,
                       label: "Postal Code",
-                      validator: (val) => (val == null || val.trim().isEmpty) ? "PIN required" : null,
+                      validator: (val) => (val == null || val.trim().isEmpty)
+                          ? "PIN required"
+                          : null,
                     ),
                   ),
                   NetraSpacing.gapW12,
@@ -507,8 +556,11 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
                     child: NetraTextField(
                       controller: _latitudeController,
                       label: "Latitude",
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      validator: (val) => (val == null || val.trim().isEmpty) ? "Latitude required" : null,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      validator: (val) => (val == null || val.trim().isEmpty)
+                          ? "Latitude required"
+                          : null,
                     ),
                   ),
                   NetraSpacing.gapW12,
@@ -516,8 +568,11 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
                     child: NetraTextField(
                       controller: _longitudeController,
                       label: "Longitude",
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      validator: (val) => (val == null || val.trim().isEmpty) ? "Longitude required" : null,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      validator: (val) => (val == null || val.trim().isEmpty)
+                          ? "Longitude required"
+                          : null,
                     ),
                   ),
                 ],
@@ -527,13 +582,15 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
               // 5. Short Medical Note (Optional)
               Text(
                 "Short Note (Optional)",
-                style: NetraTypography.titleMedium.copyWith(fontWeight: FontWeight.bold),
+                style: NetraTypography.titleMedium
+                    .copyWith(fontWeight: FontWeight.bold),
               ),
               NetraSpacing.gapH8,
               NetraTextField(
                 controller: _descriptionController,
                 label: "Emergency Context",
-                hint: "e.g. Emergency surgery, ICU patient. Keep confidential details private.",
+                hint:
+                    "e.g. Emergency surgery, ICU patient. Keep confidential details private.",
                 maxLines: 2,
                 prefixIcon: const Icon(Icons.notes_rounded),
               ),
@@ -550,12 +607,14 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.shield_outlined, color: NetraColors.primaryRed, size: 20),
+                    const Icon(Icons.shield_outlined,
+                        color: NetraColors.primaryRed, size: 20),
                     NetraSpacing.gapW12,
                     Expanded(
                       child: Text(
                         "NETRA does not expose donor personal contact information. Available contact and fulfillment actions are handled through the supported NETRA workflow and verified blood-bank processes.",
-                        style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary),
+                        style: NetraTypography.bodySmall
+                            .copyWith(color: NetraColors.textSecondary),
                       ),
                     ),
                   ],
@@ -572,7 +631,8 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
                     backgroundColor: const Color(0xFFDC2626),
                     foregroundColor: NetraColors.surfaceWhite,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+                      borderRadius:
+                          BorderRadius.circular(NetraSpacing.radiusMd),
                     ),
                     elevation: 2,
                   ),
@@ -592,7 +652,9 @@ class _EmergencyCreateRequestScreenState extends State<EmergencyCreateRequestScr
                             SizedBox(width: 12),
                             Text(
                               "Submitting Request...",
-                              style: TextStyle(color: NetraColors.surfaceWhite, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  color: NetraColors.surfaceWhite,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ],
                         )

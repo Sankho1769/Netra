@@ -3,7 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Secure token storage interface.
 /// In production, this interfaces with Android Keystore / iOS Keychain.
 abstract class SecureTokenStorage {
-  Future<void> saveTokens({required String accessToken, required String refreshToken});
+  Future<void> saveTokens(
+      {required String accessToken, required String refreshToken});
   Future<String?> getAccessToken();
   Future<String?> getRefreshToken();
   Future<void> clearTokens();
@@ -21,7 +22,8 @@ class PlatformSecureTokenStorage implements SecureTokenStorage {
   String? _cachedRefreshToken;
 
   @override
-  Future<void> saveTokens({required String accessToken, required String refreshToken}) async {
+  Future<void> saveTokens(
+      {required String accessToken, required String refreshToken}) async {
     _cachedAccessToken = accessToken;
     _cachedRefreshToken = refreshToken;
 

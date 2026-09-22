@@ -25,7 +25,8 @@ class AuthApiService {
       return AuthResponseBundle(user: user, tokens: tokens);
     } catch (e) {
       if (e is NetworkException) rethrow;
-      throw ValidationException('Unable to complete registration. Please try again.');
+      throw ValidationException(
+          'Unable to complete registration. Please try again.');
     }
   }
 
@@ -38,7 +39,8 @@ class AuthApiService {
       return AuthResponseBundle(user: user, tokens: tokens);
     } catch (e) {
       if (e is NetworkException) rethrow;
-      throw ValidationException('Authentication failed. Please check your credentials.');
+      throw ValidationException(
+          'Authentication failed. Please check your credentials.');
     }
   }
 

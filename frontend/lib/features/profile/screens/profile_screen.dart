@@ -68,7 +68,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (_isLoading) {
       return const Scaffold(
         appBar: NetraAppBar(title: "Account & Profile"),
-        body: Center(child: NetraLoadingIndicator(message: "Loading your profile...")),
+        body: Center(
+            child: NetraLoadingIndicator(message: "Loading your profile...")),
       );
     }
 
@@ -82,7 +83,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Padding(
             padding: context.screenGutter,
             child: NetraErrorView(
-              message: _profileController.errorMessage ?? "Unable to load profile.",
+              message:
+                  _profileController.errorMessage ?? "Unable to load profile.",
               onRetry: _loadData,
             ),
           ),
@@ -126,7 +128,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildHeaderCard(BuildContext context, UserProfile profile) {
-    final initials = profile.fullName.isNotEmpty ? profile.fullName[0].toUpperCase() : 'U';
+    final initials =
+        profile.fullName.isNotEmpty ? profile.fullName[0].toUpperCase() : 'U';
 
     return Card(
       elevation: context.isMobile ? 0 : 2,
@@ -159,7 +162,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Text(profile.fullName, style: NetraTypography.titleLarge),
                   NetraSpacing.gapH4,
-                  Text(profile.email, style: NetraTypography.bodyMedium.copyWith(color: NetraColors.textSecondary)),
+                  Text(profile.email,
+                      style: NetraTypography.bodyMedium
+                          .copyWith(color: NetraColors.textSecondary)),
                   NetraSpacing.gapH8,
                   Wrap(
                     spacing: 8,
@@ -171,7 +176,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           )),
                       NetraChip(
                         label: profile.status,
-                        type: profile.status == 'ACTIVE' ? NetraChipType.statusSuccess : NetraChipType.neutral,
+                        type: profile.status == 'ACTIVE'
+                            ? NetraChipType.statusSuccess
+                            : NetraChipType.neutral,
                       ),
                     ],
                   ),
@@ -246,7 +253,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.volunteer_activism_outlined, color: NetraColors.primaryRed, size: 20),
+                    const Icon(Icons.volunteer_activism_outlined,
+                        color: NetraColors.primaryRed, size: 20),
                     NetraSpacing.gapW8,
                     Text("Donor Profile", style: NetraTypography.titleMedium),
                   ],
@@ -274,7 +282,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     }
                     _loadData();
                   },
-                  icon: Icon(donorProfile != null ? Icons.chevron_right_rounded : Icons.add_rounded, size: 18),
+                  icon: Icon(
+                      donorProfile != null
+                          ? Icons.chevron_right_rounded
+                          : Icons.add_rounded,
+                      size: 18),
                   label: Text(donorProfile != null ? "View" : "Setup"),
                 ),
               ],
@@ -284,10 +296,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
                       color: NetraColors.backgroundRed,
-                      borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
+                      borderRadius:
+                          BorderRadius.circular(NetraSpacing.radiusSm),
                     ),
                     child: Text(
                       donorProfile.bloodGroup,
@@ -303,13 +317,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          donorProfile.isVerified ? "Clinically Verified" : "Self-reported",
+                          donorProfile.isVerified
+                              ? "Clinically Verified"
+                              : "Self-reported",
                           style: NetraTypography.titleSmall,
                         ),
                         NetraSpacing.gapH2,
                         Text(
                           "Availability: ${donorProfile.availabilityStatus}",
-                          style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary),
+                          style: NetraTypography.bodySmall
+                              .copyWith(color: NetraColors.textSecondary),
                         ),
                       ],
                     ),
@@ -319,7 +336,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ] else ...[
               Text(
                 "You have not set up a blood donor profile yet. Configure your blood group to help when urgent needs arise.",
-                style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary),
+                style: NetraTypography.bodySmall
+                    .copyWith(color: NetraColors.textSecondary),
               ),
             ],
           ],
@@ -334,17 +352,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         color: NetraColors.backgroundGray,
         borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
-        border: const BorderSide(color: NetraColors.borderGray),
+        border: Border.all(color: NetraColors.borderGray),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.privacy_tip_outlined, color: NetraColors.textSecondary, size: 20),
+          const Icon(Icons.privacy_tip_outlined,
+              color: NetraColors.textSecondary, size: 20),
           NetraSpacing.gapW12,
           Expanded(
             child: Text(
               "Privacy Guarantee: Your pre-donation screening answers and clinical eligibility records are kept strictly separated from your user identity and are never exposed publicly.",
-              style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary),
+              style: NetraTypography.bodySmall
+                  .copyWith(color: NetraColors.textSecondary),
             ),
           ),
         ],
@@ -391,7 +411,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     TextButton(
                       onPressed: () => Navigator.of(ctx).pop(true),
-                      child: const Text("Log Out Everywhere", style: TextStyle(color: NetraColors.errorRed)),
+                      child: const Text("Log Out Everywhere",
+                          style: TextStyle(color: NetraColors.errorRed)),
                     ),
                   ],
                 ),
@@ -407,10 +428,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 }
               }
             },
-            icon: const Icon(Icons.security_rounded, size: 16, color: NetraColors.textSecondary),
+            icon: const Icon(Icons.security_rounded,
+                size: 16, color: NetraColors.textSecondary),
             label: Text(
               "Log out from all devices",
-              style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary),
+              style: NetraTypography.bodySmall
+                  .copyWith(color: NetraColors.textSecondary),
             ),
           ),
         ),
@@ -426,16 +449,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           SizedBox(
             width: 110,
-            child: Text(label, style: NetraTypography.bodySmall.copyWith(color: NetraColors.textSecondary)),
+            child: Text(label,
+                style: NetraTypography.bodySmall
+                    .copyWith(color: NetraColors.textSecondary)),
           ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(value, style: NetraTypography.bodyMedium.copyWith(fontWeight: FontWeight.w500)),
+                Text(value,
+                    style: NetraTypography.bodyMedium
+                        .copyWith(fontWeight: FontWeight.w500)),
                 if (note != null) ...[
                   NetraSpacing.gapH2,
-                  Text(note, style: NetraTypography.labelSmall.copyWith(color: NetraColors.textSecondary)),
+                  Text(note,
+                      style: NetraTypography.labelSmall
+                          .copyWith(color: NetraColors.textSecondary)),
                 ],
               ],
             ),

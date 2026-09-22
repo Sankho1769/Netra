@@ -24,7 +24,8 @@ class EligibilityResultScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.close_rounded),
             tooltip: 'Close and Return Home',
-            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+            onPressed: () =>
+                Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],
       ),
@@ -49,7 +50,8 @@ class EligibilityResultScreen extends StatelessWidget {
                   style: NetraTypography.titleLarge,
                 ),
                 NetraSpacing.gapH12,
-                ...result.deferralReasons.map((reason) => _buildDeferralReasonCard(reason)),
+                ...result.deferralReasons
+                    .map((reason) => _buildDeferralReasonCard(reason)),
                 NetraSpacing.gapH24,
               ],
 
@@ -65,21 +67,25 @@ class EligibilityResultScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: NetraColors.insufficientBlueBg,
                     borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
-                    border: Border.all(color: NetraColors.insufficientBlueBorder),
+                    border:
+                        Border.all(color: NetraColors.insufficientBlueBorder),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         "The following required fields were missing from your responses:",
-                        style: NetraTypography.bodyMedium.copyWith(color: NetraColors.textPrimary),
+                        style: NetraTypography.bodyMedium
+                            .copyWith(color: NetraColors.textPrimary),
                       ),
                       NetraSpacing.gapH8,
                       ...result.missingFields.map((field) => Padding(
                             padding: const EdgeInsets.symmetric(vertical: 2),
                             child: Row(
                               children: [
-                                const Icon(Icons.fiber_manual_record, size: 8, color: NetraColors.insufficientBlue),
+                                const Icon(Icons.fiber_manual_record,
+                                    size: 8,
+                                    color: NetraColors.insufficientBlue),
                                 NetraSpacing.gapW8,
                                 Text(
                                   field,
@@ -161,7 +167,8 @@ class EligibilityResultScreen extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: iconColor,
                   borderRadius: BorderRadius.circular(NetraSpacing.radiusFull),
@@ -193,7 +200,8 @@ class EligibilityResultScreen extends StatelessWidget {
           if (result.estimatedNextEligibleDate != null) ...[
             NetraSpacing.gapH16,
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: NetraSpacing.md, vertical: 10),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: NetraSpacing.md, vertical: 10),
               decoration: BoxDecoration(
                 color: NetraColors.surfaceWhite,
                 borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
@@ -201,12 +209,14 @@ class EligibilityResultScreen extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.event_available_rounded, size: 20, color: iconColor),
+                  Icon(Icons.event_available_rounded,
+                      size: 20, color: iconColor),
                   NetraSpacing.gapW12,
                   Expanded(
                     child: Text(
                       "Estimated Next Eligible Date: ${DateFormat.yMMMMd().format(result.estimatedNextEligibleDate!)}",
-                      style: NetraTypography.titleSmall.copyWith(color: iconColor),
+                      style:
+                          NetraTypography.titleSmall.copyWith(color: iconColor),
                     ),
                   ),
                 ],
@@ -253,7 +263,8 @@ class EligibilityResultScreen extends StatelessWidget {
             icon: Icons.location_on_outlined,
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const NearbyBloodBanksScreen()),
+                MaterialPageRoute(
+                    builder: (context) => const NearbyBloodBanksScreen()),
               );
             },
           ),
@@ -263,7 +274,8 @@ class EligibilityResultScreen extends StatelessWidget {
             icon: Icons.event_outlined,
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Upcoming blood donation events loaded.")),
+                const SnackBar(
+                    content: Text("Upcoming blood donation events loaded.")),
               );
             },
           ),
@@ -273,7 +285,8 @@ class EligibilityResultScreen extends StatelessWidget {
             icon: Icons.app_registration_rounded,
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Opening donor appointment registration.")),
+                const SnackBar(
+                    content: Text("Opening donor appointment registration.")),
               );
             },
           ),
@@ -302,7 +315,8 @@ class EligibilityResultScreen extends StatelessWidget {
             icon: Icons.local_hospital_outlined,
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const NearbyBloodBanksScreen()),
+                MaterialPageRoute(
+                    builder: (context) => const NearbyBloodBanksScreen()),
               );
             },
           ),
@@ -315,7 +329,8 @@ class EligibilityResultScreen extends StatelessWidget {
             icon: Icons.medical_services_outlined,
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const NearbyBloodBanksScreen()),
+                MaterialPageRoute(
+                    builder: (context) => const NearbyBloodBanksScreen()),
               );
             },
           ),

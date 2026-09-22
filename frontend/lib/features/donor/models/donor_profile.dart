@@ -28,8 +28,7 @@ class DonorProfile {
       bloodGroup: json['bloodGroup'] as String? ?? '',
       bloodGroupVerificationStatus:
           json['bloodGroupVerificationStatus'] as String? ?? 'SELF_REPORTED',
-      availabilityStatus:
-          json['availabilityStatus'] as String? ?? 'AVAILABLE',
+      availabilityStatus: json['availabilityStatus'] as String? ?? 'AVAILABLE',
       donorStatus: json['donorStatus'] as String? ?? 'ACTIVE',
       lastDonationDate: json['lastDonationDate'] != null
           ? DateTime.tryParse(json['lastDonationDate'].toString())

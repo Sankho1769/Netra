@@ -13,10 +13,12 @@ class MyEventRegistrationsScreen extends StatefulWidget {
   const MyEventRegistrationsScreen({super.key, this.controller});
 
   @override
-  State<MyEventRegistrationsScreen> createState() => _MyEventRegistrationsScreenState();
+  State<MyEventRegistrationsScreen> createState() =>
+      _MyEventRegistrationsScreenState();
 }
 
-class _MyEventRegistrationsScreenState extends State<MyEventRegistrationsScreen> {
+class _MyEventRegistrationsScreenState
+    extends State<MyEventRegistrationsScreen> {
   late final DonationEventController _controller;
 
   @override
@@ -35,7 +37,20 @@ class _MyEventRegistrationsScreenState extends State<MyEventRegistrationsScreen>
   }
 
   String _formatDate(DateTime dt) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }
 
@@ -54,7 +69,9 @@ class _MyEventRegistrationsScreenState extends State<MyEventRegistrationsScreen>
 
   Widget _buildBody() {
     if (_controller.isLoading) {
-      return const Center(child: NetraLoadingIndicator(message: 'Loading your camp registrations...'));
+      return const Center(
+          child: NetraLoadingIndicator(
+              message: 'Loading your camp registrations...'));
     }
 
     if (_controller.errorMessage != null) {
@@ -86,7 +103,8 @@ class _MyEventRegistrationsScreenState extends State<MyEventRegistrationsScreen>
             side: BorderSide(color: Colors.grey.shade200),
           ),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             title: Text(
               reg.eventTitle,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
@@ -95,7 +113,8 @@ class _MyEventRegistrationsScreenState extends State<MyEventRegistrationsScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 4),
-                Text('Registered on: ${_formatDate(reg.registeredAt.toLocal())}'),
+                Text(
+                    'Registered on: ${_formatDate(reg.registeredAt.toLocal())}'),
                 const SizedBox(height: 6),
                 _buildStatusChip(reg.status),
               ],
@@ -105,7 +124,8 @@ class _MyEventRegistrationsScreenState extends State<MyEventRegistrationsScreen>
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => DonationEventDetailsScreen(eventId: reg.eventId),
+                  builder: (_) =>
+                      DonationEventDetailsScreen(eventId: reg.eventId),
                 ),
               );
             },

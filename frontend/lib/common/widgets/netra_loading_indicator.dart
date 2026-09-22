@@ -33,7 +33,8 @@ class NetraLoadingIndicator extends StatelessWidget {
             Text(
               message!,
               textAlign: TextAlign.center,
-              style: NetraTypography.bodyMedium.copyWith(color: NetraColors.textSecondary),
+              style: NetraTypography.bodyMedium
+                  .copyWith(color: NetraColors.textSecondary),
             ),
           ],
         ],

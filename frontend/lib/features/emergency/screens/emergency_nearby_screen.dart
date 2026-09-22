@@ -59,7 +59,15 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
   List<BloodRequestSummary> _bloodRequests = [];
 
   final List<String> _bloodGroups = [
-    'All', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'
+    'All',
+    'A+',
+    'A-',
+    'B+',
+    'B-',
+    'O+',
+    'O-',
+    'AB+',
+    'AB-'
   ];
 
   final List<double> _radii = [5.0, 10.0, 15.0, 25.0, 50.0];
@@ -94,13 +102,16 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
     });
 
     try {
-      final loc = await _locationService.getCurrentLocation(approximateOnly: true);
+      final loc =
+          await _locationService.getCurrentLocation(approximateOnly: true);
       if (loc != null && mounted) {
         setState(() {
-          _latitude = loc.coordinates.latitude;
-          _longitude = loc.coordinates.longitude;
-          _manualLatController.text = _latitude!.toStringAsFixed(4);
-          _manualLngController.text = _longitude!.toStringAsFixed(4);
+          _latitude = loc.latitude;
+          _longitude = loc.longitude;
+          if (_latitude != null)
+            _manualLatController.text = _latitude!.toStringAsFixed(4);
+          if (_longitude != null)
+            _manualLngController.text = _longitude!.toStringAsFixed(4);
           _isDetectingLocation = false;
           _locationUnavailable = false;
           _showManualCoordinates = false;
@@ -231,8 +242,12 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
                 labelColor: const Color(0xFFDC2626),
                 unselectedLabelColor: NetraColors.textSecondary,
                 tabs: const [
-                  Tab(icon: Icon(Icons.local_hospital_rounded), text: "Blood Centres"),
-                  Tab(icon: Icon(Icons.bloodtype_outlined), text: "Active Requests"),
+                  Tab(
+                      icon: Icon(Icons.local_hospital_rounded),
+                      text: "Blood Centres"),
+                  Tab(
+                      icon: Icon(Icons.bloodtype_outlined),
+                      text: "Active Requests"),
                 ],
               )
             : null,
@@ -309,7 +324,8 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
             NetraSpacing.gapH8,
             Text(
               "Emergency Mode requires device location to accurately locate nearby verified blood banks and active requests. NETRA never assumes or falls back to arbitrary coordinates.",
-              style: NetraTypography.bodyMedium.copyWith(color: NetraColors.textSecondary),
+              style: NetraTypography.bodyMedium
+                  .copyWith(color: NetraColors.textSecondary),
               textAlign: TextAlign.center,
             ),
             if (_locationErrorMessage != null) ...[
@@ -323,7 +339,8 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
                 ),
                 child: Text(
                   _locationErrorMessage!,
-                  style: NetraTypography.bodySmall.copyWith(color: const Color(0xFF991B1B)),
+                  style: NetraTypography.bodySmall
+                      .copyWith(color: const Color(0xFF991B1B)),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -362,7 +379,9 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
                   });
                 },
                 icon: const Icon(Icons.edit_location_alt_outlined, size: 20),
-                label: Text(_showManualCoordinates ? "Hide Manual Coordinates" : "Enter Coordinates Manually"),
+                label: Text(_showManualCoordinates
+                    ? "Hide Manual Coordinates"
+                    : "Enter Coordinates Manually"),
               ),
             ),
             if (_showManualCoordinates) ...[
@@ -379,21 +398,24 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
                   children: [
                     Text(
                       "Manual Coordinates Input",
-                      style: NetraTypography.titleSmall.copyWith(fontWeight: FontWeight.bold),
+                      style: NetraTypography.titleSmall
+                          .copyWith(fontWeight: FontWeight.bold),
                     ),
                     NetraSpacing.gapH12,
                     NetraTextField(
                       controller: _manualLatController,
                       label: "Latitude",
                       hint: "e.g. 19.0760",
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                     ),
                     NetraSpacing.gapH12,
                     NetraTextField(
                       controller: _manualLngController,
                       label: "Longitude",
                       hint: "e.g. 72.8777",
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                     ),
                     if (_manualInputError != null) ...[
                       NetraSpacing.gapH8,
@@ -411,7 +433,8 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
                           backgroundColor: NetraColors.textPrimary,
                           foregroundColor: NetraColors.surfaceWhite,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+                            borderRadius:
+                                BorderRadius.circular(NetraSpacing.radiusMd),
                           ),
                         ),
                         onPressed: _applyManualCoordinates,
@@ -455,15 +478,18 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
               InkWell(
                 onTap: _detectLocationAndFetch,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.refresh_rounded, size: 14, color: NetraColors.primaryRed),
+                      const Icon(Icons.refresh_rounded,
+                          size: 14, color: NetraColors.primaryRed),
                       NetraSpacing.gapW4,
                       Text(
                         "Update",
-                        style: NetraTypography.labelSmall.copyWith(color: NetraColors.primaryRed),
+                        style: NetraTypography.labelSmall
+                            .copyWith(color: NetraColors.primaryRed),
                       ),
                     ],
                   ),
@@ -474,11 +500,13 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
           const Divider(height: 12),
           Row(
             children: [
-              const Icon(Icons.tune_rounded, size: 18, color: NetraColors.textSecondary),
+              const Icon(Icons.tune_rounded,
+                  size: 18, color: NetraColors.textSecondary),
               NetraSpacing.gapW8,
               Text(
                 "Filter by Blood Group:",
-                style: NetraTypography.bodySmall.copyWith(fontWeight: FontWeight.bold),
+                style: NetraTypography.bodySmall
+                    .copyWith(fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               DropdownButton<double>(
@@ -488,7 +516,8 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
                 items: _radii.map((r) {
                   return DropdownMenuItem<double>(
                     value: r,
-                    child: Text("${r.toInt()} km radius", style: NetraTypography.bodySmall),
+                    child: Text("${r.toInt()} km radius",
+                        style: NetraTypography.bodySmall),
                   );
                 }).toList(),
                 onChanged: (val) {
@@ -508,8 +537,9 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
             scrollDirection: Axis.horizontal,
             child: Row(
               children: _bloodGroups.map((group) {
-                final isSelected = (_selectedBloodGroup == null && group == 'All') ||
-                    _selectedBloodGroup == group;
+                final isSelected =
+                    (_selectedBloodGroup == null && group == 'All') ||
+                        _selectedBloodGroup == group;
                 return Padding(
                   padding: const EdgeInsets.only(right: 6.0),
                   child: ChoiceChip(
@@ -517,8 +547,11 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
                     selected: isSelected,
                     selectedColor: const Color(0xFFDC2626),
                     labelStyle: TextStyle(
-                      color: isSelected ? NetraColors.surfaceWhite : NetraColors.textPrimary,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected
+                          ? NetraColors.surfaceWhite
+                          : NetraColors.textPrimary,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                     backgroundColor: NetraColors.backgroundGray,
                     onSelected: (selected) {
@@ -550,7 +583,8 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline_rounded, color: Colors.red, size: 40),
+            const Icon(Icons.error_outline_rounded,
+                color: Colors.red, size: 40),
             NetraSpacing.gapH8,
             Text(_bankError!, style: NetraTypography.bodyMedium),
             NetraSpacing.gapH12,
@@ -580,7 +614,8 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.announcement_outlined, color: Color(0xFFD97706), size: 20),
+                const Icon(Icons.announcement_outlined,
+                    color: Color(0xFFD97706), size: 20),
                 NetraSpacing.gapW8,
                 Expanded(
                   child: Text(
@@ -600,7 +635,8 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
               child: Center(
                 child: Text(
                   "No authorized blood banks found within ${_radiusKm.toInt()} km.",
-                  style: NetraTypography.bodyMedium.copyWith(color: NetraColors.textSecondary),
+                  style: NetraTypography.bodyMedium
+                      .copyWith(color: NetraColors.textSecondary),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -608,13 +644,15 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
           else
             ..._bloodBanks.map(
               (bank) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 child: BloodBankCard(
                   bank: bank,
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => BloodBankDetailsScreen(bloodBankId: bank.id),
+                        builder: (context) =>
+                            BloodBankDetailsScreen(bloodBankId: bank.id),
                       ),
                     );
                   },
@@ -636,7 +674,8 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline_rounded, color: Colors.red, size: 40),
+            const Icon(Icons.error_outline_rounded,
+                color: Colors.red, size: 40),
             NetraSpacing.gapH8,
             Text(_requestError!, style: NetraTypography.bodyMedium),
             NetraSpacing.gapH12,
@@ -657,7 +696,8 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
                 padding: const EdgeInsets.all(32.0),
                 child: Text(
                   "No active blood requests found within ${_radiusKm.toInt()} km.",
-                  style: NetraTypography.bodyMedium.copyWith(color: NetraColors.textSecondary),
+                  style: NetraTypography.bodyMedium
+                      .copyWith(color: NetraColors.textSecondary),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -672,7 +712,8 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => BloodRequestDetailsScreen(requestId: req.id),
+                        builder: (context) =>
+                            BloodRequestDetailsScreen(requestId: req.id),
                       ),
                     );
                   },

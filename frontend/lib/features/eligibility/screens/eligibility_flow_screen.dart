@@ -78,18 +78,23 @@ class _EligibilityFlowScreenState extends State<EligibilityFlowScreen> {
               children: [
                 Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: ResponsiveBreakpoints.maxContentWidthStandard),
+                    constraints: const BoxConstraints(
+                        maxWidth:
+                            ResponsiveBreakpoints.maxContentWidthStandard),
                     child: StepProgressBar(
                       currentStep: controller.currentStep,
                       totalSteps: controller.totalSteps,
-                      onBack: controller.currentStep > 1 ? controller.previousStep : null,
+                      onBack: controller.currentStep > 1
+                          ? controller.previousStep
+                          : null,
                     ),
                   ),
                 ),
                 Expanded(
                   child: _buildCurrentStep(controller),
                 ),
-                if (controller.currentStep < controller.totalSteps) _buildBottomActions(controller),
+                if (controller.currentStep < controller.totalSteps)
+                  _buildBottomActions(controller),
               ],
             ),
           ),
@@ -124,13 +129,16 @@ class _EligibilityFlowScreenState extends State<EligibilityFlowScreen> {
     return Container(
       decoration: const BoxDecoration(
         color: NetraColors.surfaceWhite,
-        border: Border(top: BorderSide(color: NetraColors.borderGray, width: 0.5)),
+        border:
+            Border(top: BorderSide(color: NetraColors.borderGray, width: 0.5)),
       ),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: ResponsiveBreakpoints.maxContentWidthReading),
+          constraints: const BoxConstraints(
+              maxWidth: ResponsiveBreakpoints.maxContentWidthReading),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: NetraSpacing.lg, vertical: NetraSpacing.md),
+            padding: const EdgeInsets.symmetric(
+                horizontal: NetraSpacing.lg, vertical: NetraSpacing.md),
             child: Row(
               children: [
                 if (controller.currentStep > 1) ...[
@@ -152,7 +160,8 @@ class _EligibilityFlowScreenState extends State<EligibilityFlowScreen> {
                       if (!success && controller.errors.isNotEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text("Please complete the required questions to continue."),
+                            content: Text(
+                                "Please complete the required questions to continue."),
                             duration: Duration(seconds: 2),
                             behavior: SnackBarBehavior.floating,
                           ),

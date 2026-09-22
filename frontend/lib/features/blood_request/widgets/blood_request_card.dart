@@ -92,7 +92,8 @@ class BloodRequestCard extends StatelessWidget {
                   ),
                   if (request.distanceKm != null)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.blueGrey.shade50,
                         borderRadius: BorderRadius.circular(8),
@@ -100,7 +101,8 @@ class BloodRequestCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.near_me_outlined, size: 14, color: Colors.blueGrey.shade700),
+                          Icon(Icons.near_me_outlined,
+                              size: 14, color: Colors.blueGrey.shade700),
                           const SizedBox(width: 4),
                           Text(
                             '${request.distanceKm} km',
@@ -119,7 +121,8 @@ class BloodRequestCard extends StatelessWidget {
               // Hospital & Location
               Row(
                 children: [
-                  const Icon(Icons.local_hospital_outlined, size: 18, color: Color(0xFF4B5563)),
+                  const Icon(Icons.local_hospital_outlined,
+                      size: 18, color: Color(0xFF4B5563)),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -137,7 +140,8 @@ class BloodRequestCard extends StatelessWidget {
               const SizedBox(height: 6),
               Row(
                 children: [
-                  const Icon(Icons.location_on_outlined, size: 18, color: Color(0xFF6B7280)),
+                  const Icon(Icons.location_on_outlined,
+                      size: 18, color: Color(0xFF6B7280)),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -154,7 +158,8 @@ class BloodRequestCard extends StatelessWidget {
               const SizedBox(height: 10),
               // Required By Deadline
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(8),
@@ -191,7 +196,8 @@ class BloodRequestCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const Icon(Icons.chevron_right, size: 18, color: Color(0xFF9CA3AF)),
+                    const Icon(Icons.chevron_right,
+                        size: 18, color: Color(0xFF9CA3AF)),
                   ],
                 ),
               ),

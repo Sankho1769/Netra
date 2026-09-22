@@ -8,7 +8,9 @@ class DonationEventApiService {
 
   DonationEventApiService({ApiClient? client, String? baseUrl})
       : _client = client ??
-            ApiClient(baseUrl: baseUrl ?? 'http://localhost:8080/api/v1/donation-events');
+            ApiClient(
+                baseUrl:
+                    baseUrl ?? 'http://localhost:8080/api/v1/donation-events');
 
   Future<List<DonationEventSummary>> discoverEvents({
     String? city,
@@ -38,14 +40,21 @@ class DonationEventApiService {
 
       if (response is Map<String, dynamic> && response.containsKey('content')) {
         final list = response['content'] as List<dynamic>;
-        return list.map((e) => DonationEventSummary.fromJson(e as Map<String, dynamic>)).toList();
+        return list
+            .map(
+                (e) => DonationEventSummary.fromJson(e as Map<String, dynamic>))
+            .toList();
       } else if (response is List<dynamic>) {
-        return response.map((e) => DonationEventSummary.fromJson(e as Map<String, dynamic>)).toList();
+        return response
+            .map(
+                (e) => DonationEventSummary.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
       return [];
     } catch (e) {
       if (e is NetworkException) rethrow;
-      throw const ValidationException('Failed to discover donation camps. Please try again.');
+      throw const ValidationException(
+          'Failed to discover donation camps. Please try again.');
     }
   }
 
@@ -61,15 +70,20 @@ class DonationEventApiService {
         'radiusKm': radiusKm,
       };
 
-      final response = await _client.get('/nearby', queryParameters: queryParams);
+      final response =
+          await _client.get('/nearby', queryParameters: queryParams);
 
       if (response is List<dynamic>) {
-        return response.map((e) => DonationEventSummary.fromJson(e as Map<String, dynamic>)).toList();
+        return response
+            .map(
+                (e) => DonationEventSummary.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
       return [];
     } catch (e) {
       if (e is NetworkException) rethrow;
-      throw const ValidationException('Failed to find nearby camps. Please try again.');
+      throw const ValidationException(
+          'Failed to find nearby camps. Please try again.');
     }
   }
 
@@ -93,7 +107,8 @@ class DonationEventApiService {
     }
   }
 
-  Future<DonationEventDetail> updateEvent(String id, Map<String, dynamic> payload) async {
+  Future<DonationEventDetail> updateEvent(
+      String id, Map<String, dynamic> payload) async {
     try {
       final response = await _client.put('/$id', body: payload);
       return DonationEventDetail.fromJson(response as Map<String, dynamic>);
@@ -109,11 +124,13 @@ class DonationEventApiService {
       return DonationEventDetail.fromJson(response as Map<String, dynamic>);
     } catch (e) {
       if (e is NetworkException) rethrow;
-      throw const ValidationException('Failed to submit donation camp for approval.');
+      throw const ValidationException(
+          'Failed to submit donation camp for approval.');
     }
   }
 
-  Future<DonationEventDetail> approveEvent(String id, String status, {String? rejectionReason}) async {
+  Future<DonationEventDetail> approveEvent(String id, String status,
+      {String? rejectionReason}) async {
     try {
       final response = await _client.patch(
         '/$id/approval',
@@ -177,7 +194,9 @@ class DonationEventApiService {
     try {
       final response = await _client.get('/my-registrations');
       if (response is List<dynamic>) {
-        return response.map((e) => EventRegistration.fromJson(e as Map<String, dynamic>)).toList();
+        return response
+            .map((e) => EventRegistration.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
       return [];
     } catch (e) {
@@ -190,7 +209,9 @@ class DonationEventApiService {
     try {
       final response = await _client.get('/$eventId/registrations');
       if (response is List<dynamic>) {
-        return response.map((e) => EventAttendee.fromJson(e as Map<String, dynamic>)).toList();
+        return response
+            .map((e) => EventAttendee.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
       return [];
     } catch (e) {

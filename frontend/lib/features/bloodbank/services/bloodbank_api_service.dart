@@ -8,7 +8,8 @@ class BloodBankApiService {
 
   BloodBankApiService({ApiClient? client, String? baseUrl})
       : _client = client ??
-            ApiClient(baseUrl: baseUrl ?? 'http://localhost:8080/api/v1/bloodbanks');
+            ApiClient(
+                baseUrl: baseUrl ?? 'http://localhost:8080/api/v1/bloodbanks');
 
   Future<List<BloodBankSummary>> discoverBloodBanks({
     String? city,
@@ -36,14 +37,19 @@ class BloodBankApiService {
 
       if (response is Map<String, dynamic> && response.containsKey('content')) {
         final list = response['content'] as List<dynamic>;
-        return list.map((e) => BloodBankSummary.fromJson(e as Map<String, dynamic>)).toList();
+        return list
+            .map((e) => BloodBankSummary.fromJson(e as Map<String, dynamic>))
+            .toList();
       } else if (response is List<dynamic>) {
-        return response.map((e) => BloodBankSummary.fromJson(e as Map<String, dynamic>)).toList();
+        return response
+            .map((e) => BloodBankSummary.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
       return [];
     } catch (e) {
       if (e is NetworkException) rethrow;
-      throw const ValidationException('Failed to discover blood centres. Please try again.');
+      throw const ValidationException(
+          'Failed to discover blood centres. Please try again.');
     }
   }
 
@@ -51,6 +57,7 @@ class BloodBankApiService {
     required double latitude,
     required double longitude,
     double radiusKm = 10.0,
+    String? bloodGroup,
   }) async {
     try {
       final queryParams = <String, dynamic>{
@@ -58,16 +65,23 @@ class BloodBankApiService {
         'longitude': longitude,
         'radiusKm': radiusKm,
       };
+      if (bloodGroup != null && bloodGroup.trim().isNotEmpty) {
+        queryParams['bloodGroup'] = bloodGroup.trim();
+      }
 
-      final response = await _client.get('/nearby', queryParameters: queryParams);
+      final response =
+          await _client.get('/nearby', queryParameters: queryParams);
 
       if (response is List<dynamic>) {
-        return response.map((e) => BloodBankSummary.fromJson(e as Map<String, dynamic>)).toList();
+        return response
+            .map((e) => BloodBankSummary.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
       return [];
     } catch (e) {
       if (e is NetworkException) rethrow;
-      throw const ValidationException('Failed to load nearby blood centres. Please try again.');
+      throw const ValidationException(
+          'Failed to load nearby blood centres. Please try again.');
     }
   }
 
@@ -83,11 +97,13 @@ class BloodBankApiService {
         queryParams['userLon'] = userLon;
       }
 
-      final response = await _client.get('/$id', queryParameters: queryParams.isNotEmpty ? queryParams : null);
+      final response = await _client.get('/$id',
+          queryParameters: queryParams.isNotEmpty ? queryParams : null);
       return BloodBankDetail.fromJson(response as Map<String, dynamic>);
     } catch (e) {
       if (e is NetworkException) rethrow;
-      throw const ValidationException('Failed to load blood centre details. Please try again.');
+      throw const ValidationException(
+          'Failed to load blood centre details. Please try again.');
     }
   }
 
@@ -95,12 +111,15 @@ class BloodBankApiService {
     try {
       final response = await _client.get('/$id/inventory');
       if (response is List<dynamic>) {
-        return response.map((e) => BloodInventoryItem.fromJson(e as Map<String, dynamic>)).toList();
+        return response
+            .map((e) => BloodInventoryItem.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
       return [];
     } catch (e) {
       if (e is NetworkException) rethrow;
-      throw const ValidationException('Failed to load blood inventory. Please try again.');
+      throw const ValidationException(
+          'Failed to load blood inventory. Please try again.');
     }
   }
 }

@@ -3,7 +3,17 @@ import '../../core/theme/netra_colors.dart';
 import '../../core/theme/netra_spacing.dart';
 import '../../core/theme/netra_typography.dart';
 
-enum NetraChipVariant { neutral, eligible, deferral, review, info }
+typedef NetraChipType = NetraChipVariant;
+
+enum NetraChipVariant {
+  neutral,
+  eligible,
+  deferral,
+  review,
+  info,
+  outline,
+  statusSuccess,
+}
 
 class NetraChip extends StatelessWidget {
   final String label;
@@ -15,9 +25,10 @@ class NetraChip extends StatelessWidget {
     super.key,
     required this.label,
     this.icon,
-    this.variant = NetraChipVariant.neutral,
+    NetraChipVariant? variant,
+    NetraChipVariant? type,
     this.onTap,
-  });
+  }) : variant = type ?? variant ?? NetraChipVariant.neutral;
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +38,7 @@ class NetraChip extends StatelessWidget {
 
     switch (variant) {
       case NetraChipVariant.eligible:
+      case NetraChipVariant.statusSuccess:
         bg = NetraColors.eligibleGreenBg;
         border = NetraColors.eligibleGreenBorder;
         text = NetraColors.eligibleGreen;
@@ -46,6 +58,11 @@ class NetraChip extends StatelessWidget {
         border = NetraColors.insufficientBlueBorder;
         text = NetraColors.insufficientBlue;
         break;
+      case NetraChipVariant.outline:
+        bg = Colors.transparent;
+        border = NetraColors.borderGray;
+        text = NetraColors.textPrimary;
+        break;
       case NetraChipVariant.neutral:
         bg = NetraColors.backgroundGray;
         border = NetraColors.borderGray;
@@ -57,7 +74,8 @@ class NetraChip extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(NetraSpacing.radiusFull),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: NetraSpacing.md, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+            horizontal: NetraSpacing.md, vertical: 6),
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(NetraSpacing.radiusFull),

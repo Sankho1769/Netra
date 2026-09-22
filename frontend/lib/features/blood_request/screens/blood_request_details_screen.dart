@@ -17,7 +17,8 @@ class BloodRequestDetailsScreen extends StatefulWidget {
   });
 
   @override
-  State<BloodRequestDetailsScreen> createState() => _BloodRequestDetailsScreenState();
+  State<BloodRequestDetailsScreen> createState() =>
+      _BloodRequestDetailsScreenState();
 }
 
 class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
@@ -72,9 +73,11 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
             child: const Text('Keep Active'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626)),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Confirm Cancel', style: TextStyle(color: Colors.white)),
+            child: const Text('Confirm Cancel',
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -83,17 +86,21 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
     if (confirmed == true && mounted) {
       final success = await _controller.cancelRequest(
         widget.requestId,
-        reason: reasonController.text.trim().isEmpty ? null : reasonController.text.trim(),
+        reason: reasonController.text.trim().isEmpty
+            ? null
+            : reasonController.text.trim(),
       );
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Blood request cancelled successfully.')),
+          const SnackBar(
+              content: Text('Blood request cancelled successfully.')),
         );
         _loadDetails();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_controller.errorMessage ?? 'Failed to cancel request.'),
+            content:
+                Text(_controller.errorMessage ?? 'Failed to cancel request.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -104,11 +111,15 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
   Future<void> _showEditDialog() async {
     if (_detail == null) return;
 
-    final unitsController = TextEditingController(text: _detail!.unitsRequired.toString());
+    final unitsController =
+        TextEditingController(text: _detail!.unitsRequired.toString());
     BloodRequestUrgency selectedUrgency = _detail!.urgency;
-    final hospitalNameController = TextEditingController(text: _detail!.hospitalName);
-    final hospitalAddressController = TextEditingController(text: _detail!.hospitalAddress);
-    final descriptionController = TextEditingController(text: _detail!.description ?? '');
+    final hospitalNameController =
+        TextEditingController(text: _detail!.hospitalName);
+    final hospitalAddressController =
+        TextEditingController(text: _detail!.hospitalAddress);
+    final descriptionController =
+        TextEditingController(text: _detail!.description ?? '');
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -121,7 +132,8 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
               children: [
                 TextField(
                   controller: unitsController,
-                  decoration: const InputDecoration(labelText: 'Units Required (1-50)'),
+                  decoration:
+                      const InputDecoration(labelText: 'Units Required (1-50)'),
                   keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: 12),
@@ -148,12 +160,14 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: hospitalAddressController,
-                  decoration: const InputDecoration(labelText: 'Hospital Address'),
+                  decoration:
+                      const InputDecoration(labelText: 'Hospital Address'),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: descriptionController,
-                  decoration: const InputDecoration(labelText: 'Description / Notes'),
+                  decoration:
+                      const InputDecoration(labelText: 'Description / Notes'),
                   maxLines: 2,
                 ),
               ],
@@ -174,7 +188,8 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
     );
 
     if (confirmed == true && mounted) {
-      final units = int.tryParse(unitsController.text.trim()) ?? _detail!.unitsRequired;
+      final units =
+          int.tryParse(unitsController.text.trim()) ?? _detail!.unitsRequired;
       final payload = <String, dynamic>{
         'unitsRequired': units,
         'urgency': selectedUrgency.name.toUpperCase(),
@@ -184,7 +199,8 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
           'description': descriptionController.text.trim(),
       };
 
-      final updated = await _controller.updateRequest(widget.requestId, payload);
+      final updated =
+          await _controller.updateRequest(widget.requestId, payload);
       if (updated != null && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Blood request updated successfully.')),
@@ -195,7 +211,8 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_controller.errorMessage ?? 'Failed to update request.'),
+            content:
+                Text(_controller.errorMessage ?? 'Failed to update request.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -319,9 +336,11 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
             const SizedBox(height: 20),
 
             // Hospital & Operational Location
-            _buildSectionHeader(context, 'Hospital & Location', Icons.local_hospital_outlined),
+            _buildSectionHeader(
+                context, 'Hospital & Location', Icons.local_hospital_outlined),
             Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -330,14 +349,19 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
                     const Divider(height: 16),
                     _buildInfoRow('Address', d.hospitalAddress),
                     const Divider(height: 16),
-                    _buildInfoRow('City / State', '${d.city}, ${d.state} (${d.postalCode})'),
-                    if (d.canManage && d.latitude != null && d.longitude != null) ...[
+                    _buildInfoRow('City / State',
+                        '${d.city}, ${d.state} (${d.postalCode})'),
+                    if (d.canManage &&
+                        d.latitude != null &&
+                        d.longitude != null) ...[
                       const Divider(height: 16),
-                      _buildInfoRow('GPS Coordinates', '${d.latitude!.toStringAsFixed(4)}, ${d.longitude!.toStringAsFixed(4)}'),
+                      _buildInfoRow('GPS Coordinates',
+                          '${d.latitude!.toStringAsFixed(4)}, ${d.longitude!.toStringAsFixed(4)}'),
                     ],
                     if (d.distanceKm != null) ...[
                       const Divider(height: 16),
-                      _buildInfoRow('Proximity Distance', '${d.distanceKm} km away'),
+                      _buildInfoRow(
+                          'Proximity Distance', '${d.distanceKm} km away'),
                     ],
                   ],
                 ),
@@ -346,9 +370,11 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
             const SizedBox(height: 20),
 
             // Timelines
-            _buildSectionHeader(context, 'Timelines & Deadlines', Icons.schedule_outlined),
+            _buildSectionHeader(
+                context, 'Timelines & Deadlines', Icons.schedule_outlined),
             Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -362,10 +388,12 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
                     _buildInfoRow('Created At', _formatDateTime(d.createdAt)),
                     if (d.cancelledAt != null) ...[
                       const Divider(height: 16),
-                      _buildInfoRow('Cancelled At', _formatDateTime(d.cancelledAt!)),
+                      _buildInfoRow(
+                          'Cancelled At', _formatDateTime(d.cancelledAt!)),
                       if (d.cancellationReason != null) ...[
                         const Divider(height: 16),
-                        _buildInfoRow('Cancellation Reason', d.cancellationReason!),
+                        _buildInfoRow(
+                            'Cancellation Reason', d.cancellationReason!),
                       ],
                     ],
                   ],
@@ -376,9 +404,11 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
 
             // Clinical Notes / Description
             if (d.description != null && d.description!.isNotEmpty) ...[
-              _buildSectionHeader(context, 'Additional Details', Icons.description_outlined),
+              _buildSectionHeader(
+                  context, 'Additional Details', Icons.description_outlined),
               Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
@@ -395,10 +425,12 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
 
             // Owner-specific section
             if (d.isOwner) ...[
-              _buildSectionHeader(context, 'Ownership Verification', Icons.verified_user_outlined),
+              _buildSectionHeader(context, 'Ownership Verification',
+                  Icons.verified_user_outlined),
               Card(
                 color: Colors.blue.shade50,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Row(
@@ -427,7 +459,8 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
                     backgroundColor: const Color(0xFFDC2626),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
                   icon: const Icon(Icons.person_search),
                   label: const Text(
@@ -456,7 +489,8 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
                     foregroundColor: const Color(0xFFDC2626),
                     side: const BorderSide(color: Color(0xFFDC2626)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
                   icon: const Icon(Icons.people_outline),
                   label: const Text(
@@ -490,7 +524,8 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.privacy_tip_outlined, size: 20, color: Colors.grey.shade700),
+                  Icon(Icons.privacy_tip_outlined,
+                      size: 20, color: Colors.grey.shade700),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -511,7 +546,8 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title, IconData icon) {
+  Widget _buildSectionHeader(
+      BuildContext context, String title, IconData icon) {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8),
       child: Row(
@@ -531,7 +567,8 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, {bool isBold = false, bool isUrgent = false}) {
+  Widget _buildInfoRow(String label, String value,
+      {bool isBold = false, bool isUrgent = false}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -551,8 +588,10 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
             textAlign: TextAlign.end,
             style: TextStyle(
               fontSize: 14,
-              fontWeight: isBold || isUrgent ? FontWeight.w700 : FontWeight.w500,
-              color: isUrgent ? const Color(0xFFDC2626) : const Color(0xFF1F2937),
+              fontWeight:
+                  isBold || isUrgent ? FontWeight.w700 : FontWeight.w500,
+              color:
+                  isUrgent ? const Color(0xFFDC2626) : const Color(0xFF1F2937),
             ),
           ),
         ),

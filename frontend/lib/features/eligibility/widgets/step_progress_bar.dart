@@ -20,10 +20,12 @@ class StepProgressBar extends StatelessWidget {
     final double progress = (currentStep / totalSteps).clamp(0.0, 1.0);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: NetraSpacing.lg, vertical: NetraSpacing.md),
+      padding: const EdgeInsets.symmetric(
+          horizontal: NetraSpacing.lg, vertical: NetraSpacing.md),
       decoration: const BoxDecoration(
         color: NetraColors.surfaceWhite,
-        border: Border(bottom: BorderSide(color: NetraColors.borderGray, width: 0.5)),
+        border: Border(
+            bottom: BorderSide(color: NetraColors.borderGray, width: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,7 +60,8 @@ class StepProgressBar extends StatelessWidget {
               value: progress,
               minHeight: 6,
               backgroundColor: NetraColors.borderGray.withOpacity(0.4),
-              valueColor: const AlwaysStoppedAnimation<Color>(NetraColors.primaryRed),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(NetraColors.primaryRed),
             ),
           ),
         ],

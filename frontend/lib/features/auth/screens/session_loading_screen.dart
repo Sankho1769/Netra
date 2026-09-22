@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/netra_colors.dart';
 import '../../../core/theme/netra_spacing.dart';
 import '../../../core/theme/netra_typography.dart';
-import '../state/auth_controller.dart';
 import '../state/auth_scope.dart';
 import '../../home/home_screen.dart';
 import 'login_screen.dart';
@@ -55,7 +54,8 @@ class _SessionLoadingScreenState extends State<SessionLoadingScreen> {
   void _navigate(bool isAuthenticated) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => isAuthenticated ? const HomeScreen() : const LoginScreen(),
+        builder: (_) =>
+            isAuthenticated ? const HomeScreen() : const LoginScreen(),
       ),
     );
   }
@@ -109,7 +109,8 @@ class _SessionLoadingScreenState extends State<SessionLoadingScreen> {
               height: 24,
               child: CircularProgressIndicator(
                 strokeWidth: 2.5,
-                valueColor: AlwaysStoppedAnimation<Color>(NetraColors.primaryRed),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(NetraColors.primaryRed),
               ),
             ),
           ],

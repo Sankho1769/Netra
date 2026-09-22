@@ -20,10 +20,12 @@ class EmergencyApiService {
     BloodRequestApiService? bloodRequestApiService,
     String? baseUrl,
   })  : _client = client ??
-            ApiClient(baseUrl: baseUrl ?? 'http://localhost:8080/api/v1/emergency'),
+            ApiClient(
+                baseUrl: baseUrl ?? 'http://localhost:8080/api/v1/emergency'),
         _tokenStorage = tokenStorage ?? PlatformSecureTokenStorage(),
         _bloodBankApiService = bloodBankApiService ?? BloodBankApiService(),
-        _bloodRequestApiService = bloodRequestApiService ?? BloodRequestApiService();
+        _bloodRequestApiService =
+            bloodRequestApiService ?? BloodRequestApiService();
 
   static String generateIdempotencyKey() {
     final random = Random.secure();
@@ -57,7 +59,8 @@ class EmergencyApiService {
       return BloodRequestDetail.fromJson(response as Map<String, dynamic>);
     } catch (e) {
       if (e is NetworkException) rethrow;
-      throw const ValidationException('Failed to submit emergency blood request.');
+      throw const ValidationException(
+          'Failed to submit emergency blood request.');
     }
   }
 
