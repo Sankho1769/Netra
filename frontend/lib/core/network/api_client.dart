@@ -183,6 +183,8 @@ class ApiClient {
         throw UnauthorizedException(message);
       case 404:
         throw NotFoundException(message);
+      case 409:
+        throw ConflictException(message);
       case 410:
         throw SessionExpiredException(message);
       case 429:

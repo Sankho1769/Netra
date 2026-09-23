@@ -51,6 +51,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .headers(headers -> headers
                 .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
+                .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; frame-ancestors 'none';"))
                 .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
             )
             .exceptionHandling(exceptions -> exceptions
@@ -145,6 +146,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/users/**").authenticated()
                 .requestMatchers("/api/v1/profile/**").authenticated()
                 .requestMatchers("/api/v1/donor/**").authenticated()
+                .requestMatchers("/api/v1/donations/**").authenticated()
+                .requestMatchers("/api/v1/fulfillments/**").authenticated()
 
                 .requestMatchers("/error").permitAll()
                 .anyRequest().authenticated()

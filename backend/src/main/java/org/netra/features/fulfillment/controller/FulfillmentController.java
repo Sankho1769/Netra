@@ -2,6 +2,7 @@ package org.netra.features.fulfillment.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.netra.core.security.ClientIpResolver;
 import org.netra.features.fulfillment.dto.*;
 import org.netra.features.fulfillment.service.FulfillmentService;
 import org.springframework.data.domain.Page;
@@ -20,16 +21,18 @@ import java.util.UUID;
 public class FulfillmentController {
 
     private final FulfillmentService fulfillmentService;
+    private final ClientIpResolver clientIpResolver;
 
-    public FulfillmentController(FulfillmentService fulfillmentService) {
+    public FulfillmentController(FulfillmentService fulfillmentService, ClientIpResolver clientIpResolver) {
         this.fulfillmentService = fulfillmentService;
+        this.clientIpResolver = clientIpResolver;
     }
 
     @PostMapping
     public ResponseEntity<FulfillmentDto> createFulfillment(
             @Valid @RequestBody CreateFulfillmentRequest request,
             HttpServletRequest httpRequest) {
-        String clientIp = httpRequest.getRemoteAddr();
+        String clientIp = clientIpResolver.resolveClientIp(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
         FulfillmentDto dto = fulfillmentService.createFulfillment(request, clientIp, userAgent);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
@@ -40,7 +43,7 @@ public class FulfillmentController {
     public ResponseEntity<FulfillmentDto> startFulfillment(
             @PathVariable UUID id,
             HttpServletRequest httpRequest) {
-        String clientIp = httpRequest.getRemoteAddr();
+        String clientIp = clientIpResolver.resolveClientIp(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
         FulfillmentDto dto = fulfillmentService.startFulfillment(id, clientIp, userAgent);
         return ResponseEntity.ok(dto);
@@ -51,7 +54,7 @@ public class FulfillmentController {
     public ResponseEntity<FulfillmentDto> completeFulfillment(
             @PathVariable UUID id,
             HttpServletRequest httpRequest) {
-        String clientIp = httpRequest.getRemoteAddr();
+        String clientIp = clientIpResolver.resolveClientIp(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
         FulfillmentDto dto = fulfillmentService.completeFulfillment(id, clientIp, userAgent);
         return ResponseEntity.ok(dto);
@@ -63,7 +66,7 @@ public class FulfillmentController {
             @PathVariable UUID id,
             @Valid @RequestBody FailFulfillmentRequest request,
             HttpServletRequest httpRequest) {
-        String clientIp = httpRequest.getRemoteAddr();
+        String clientIp = clientIpResolver.resolveClientIp(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
         FulfillmentDto dto = fulfillmentService.failFulfillment(id, request, clientIp, userAgent);
         return ResponseEntity.ok(dto);
@@ -74,7 +77,7 @@ public class FulfillmentController {
             @PathVariable UUID id,
             @Valid @RequestBody CancelFulfillmentRequest request,
             HttpServletRequest httpRequest) {
-        String clientIp = httpRequest.getRemoteAddr();
+        String clientIp = clientIpResolver.resolveClientIp(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
         FulfillmentDto dto = fulfillmentService.cancelFulfillment(id, request, clientIp, userAgent);
         return ResponseEntity.ok(dto);

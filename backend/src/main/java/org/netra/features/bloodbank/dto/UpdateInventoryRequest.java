@@ -1,5 +1,6 @@
 package org.netra.features.bloodbank.dto;
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import org.netra.features.donor.entity.BloodGroup;
@@ -11,6 +12,7 @@ public class UpdateInventoryRequest {
 
     @NotNull(message = "Units available is required")
     @Min(value = 0, message = "Units available cannot be negative")
+    @Max(value = 10000, message = "Units available must not exceed 10000")
     private Integer unitsAvailable;
 
     public UpdateInventoryRequest() {

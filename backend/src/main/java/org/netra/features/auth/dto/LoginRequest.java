@@ -2,6 +2,7 @@ package org.netra.features.auth.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 public class LoginRequest {
 
@@ -10,8 +11,10 @@ public class LoginRequest {
     private String email;
 
     @NotBlank(message = "Password is required")
+    @Size(max = 128, message = "Password must not exceed 128 characters")
     private String password;
 
+    @Size(max = 256, message = "Device ID must not exceed 256 characters")
     private String deviceId;
 
     public LoginRequest() {

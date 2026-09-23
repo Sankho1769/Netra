@@ -180,6 +180,11 @@ public class NotificationService {
         // Final attempt or fallback to latest entity state
         Notification n = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found with id: " + notificationId));
+        if (!n.getRecipientUserId().equals(currentUserId)) {
+            log.warn("IDOR attempt in markAsRead fallback: User {} attempted to access notification {} belonging to user {}",
+                    currentUserId, notificationId, n.getRecipientUserId());
+            throw new UnauthorizedSessionAccessException("Access denied to notification.");
+        }
         return NotificationDto.fromEntity(n);
     }
 
