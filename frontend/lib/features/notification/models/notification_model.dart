@@ -8,6 +8,11 @@ enum NotificationType {
   donationSubmitted,
   donationVerified,
   donationRejected,
+  fulfillmentCreated,
+  fulfillmentStarted,
+  fulfillmentCompleted,
+  fulfillmentFailed,
+  fulfillmentCancelled,
   unknown;
 
   static NotificationType fromString(String? value) {
@@ -31,6 +36,16 @@ enum NotificationType {
         return NotificationType.donationVerified;
       case 'DONATION_REJECTED':
         return NotificationType.donationRejected;
+      case 'FULFILLMENT_CREATED':
+        return NotificationType.fulfillmentCreated;
+      case 'FULFILLMENT_STARTED':
+        return NotificationType.fulfillmentStarted;
+      case 'FULFILLMENT_COMPLETED':
+        return NotificationType.fulfillmentCompleted;
+      case 'FULFILLMENT_FAILED':
+        return NotificationType.fulfillmentFailed;
+      case 'FULFILLMENT_CANCELLED':
+        return NotificationType.fulfillmentCancelled;
       default:
         return NotificationType.unknown;
     }
@@ -56,6 +71,16 @@ enum NotificationType {
         return 'DONATION_VERIFIED';
       case NotificationType.donationRejected:
         return 'DONATION_REJECTED';
+      case NotificationType.fulfillmentCreated:
+        return 'FULFILLMENT_CREATED';
+      case NotificationType.fulfillmentStarted:
+        return 'FULFILLMENT_STARTED';
+      case NotificationType.fulfillmentCompleted:
+        return 'FULFILLMENT_COMPLETED';
+      case NotificationType.fulfillmentFailed:
+        return 'FULFILLMENT_FAILED';
+      case NotificationType.fulfillmentCancelled:
+        return 'FULFILLMENT_CANCELLED';
       case NotificationType.unknown:
         return 'UNKNOWN';
     }
@@ -105,6 +130,7 @@ enum NotificationReferenceType {
   donorMatch,
   bloodRequest,
   donation,
+  fulfillment,
   unknown;
 
   static NotificationReferenceType? fromString(String? value) {
@@ -116,6 +142,8 @@ enum NotificationReferenceType {
         return NotificationReferenceType.bloodRequest;
       case 'DONATION':
         return NotificationReferenceType.donation;
+      case 'FULFILLMENT':
+        return NotificationReferenceType.fulfillment;
       default:
         return NotificationReferenceType.unknown;
     }
@@ -129,6 +157,8 @@ enum NotificationReferenceType {
         return 'BLOOD_REQUEST';
       case NotificationReferenceType.donation:
         return 'DONATION';
+      case NotificationReferenceType.fulfillment:
+        return 'FULFILLMENT';
       case NotificationReferenceType.unknown:
         return 'UNKNOWN';
     }

@@ -43,7 +43,8 @@ class PushNotificationService {
     if (refId.toString().trim().isEmpty) return false;
     return refType == 'DONOR_MATCH' ||
         refType == 'BLOOD_REQUEST' ||
-        refType == 'DONATION';
+        refType == 'DONATION' ||
+        refType == 'FULFILLMENT';
   }
 
   /// Formats relative time (e.g. "5m ago", "2h ago", "Yesterday").

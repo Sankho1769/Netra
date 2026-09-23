@@ -32,6 +32,16 @@ class NotificationItemCard extends StatelessWidget {
         return Icons.verified_outlined;
       case NotificationType.donationRejected:
         return Icons.highlight_off_outlined;
+      case NotificationType.fulfillmentCreated:
+        return Icons.pending_actions_outlined;
+      case NotificationType.fulfillmentStarted:
+        return Icons.local_shipping_outlined;
+      case NotificationType.fulfillmentCompleted:
+        return Icons.task_alt_outlined;
+      case NotificationType.fulfillmentFailed:
+        return Icons.error_outline;
+      case NotificationType.fulfillmentCancelled:
+        return Icons.cancel_outlined;
       case NotificationType.unknown:
         return Icons.notifications_outlined;
     }
@@ -57,6 +67,16 @@ class NotificationItemCard extends StatelessWidget {
         return const Color(0xFF16A34A); // Green
       case NotificationType.donationRejected:
         return const Color(0xFFDC2626); // Red
+      case NotificationType.fulfillmentCreated:
+        return const Color(0xFF4F46E5); // Indigo
+      case NotificationType.fulfillmentStarted:
+        return const Color(0xFFD97706); // Amber
+      case NotificationType.fulfillmentCompleted:
+        return const Color(0xFF16A34A); // Green
+      case NotificationType.fulfillmentFailed:
+        return const Color(0xFFDC2626); // Red
+      case NotificationType.fulfillmentCancelled:
+        return const Color(0xFF6B7280); // Gray
       case NotificationType.unknown:
         return const Color(0xFF2563EB); // Blue
     }

@@ -25,6 +25,9 @@ public class BloodRequest {
     @Column(name = "units_required", nullable = false)
     private Integer unitsRequired;
 
+    @Column(name = "units_fulfilled", nullable = false)
+    private Integer unitsFulfilled = 0;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "urgency", nullable = false, length = 32)
     private BloodRequestUrgency urgency = BloodRequestUrgency.NORMAL;
@@ -270,5 +273,17 @@ public class BloodRequest {
 
     public void setVersion(Long version) {
         this.version = version;
+    }
+
+    public Integer getUnitsFulfilled() {
+        return unitsFulfilled != null ? unitsFulfilled : 0;
+    }
+
+    public void setUnitsFulfilled(Integer unitsFulfilled) {
+        this.unitsFulfilled = unitsFulfilled != null ? unitsFulfilled : 0;
+    }
+
+    public int getRemainingUnits() {
+        return Math.max(0, (unitsRequired != null ? unitsRequired : 0) - getUnitsFulfilled());
     }
 }

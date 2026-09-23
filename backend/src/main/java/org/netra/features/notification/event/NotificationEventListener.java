@@ -187,4 +187,113 @@ public class NotificationEventListener {
             log.error("Error handling DONATION_REJECTED event for donation {}: {}", event.getDonationId(), ex.getMessage());
         }
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void handleFulfillmentCreated(org.netra.features.fulfillment.event.FulfillmentCreatedEvent event) {
+        try {
+            // Notify Requester
+            notificationService.createNotification(
+                    event.getRequesterUserId(),
+                    NotificationType.FULFILLMENT_CREATED,
+                    "Fulfillment Initiated",
+                    "A verified donation has been matched and queued for fulfillment of your blood request.",
+                    NotificationReferenceType.FULFILLMENT,
+                    event.getFulfillmentId(),
+                    "FULFILLMENT_CREATED_REQ:" + event.getFulfillmentId()
+            );
+            // Notify Donor
+            notificationService.createNotification(
+                    event.getDonorUserId(),
+                    NotificationType.FULFILLMENT_CREATED,
+                    "Donation Allocated",
+                    "Your verified blood donation has been allocated to fulfill an urgent blood request.",
+                    NotificationReferenceType.FULFILLMENT,
+                    event.getFulfillmentId(),
+                    "FULFILLMENT_CREATED_DONOR:" + event.getFulfillmentId()
+            );
+        } catch (Exception ex) {
+            log.error("Error handling FULFILLMENT_CREATED event for fulfillment {}: {}", event.getFulfillmentId(), ex.getMessage());
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void handleFulfillmentStarted(org.netra.features.fulfillment.event.FulfillmentStartedEvent event) {
+        try {
+            notificationService.createNotification(
+                    event.getRequesterUserId(),
+                    NotificationType.FULFILLMENT_STARTED,
+                    "Fulfillment In Progress",
+                    "Clinical blood bank staff have started the fulfillment process for your blood request.",
+                    NotificationReferenceType.FULFILLMENT,
+                    event.getFulfillmentId(),
+                    "FULFILLMENT_STARTED_REQ:" + event.getFulfillmentId()
+            );
+        } catch (Exception ex) {
+            log.error("Error handling FULFILLMENT_STARTED event for fulfillment {}: {}", event.getFulfillmentId(), ex.getMessage());
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void handleFulfillmentCompleted(org.netra.features.fulfillment.event.FulfillmentCompletedEvent event) {
+        try {
+            String reqBody = event.isRequestCompleted()
+                    ? "Your blood request has been fully completed! All units have been fulfilled."
+                    : "A donation has been completed for your blood request (" + event.getUnitsFulfilled() + " unit(s) fulfilled).";
+            notificationService.createNotification(
+                    event.getRequesterUserId(),
+                    NotificationType.FULFILLMENT_COMPLETED,
+                    event.isRequestCompleted() ? "Blood Request Completed" : "Donation Fulfilled",
+                    reqBody,
+                    NotificationReferenceType.FULFILLMENT,
+                    event.getFulfillmentId(),
+                    "FULFILLMENT_COMPLETED_REQ:" + event.getFulfillmentId()
+            );
+
+            notificationService.createNotification(
+                    event.getDonorUserId(),
+                    NotificationType.FULFILLMENT_COMPLETED,
+                    "Life Saved!",
+                    "Your verified blood donation has been successfully delivered and transfused. Thank you for being a hero!",
+                    NotificationReferenceType.FULFILLMENT,
+                    event.getFulfillmentId(),
+                    "FULFILLMENT_COMPLETED_DONOR:" + event.getFulfillmentId()
+            );
+        } catch (Exception ex) {
+            log.error("Error handling FULFILLMENT_COMPLETED event for fulfillment {}: {}", event.getFulfillmentId(), ex.getMessage());
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void handleFulfillmentFailed(org.netra.features.fulfillment.event.FulfillmentFailedEvent event) {
+        try {
+            notificationService.createNotification(
+                    event.getRequesterUserId(),
+                    NotificationType.FULFILLMENT_FAILED,
+                    "Fulfillment Failed",
+                    "A queued fulfillment could not be completed: " + event.getFailureReason(),
+                    NotificationReferenceType.FULFILLMENT,
+                    event.getFulfillmentId(),
+                    "FULFILLMENT_FAILED_REQ:" + event.getFulfillmentId()
+            );
+        } catch (Exception ex) {
+            log.error("Error handling FULFILLMENT_FAILED event for fulfillment {}: {}", event.getFulfillmentId(), ex.getMessage());
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void handleFulfillmentCancelled(org.netra.features.fulfillment.event.FulfillmentCancelledEvent event) {
+        try {
+            notificationService.createNotification(
+                    event.getRequesterUserId(),
+                    NotificationType.FULFILLMENT_CANCELLED,
+                    "Fulfillment Cancelled",
+                    "A queued fulfillment has been cancelled: " + event.getCancellationReason(),
+                    NotificationReferenceType.FULFILLMENT,
+                    event.getFulfillmentId(),
+                    "FULFILLMENT_CANCELLED_REQ:" + event.getFulfillmentId()
+            );
+        } catch (Exception ex) {
+            log.error("Error handling FULFILLMENT_CANCELLED event for fulfillment {}: {}", event.getFulfillmentId(), ex.getMessage());
+        }
+    }
 }

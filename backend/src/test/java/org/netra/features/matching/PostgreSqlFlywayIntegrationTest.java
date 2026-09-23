@@ -117,7 +117,7 @@ public class PostgreSqlFlywayIntegrationTest {
         List<Map<String, Object>> history = jdbcTemplate.queryForList(
                 "SELECT version, description, type, script, success FROM flyway_schema_history ORDER BY installed_rank"
         );
-        assertEquals(14, history.size(), "Flyway must have applied exactly 14 migrations (V1 through V14)");
+        assertEquals(15, history.size(), "Flyway must have applied exactly 15 migrations (V1 through V15)");
 
         for (Map<String, Object> row : history) {
             Boolean success = (Boolean) row.get("success");
@@ -132,7 +132,7 @@ public class PostgreSqlFlywayIntegrationTest {
                 "donor_profiles", "blood_banks", "blood_inventory", "blood_bank_accounts",
                 "donation_events", "donation_event_registrations", "blood_requests",
                 "idempotency_records", "donor_matches", "notifications", "user_device_tokens",
-                "donations"
+                "donations", "fulfillments"
         );
 
         try (Connection conn = dataSource.getConnection()) {
@@ -302,6 +302,36 @@ public class PostgreSqlFlywayIntegrationTest {
             assertTrue(donationIndexes.contains("idx_donations_status_created"), "Index idx_donations_status_created must exist");
             assertTrue(donationIndexes.contains("idx_donations_blood_request"), "Index idx_donations_blood_request must exist");
             assertTrue(donationIndexes.contains("idx_donations_donation_event"), "Index idx_donations_donation_event must exist");
+
+            // 14. Verify V15 fulfillments constraints and columns
+            Integer chkFulfillmentStatus = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'chk_fulfillments_status'",
+                    Integer.class
+            );
+            assertEquals(1, chkFulfillmentStatus, "Check constraint 'chk_fulfillments_status' must exist");
+
+            Integer chkFulfillmentUnits = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'chk_fulfillments_units'",
+                    Integer.class
+            );
+            assertEquals(1, chkFulfillmentUnits, "Check constraint 'chk_fulfillments_units' must exist");
+
+            Integer chkRequestUnitsFulfilled = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'chk_request_units_fulfilled'",
+                    Integer.class
+            );
+            assertEquals(1, chkRequestUnitsFulfilled, "Check constraint 'chk_request_units_fulfilled' must exist");
+
+            // 15. Verify V15 fulfillments indexes
+            List<String> fulfillmentIndexes = jdbcTemplate.queryForList(
+                    "SELECT indexname FROM pg_indexes WHERE tablename = 'fulfillments'",
+                    String.class
+            );
+            assertTrue(fulfillmentIndexes.contains("idx_fulfillments_blood_request"), "Index idx_fulfillments_blood_request must exist");
+            assertTrue(fulfillmentIndexes.contains("idx_fulfillments_donation"), "Index idx_fulfillments_donation must exist");
+            assertTrue(fulfillmentIndexes.contains("idx_fulfillments_status"), "Index idx_fulfillments_status must exist");
+            assertTrue(fulfillmentIndexes.contains("idx_fulfillments_created_by"), "Index idx_fulfillments_created_by must exist");
+            assertTrue(fulfillmentIndexes.contains("uq_fulfillments_active_donation"), "Unique index uq_fulfillments_active_donation must exist");
         }
     }
 
@@ -751,5 +781,127 @@ public class PostgreSqlFlywayIntegrationTest {
                 Integer.class, notifId1, notifId2, notifId3
         );
         assertEquals(3, notifCount, "All 3 new donation notification types must be successfully inserted");
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("PostgreSQL Functional: Verify fulfillments constraints, double-consumption index, units check, and notification types")
+    void testV15FulfillmentBehaviorOnPostgreSQL() {
+        // Seed prerequisites: 1 requester, 1 donor, 1 staff, 1 blood request, 1 verified donation
+        UUID requesterId = UUID.randomUUID();
+        UUID donorId = UUID.randomUUID();
+        UUID staffId = UUID.randomUUID();
+        UUID requestId = UUID.randomUUID();
+        UUID donationId = UUID.randomUUID();
+
+        jdbcTemplate.update(
+                "INSERT INTO users (id, full_name, email, password_hash, status) VALUES (?, 'Fulfillment Requester', ?, 'hash', 'ACTIVE')",
+                requesterId, "req_f_" + requesterId + "@netra.org"
+        );
+        jdbcTemplate.update(
+                "INSERT INTO users (id, full_name, email, password_hash, status) VALUES (?, 'Fulfillment Donor', ?, 'hash', 'ACTIVE')",
+                donorId, "donor_f_" + donorId + "@netra.org"
+        );
+        jdbcTemplate.update(
+                "INSERT INTO users (id, full_name, email, password_hash, status) VALUES (?, 'Fulfillment Staff', ?, 'hash', 'ACTIVE')",
+                staffId, "staff_f_" + staffId + "@netra.org"
+        );
+
+        jdbcTemplate.update(
+                "INSERT INTO blood_requests (id, requester_user_id, blood_group, units_required, units_fulfilled, status, hospital_name, hospital_address, city, state, postal_code, latitude, longitude, required_by) " +
+                        "VALUES (?, ?, 'O+', 3, 0, 'OPEN', 'City General', '123 Main St', 'Mumbai', 'Maharashtra', '400001', 18.9220, 72.8347, NOW() + INTERVAL '1 day')",
+                requestId, requesterId
+        );
+
+        jdbcTemplate.update(
+                "INSERT INTO donations (id, donor_user_id, source_type, blood_request_id, donation_date, verification_status) " +
+                        "VALUES (?, ?, 'BLOOD_REQUEST', ?, CURRENT_DATE, 'VERIFIED')",
+                donationId, donorId, requestId
+        );
+
+        // 1. Valid insertion: Default READY status, 1 unit
+        UUID fulfillment1Id = UUID.randomUUID();
+        jdbcTemplate.update(
+                "INSERT INTO fulfillments (id, blood_request_id, donation_id, units, status, created_by_user_id) " +
+                        "VALUES (?, ?, ?, 1, 'READY', ?)",
+                fulfillment1Id, requestId, donationId, staffId
+        );
+
+        Map<String, Object> inserted = jdbcTemplate.queryForMap(
+                "SELECT id, status, units FROM fulfillments WHERE id = ?",
+                fulfillment1Id
+        );
+        assertEquals("READY", inserted.get("status"));
+        assertEquals(1, ((Number) inserted.get("units")).intValue());
+
+        // 2. Double-consumption prevention: Inserting another fulfillment for the same donation while first is active (READY) must violate uq_fulfillments_active_donation
+        UUID fulfillmentDuplicateDonationId = UUID.randomUUID();
+        assertThrows(DataIntegrityViolationException.class, () ->
+                jdbcTemplate.update(
+                        "INSERT INTO fulfillments (id, blood_request_id, donation_id, units, status, created_by_user_id) " +
+                                "VALUES (?, ?, ?, 1, 'READY', ?)",
+                        fulfillmentDuplicateDonationId, requestId, donationId, staffId
+                )
+        );
+
+        // 3. Status constraint check: Invalid status must violate chk_fulfillments_status
+        assertThrows(DataIntegrityViolationException.class, () ->
+                jdbcTemplate.update(
+                        "INSERT INTO fulfillments (id, blood_request_id, donation_id, units, status, created_by_user_id) " +
+                                "VALUES (?, ?, ?, 1, 'PENDING_APPROVAL', ?)",
+                        UUID.randomUUID(), requestId, UUID.randomUUID(), staffId
+                )
+        );
+
+        // 4. Units constraint check: 0 units must violate chk_fulfillments_units
+        assertThrows(DataIntegrityViolationException.class, () ->
+                jdbcTemplate.update(
+                        "INSERT INTO fulfillments (id, blood_request_id, donation_id, units, status, created_by_user_id) " +
+                                "VALUES (?, ?, ?, 0, 'READY', ?)",
+                        UUID.randomUUID(), requestId, UUID.randomUUID(), staffId
+                )
+        );
+
+        // 5. Blood requests units_fulfilled constraint: units_fulfilled > units_required must violate chk_request_units_fulfilled
+        assertThrows(DataIntegrityViolationException.class, () ->
+                jdbcTemplate.update(
+                        "UPDATE blood_requests SET units_fulfilled = 10 WHERE id = ?",
+                        requestId
+                )
+        );
+
+        // 6. Release reservation by cancelling first fulfillment, then verify second fulfillment succeeds
+        jdbcTemplate.update(
+                "UPDATE fulfillments SET status = 'CANCELLED' WHERE id = ?",
+                fulfillment1Id
+        );
+
+        UUID fulfillment2Id = UUID.randomUUID();
+        assertDoesNotThrow(() ->
+                jdbcTemplate.update(
+                        "INSERT INTO fulfillments (id, blood_request_id, donation_id, units, status, created_by_user_id) " +
+                                "VALUES (?, ?, ?, 1, 'READY', ?)",
+                        fulfillment2Id, requestId, donationId, staffId
+                )
+        );
+
+        // 7. Verify notifications table accepts all 5 new fulfillment notification types
+        UUID n1 = UUID.randomUUID();
+        UUID n2 = UUID.randomUUID();
+        UUID n3 = UUID.randomUUID();
+        UUID n4 = UUID.randomUUID();
+        UUID n5 = UUID.randomUUID();
+
+        jdbcTemplate.update("INSERT INTO notifications (id, recipient_user_id, type, title, body) VALUES (?, ?, 'FULFILLMENT_CREATED', 'T', 'B')", n1, requesterId);
+        jdbcTemplate.update("INSERT INTO notifications (id, recipient_user_id, type, title, body) VALUES (?, ?, 'FULFILLMENT_STARTED', 'T', 'B')", n2, requesterId);
+        jdbcTemplate.update("INSERT INTO notifications (id, recipient_user_id, type, title, body) VALUES (?, ?, 'FULFILLMENT_COMPLETED', 'T', 'B')", n3, requesterId);
+        jdbcTemplate.update("INSERT INTO notifications (id, recipient_user_id, type, title, body) VALUES (?, ?, 'FULFILLMENT_FAILED', 'T', 'B')", n4, requesterId);
+        jdbcTemplate.update("INSERT INTO notifications (id, recipient_user_id, type, title, body) VALUES (?, ?, 'FULFILLMENT_CANCELLED', 'T', 'B')", n5, requesterId);
+
+        Integer notifCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM notifications WHERE id IN (?, ?, ?, ?, ?)",
+                Integer.class, n1, n2, n3, n4, n5
+        );
+        assertEquals(5, notifCount, "All 5 new fulfillment notification types must be successfully inserted");
     }
 }
