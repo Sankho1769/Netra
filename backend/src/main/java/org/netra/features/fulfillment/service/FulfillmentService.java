@@ -166,13 +166,27 @@ public class FulfillmentService {
         Fulfillment fulfillment = fulfillmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fulfillment not found: " + id));
 
+        // 1. Lock BloodRequest for update in consistent lock order (BloodRequest -> Donation -> Fulfillment)
+        BloodRequest bloodRequest = bloodRequestRepository.findByIdForUpdate(fulfillment.getBloodRequestId())
+                .orElseThrow(() -> new ResourceNotFoundException("Blood request not found: " + fulfillment.getBloodRequestId()));
+
+        // 2. Fetch Donation
         Donation donation = donationRepository.findById(fulfillment.getDonationId()).orElse(null);
+
+        // 3. Authorization check
         authorizationService.verifyCanOperateFulfillment(currentUserId, fulfillment, donation);
+
+        // 4. Invariant checks against freshly locked BloodRequest and verified Donation
+        if (bloodRequest.getStatus() != BloodRequestStatus.OPEN) {
+            throw new ValidationException("Cannot start fulfillment for blood request that is " + bloodRequest.getStatus() + ".");
+        }
+
+        if (donation == null || donation.getVerificationStatus() != DonationVerificationStatus.VERIFIED) {
+            throw new ValidationException("Cannot start fulfillment with an unverified donation.");
+        }
 
         fulfillment.start(currentUserId, Instant.now());
         Fulfillment saved = fulfillmentRepository.save(fulfillment);
-
-        BloodRequest bloodRequest = bloodRequestRepository.findById(saved.getBloodRequestId()).orElse(null);
 
         auditService.logAuthEvent(
                 "FULFILLMENT_STARTED",
@@ -182,7 +196,7 @@ public class FulfillmentService {
                 "{\"fulfillmentId\":\"" + saved.getId() + "\"}"
         );
 
-        if (bloodRequest != null && donation != null) {
+        if (donation != null) {
             eventPublisher.publishEvent(new FulfillmentStartedEvent(
                     saved.getId(),
                     bloodRequest.getId(),
@@ -207,17 +221,34 @@ public class FulfillmentService {
         Fulfillment fulfillment = fulfillmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fulfillment not found: " + id));
 
-        Donation donation = donationRepository.findById(fulfillment.getDonationId()).orElse(null);
-        authorizationService.verifyCanOperateFulfillment(currentUserId, fulfillment, donation);
-
-        // Lock BloodRequest for atomic quantity accounting
+        // 1. Lock BloodRequest for update in consistent lock order (BloodRequest -> Donation -> Fulfillment)
         BloodRequest bloodRequest = bloodRequestRepository.findByIdForUpdate(fulfillment.getBloodRequestId())
                 .orElseThrow(() -> new ResourceNotFoundException("Blood request not found: " + fulfillment.getBloodRequestId()));
+
+        // 2. Fetch Donation
+        Donation donation = donationRepository.findById(fulfillment.getDonationId()).orElse(null);
+
+        // 3. Authorization check
+        authorizationService.verifyCanOperateFulfillment(currentUserId, fulfillment, donation);
+
+        // 4. Invariant checks against freshly locked BloodRequest and verified Donation
+        if (bloodRequest.getStatus() != BloodRequestStatus.OPEN) {
+            throw new ValidationException("Cannot complete fulfillment for blood request that is " + bloodRequest.getStatus() + ".");
+        }
+
+        if (donation == null || donation.getVerificationStatus() != DonationVerificationStatus.VERIFIED) {
+            throw new ValidationException("Cannot complete fulfillment with an unverified donation.");
+        }
+
+        // 5. Quantity correctness evaluated against freshly locked BloodRequest
+        int newFulfilled = bloodRequest.getUnitsFulfilled() + fulfillment.getUnits();
+        if (newFulfilled > bloodRequest.getUnitsRequired()) {
+            throw new ValidationException("Fulfillment units would exceed remaining required units on the blood request.");
+        }
 
         Instant now = Instant.now();
         fulfillment.complete(currentUserId, now);
 
-        int newFulfilled = bloodRequest.getUnitsFulfilled() + fulfillment.getUnits();
         bloodRequest.setUnitsFulfilled(newFulfilled);
 
         boolean requestCompleted = newFulfilled >= bloodRequest.getUnitsRequired();
@@ -267,6 +298,10 @@ public class FulfillmentService {
         Fulfillment fulfillment = fulfillmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fulfillment not found: " + id));
 
+        // Lock BloodRequest for update in consistent lock order
+        BloodRequest bloodRequest = bloodRequestRepository.findByIdForUpdate(fulfillment.getBloodRequestId())
+                .orElseThrow(() -> new ResourceNotFoundException("Blood request not found: " + fulfillment.getBloodRequestId()));
+
         Donation donation = donationRepository.findById(fulfillment.getDonationId()).orElse(null);
         authorizationService.verifyCanOperateFulfillment(currentUserId, fulfillment, donation);
 
@@ -277,8 +312,6 @@ public class FulfillmentService {
         }
         Fulfillment saved = fulfillmentRepository.save(fulfillment);
 
-        BloodRequest bloodRequest = bloodRequestRepository.findById(saved.getBloodRequestId()).orElse(null);
-
         auditService.logAuthEvent(
                 "FULFILLMENT_FAILED",
                 currentUserId,
@@ -287,7 +320,7 @@ public class FulfillmentService {
                 "{\"fulfillmentId\":\"" + saved.getId() + "\",\"reason\":\"" + request.getFailureReason() + "\"}"
         );
 
-        if (bloodRequest != null && donation != null) {
+        if (donation != null) {
             eventPublisher.publishEvent(new FulfillmentFailedEvent(
                     saved.getId(),
                     bloodRequest.getId(),
@@ -313,7 +346,10 @@ public class FulfillmentService {
         Fulfillment fulfillment = fulfillmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fulfillment not found: " + id));
 
-        BloodRequest bloodRequest = bloodRequestRepository.findById(fulfillment.getBloodRequestId()).orElse(null);
+        // Lock BloodRequest for update in consistent lock order
+        BloodRequest bloodRequest = bloodRequestRepository.findByIdForUpdate(fulfillment.getBloodRequestId())
+                .orElseThrow(() -> new ResourceNotFoundException("Blood request not found: " + fulfillment.getBloodRequestId()));
+
         Donation donation = donationRepository.findById(fulfillment.getDonationId()).orElse(null);
         authorizationService.verifyCanCancelFulfillment(currentUserId, fulfillment, bloodRequest, donation);
 
@@ -332,7 +368,7 @@ public class FulfillmentService {
                 "{\"fulfillmentId\":\"" + saved.getId() + "\",\"reason\":\"" + request.getCancellationReason() + "\"}"
         );
 
-        if (bloodRequest != null && donation != null) {
+        if (donation != null) {
             eventPublisher.publishEvent(new FulfillmentCancelledEvent(
                     saved.getId(),
                     bloodRequest.getId(),

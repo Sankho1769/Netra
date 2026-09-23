@@ -215,7 +215,7 @@ public class BloodRequestService {
         UUID currentUserId = SecurityUtils.getCurrentUserId()
                 .orElseThrow(() -> new UnauthorizedSessionAccessException("Authentication is required to update a blood request."));
 
-        BloodRequest bloodRequest = bloodRequestRepository.findById(id)
+        BloodRequest bloodRequest = bloodRequestRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Blood request not found: " + id));
 
         authorizationService.verifyCanManageRequest(currentUserId, bloodRequest);
@@ -304,7 +304,7 @@ public class BloodRequestService {
         UUID currentUserId = SecurityUtils.getCurrentUserId()
                 .orElseThrow(() -> new UnauthorizedSessionAccessException("Authentication is required to cancel a blood request."));
 
-        BloodRequest bloodRequest = bloodRequestRepository.findById(id)
+        BloodRequest bloodRequest = bloodRequestRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Blood request not found: " + id));
 
         authorizationService.verifyCanManageRequest(currentUserId, bloodRequest);
@@ -345,7 +345,7 @@ public class BloodRequestService {
         UUID currentUserId = SecurityUtils.getCurrentUserId()
                 .orElseThrow(() -> new UnauthorizedSessionAccessException("Authentication is required to cancel an emergency blood request."));
 
-        BloodRequest bloodRequest = bloodRequestRepository.findById(id)
+        BloodRequest bloodRequest = bloodRequestRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Blood request not found: " + id));
 
         // 1. Verify owner/admin authorization FIRST to avoid leaking urgency information

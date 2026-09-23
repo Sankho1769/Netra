@@ -276,7 +276,7 @@ class FulfillmentServiceTest {
 
         when(fulfillmentRepository.findById(fulfillmentId)).thenReturn(Optional.of(f));
         when(fulfillmentRepository.save(any(Fulfillment.class))).thenAnswer(i -> i.getArgument(0));
-        when(bloodRequestRepository.findById(reqId)).thenReturn(Optional.of(req));
+        when(bloodRequestRepository.findByIdForUpdate(reqId)).thenReturn(Optional.of(req));
         when(donationRepository.findById(donId)).thenReturn(Optional.of(don));
 
         FulfillmentDto result = fulfillmentService.startFulfillment(fulfillmentId, "127.0.0.1", "TestAgent");
@@ -371,7 +371,7 @@ class FulfillmentServiceTest {
 
         when(fulfillmentRepository.findById(fulfillmentId)).thenReturn(Optional.of(f));
         when(fulfillmentRepository.save(any(Fulfillment.class))).thenAnswer(i -> i.getArgument(0));
-        when(bloodRequestRepository.findById(reqId)).thenReturn(Optional.of(req));
+        when(bloodRequestRepository.findByIdForUpdate(reqId)).thenReturn(Optional.of(req));
         when(donationRepository.findById(donId)).thenReturn(Optional.of(don));
 
         FailFulfillmentRequest failReq = new FailFulfillmentRequest("Unit damaged in transport", "Bag leaked");
@@ -399,7 +399,7 @@ class FulfillmentServiceTest {
 
         when(fulfillmentRepository.findById(fulfillmentId)).thenReturn(Optional.of(f));
         when(fulfillmentRepository.save(any(Fulfillment.class))).thenAnswer(i -> i.getArgument(0));
-        when(bloodRequestRepository.findById(reqId)).thenReturn(Optional.of(req));
+        when(bloodRequestRepository.findByIdForUpdate(reqId)).thenReturn(Optional.of(req));
         when(donationRepository.findById(donId)).thenReturn(Optional.of(don));
 
         CancelFulfillmentRequest cancelReq = new CancelFulfillmentRequest("Alternative blood source found", null);
