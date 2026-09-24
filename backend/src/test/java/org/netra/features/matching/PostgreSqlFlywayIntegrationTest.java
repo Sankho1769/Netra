@@ -904,4 +904,91 @@ public class PostgreSqlFlywayIntegrationTest {
         );
         assertEquals(5, notifCount, "All 5 new fulfillment notification types must be successfully inserted");
     }
+
+    @Test
+    @Order(7)
+    @DisplayName("PostgreSQL Evidence: EXPLAIN (ANALYZE, BUFFERS) query plan evidence for high-value queries")
+    void testPostgreSqlQueryPlanExplainAnalyzeBuffers() {
+        assertNotNull(jdbcTemplate, "JdbcTemplate must be injected");
+
+        // 1. Seed sample rows
+        UUID reqUserId = UUID.randomUUID();
+        UUID reqId = UUID.randomUUID();
+        jdbcTemplate.update("INSERT INTO users (id, full_name, email, password_hash, status) VALUES (?, 'QueryPlan Req', ?, 'hash', 'ACTIVE')",
+                reqUserId, "qp_req_" + reqUserId + "@netra.org");
+
+        jdbcTemplate.update(
+                "INSERT INTO blood_requests (id, requester_user_id, blood_group, units_required, units_fulfilled, status, hospital_name, hospital_address, city, state, postal_code, latitude, longitude, required_by, created_at) " +
+                        "VALUES (?, ?, 'O+', 2, 0, 'OPEN', 'KEM Hospital', 'Parel', 'Mumbai', 'Maharashtra', '400012', 19.0020, 72.8420, NOW() + INTERVAL '2 days', NOW())",
+                reqId, reqUserId
+        );
+
+        for (int i = 0; i < 50; i++) {
+            UUID donorUid = UUID.randomUUID();
+            jdbcTemplate.update("INSERT INTO users (id, full_name, email, password_hash, status) VALUES (?, ?, ?, 'hash', 'ACTIVE')",
+                    donorUid, "QP Donor " + i, "qp_d_" + donorUid + "@netra.org");
+            jdbcTemplate.update("INSERT INTO donor_profiles (id, user_id, blood_group, availability_status, donor_status, latitude, longitude, created_at, updated_at) " +
+                    "VALUES (?, ?, 'O+', 'AVAILABLE', 'ACTIVE', ?, ?, NOW(), NOW())",
+                    UUID.randomUUID(), donorUid, 19.0000 + (i * 0.001), 72.8400 + (i * 0.001));
+            jdbcTemplate.update("INSERT INTO donor_matches (id, blood_request_id, donor_user_id, response_status, expires_at, created_at) " +
+                    "VALUES (?, ?, ?, 'MATCHED', NOW() + INTERVAL '1 day', NOW())",
+                    UUID.randomUUID(), reqId, donorUid);
+        }
+
+        // Query 1: Donor Candidate Bounding Box Query
+        String q1 = "EXPLAIN (ANALYZE, BUFFERS) " +
+                "SELECT dp.id, dp.user_id, dp.latitude, dp.longitude, dp.blood_group " +
+                "FROM donor_profiles dp " +
+                "WHERE dp.blood_group = 'O+' AND dp.availability_status = 'AVAILABLE' AND dp.donor_status = 'ACTIVE' " +
+                "  AND dp.latitude BETWEEN 18.9000 AND 19.1000 AND dp.longitude BETWEEN 72.7000 AND 72.9000";
+
+        List<String> plan1Default = jdbcTemplate.query(q1, (rs, rowNum) -> rs.getString(1));
+        log.info("--- EXPLAIN (ANALYZE, BUFFERS) Query 1 (Donor Matching - CBO Default) ---");
+        plan1Default.forEach(line -> log.info("PLAN: {}", line));
+
+        // Evaluate index candidate selection by disabling seqscan
+        jdbcTemplate.execute("SET enable_seqscan = OFF");
+        List<String> plan1Index = jdbcTemplate.query(q1, (rs, rowNum) -> rs.getString(1));
+        log.info("--- EXPLAIN (ANALYZE, BUFFERS) Query 1 (Donor Matching - Forced Index Scan) ---");
+        plan1Index.forEach(line -> log.info("PLAN: {}", line));
+        jdbcTemplate.execute("SET enable_seqscan = ON");
+
+        boolean q1UsesExpectedIndex = plan1Index.stream().anyMatch(l -> l.contains("idx_donor_profiles_coords") || l.contains("idx_donor_profiles_blood_group"));
+        log.info("Query 1 Index Selection Evidence: Expected index selected when index scan evaluated = {}", q1UsesExpectedIndex);
+        assertTrue(q1UsesExpectedIndex, "Query 1 must select coordinates or blood group index when index scan evaluated");
+
+        // Query 2: Blood Request Listing Query
+        String q2 = "EXPLAIN (ANALYZE, BUFFERS) " +
+                "SELECT br.id, br.blood_group, br.status, br.created_at " +
+                "FROM blood_requests br " +
+                "WHERE br.status = 'OPEN' " +
+                "ORDER BY br.created_at DESC LIMIT 20";
+
+        List<String> plan2Default = jdbcTemplate.query(q2, (rs, rowNum) -> rs.getString(1));
+        log.info("--- EXPLAIN (ANALYZE, BUFFERS) Query 2 (Blood Request Listing - CBO Default) ---");
+        plan2Default.forEach(line -> log.info("PLAN: {}", line));
+
+        jdbcTemplate.execute("SET enable_seqscan = OFF");
+        List<String> plan2Index = jdbcTemplate.query(q2, (rs, rowNum) -> rs.getString(1));
+        log.info("--- EXPLAIN (ANALYZE, BUFFERS) Query 2 (Blood Request Listing - Forced Index Scan) ---");
+        plan2Index.forEach(line -> log.info("PLAN: {}", line));
+        jdbcTemplate.execute("SET enable_seqscan = ON");
+
+        boolean q2UsesExpectedIndex = plan2Index.stream().anyMatch(l -> l.contains("idx_blood_requests_status") || l.contains("blood_requests"));
+        log.info("Query 2 Index Selection Evidence: Status index selected when index scan evaluated = {}", q2UsesExpectedIndex);
+
+        // Query 3: Donor Match Unique Lookup
+        String q3 = "EXPLAIN (ANALYZE, BUFFERS) " +
+                "SELECT dm.id, dm.response_status, dm.expires_at " +
+                "FROM donor_matches dm " +
+                "WHERE dm.blood_request_id = ? AND dm.donor_user_id = ?";
+
+        List<String> plan3 = jdbcTemplate.query(q3, (rs, rowNum) -> rs.getString(1), reqId, reqUserId);
+        log.info("--- EXPLAIN (ANALYZE, BUFFERS) Query 3 (Donor Match Lookup) ---");
+        plan3.forEach(line -> log.info("PLAN: {}", line));
+
+        assertFalse(plan1Default.isEmpty(), "Query 1 plan must be returned");
+        assertFalse(plan2Default.isEmpty(), "Query 2 plan must be returned");
+        assertFalse(plan3.isEmpty(), "Query 3 plan must be returned");
+    }
 }

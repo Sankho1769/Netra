@@ -26,7 +26,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -386,7 +388,8 @@ public class FulfillmentService {
     public Page<FulfillmentDto> getMyFulfillments(Pageable pageable) {
         UUID currentUserId = SecurityUtils.getCurrentUserId()
                 .orElseThrow(() -> new UnauthorizedSessionAccessException("Authentication required."));
-        return fulfillmentRepository.findMyFulfillments(currentUserId, pageable)
+        Pageable bounded = boundPageable(pageable);
+        return fulfillmentRepository.findMyFulfillments(currentUserId, bounded)
                 .map(FulfillmentDto::fromEntity);
     }
 
@@ -395,8 +398,19 @@ public class FulfillmentService {
         UUID currentUserId = SecurityUtils.getCurrentUserId()
                 .orElseThrow(() -> new UnauthorizedSessionAccessException("Authentication required."));
         authorizationService.verifyCanViewPendingQueue(currentUserId);
-        return fulfillmentRepository.findPendingFulfillments(pageable)
+        Pageable bounded = boundPageable(pageable);
+        return fulfillmentRepository.findPendingFulfillments(bounded)
                 .map(FulfillmentDto::fromEntity);
+    }
+
+    private Pageable boundPageable(Pageable pageable) {
+        if (pageable == null) {
+            return PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
+        }
+        int page = Math.max(0, pageable.getPageNumber());
+        int size = Math.min(50, Math.max(1, pageable.getPageSize()));
+        Sort sort = pageable.getSort().isSorted() ? pageable.getSort() : Sort.by(Sort.Direction.DESC, "createdAt");
+        return PageRequest.of(page, size, sort);
     }
 
     @Transactional(readOnly = true)
