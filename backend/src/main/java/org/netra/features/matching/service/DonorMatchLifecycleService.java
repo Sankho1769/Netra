@@ -35,24 +35,36 @@ public class DonorMatchLifecycleService {
     private final AuditService auditService;
     private final java.time.Clock clock;
     private final ApplicationEventPublisher eventPublisher;
+    private final org.netra.core.observability.NetraMetrics netraMetrics;
 
     @org.springframework.beans.factory.annotation.Autowired
     public DonorMatchLifecycleService(
             DonorMatchRepository donorMatchRepository,
             AuditService auditService,
             java.time.Clock clock,
-            org.springframework.beans.factory.ObjectProvider<ApplicationEventPublisher> eventPublisherProvider) {
+            org.springframework.beans.factory.ObjectProvider<ApplicationEventPublisher> eventPublisherProvider,
+            @org.springframework.beans.factory.annotation.Autowired(required = false)
+            org.netra.core.observability.NetraMetrics netraMetrics) {
         this.donorMatchRepository = donorMatchRepository;
         this.auditService = auditService;
         this.clock = clock != null ? clock : java.time.Clock.systemUTC();
         this.eventPublisher = eventPublisherProvider != null ? eventPublisherProvider.getIfAvailable() : null;
+        this.netraMetrics = netraMetrics;
+    }
+
+    public DonorMatchLifecycleService(
+            DonorMatchRepository donorMatchRepository,
+            AuditService auditService,
+            java.time.Clock clock,
+            org.springframework.beans.factory.ObjectProvider<ApplicationEventPublisher> eventPublisherProvider) {
+        this(donorMatchRepository, auditService, clock, eventPublisherProvider, null);
     }
 
     public DonorMatchLifecycleService(
             DonorMatchRepository donorMatchRepository,
             AuditService auditService,
             java.time.Clock clock) {
-        this(donorMatchRepository, auditService, clock, null);
+        this(donorMatchRepository, auditService, clock, null, null);
     }
 
     /**
@@ -62,7 +74,20 @@ public class DonorMatchLifecycleService {
     @Scheduled(fixedDelayString = "${netra.donor-matching.match-expiration-interval-ms:60000}")
     @Transactional
     public void scheduledExpiration() {
-        expireOverdueMatches(Instant.now(clock));
+        long start = System.currentTimeMillis();
+        String outcome = "SUCCESS";
+        int count = 0;
+        try {
+            count = expireOverdueMatches(Instant.now(clock));
+        } catch (Exception e) {
+            outcome = "FAILURE";
+            throw e;
+        } finally {
+            long duration = System.currentTimeMillis() - start;
+            if (netraMetrics != null) {
+                netraMetrics.recordScheduledJobExecution("donor_match_expiration", outcome, duration, count);
+            }
+        }
     }
 
     /**

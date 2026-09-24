@@ -36,9 +36,19 @@ public class EmergencyIdempotencyService {
     public static final Duration DEFAULT_TTL = Duration.ofHours(24);
 
     private final IdempotencyRecordRepository repository;
+    private final org.netra.core.observability.NetraMetrics netraMetrics;
 
     public EmergencyIdempotencyService(IdempotencyRecordRepository repository) {
+        this(repository, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public EmergencyIdempotencyService(
+            IdempotencyRecordRepository repository,
+            @org.springframework.beans.factory.annotation.Autowired(required = false)
+            org.netra.core.observability.NetraMetrics netraMetrics) {
         this.repository = repository;
+        this.netraMetrics = netraMetrics;
     }
 
     @Transactional(readOnly = true)
@@ -144,7 +154,20 @@ public class EmergencyIdempotencyService {
     @Scheduled(fixedRate = 3600000) // hourly background cleanup
     @Transactional
     public void cleanupExpiredRecordsTask() {
-        cleanExpiredRecords();
+        long start = System.currentTimeMillis();
+        String outcome = "SUCCESS";
+        long deleted = 0;
+        try {
+            deleted = cleanExpiredRecords();
+        } catch (Exception e) {
+            outcome = "FAILURE";
+            throw e;
+        } finally {
+            long duration = System.currentTimeMillis() - start;
+            if (netraMetrics != null) {
+                netraMetrics.recordScheduledJobExecution("emergency_idempotency_cleanup", outcome, duration, (int) deleted);
+            }
+        }
     }
 
     @Transactional

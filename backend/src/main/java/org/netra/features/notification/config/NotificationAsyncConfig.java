@@ -28,6 +28,7 @@ public class NotificationAsyncConfig {
         executor.setMaxPoolSize(16);
         executor.setQueueCapacity(250);
         executor.setThreadNamePrefix("notif-exec-");
+        executor.setTaskDecorator(new org.netra.core.observability.MdcTaskDecorator());
         executor.setRejectedExecutionHandler((r, exec) -> {
             log.warn("Notification task executor bounded queue full; falling back to caller runs policy.");
             new ThreadPoolExecutor.CallerRunsPolicy().rejectedExecution(r, exec);

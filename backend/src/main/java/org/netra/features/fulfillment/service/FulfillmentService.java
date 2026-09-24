@@ -52,6 +52,13 @@ public class FulfillmentService {
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.netra.core.observability.NetraMetrics netraMetrics;
+
+    public void setNetraMetrics(org.netra.core.observability.NetraMetrics netraMetrics) {
+        this.netraMetrics = netraMetrics;
+    }
+
     public FulfillmentService(
             FulfillmentRepository fulfillmentRepository,
             BloodRequestRepository bloodRequestRepository,
@@ -120,6 +127,9 @@ public class FulfillmentService {
         int reservedUnits = fulfillmentRepository.sumReservedUnitsForBloodRequest(bloodRequest.getId());
         int remainingUnreserved = bloodRequest.getUnitsRequired() - bloodRequest.getUnitsFulfilled() - reservedUnits;
         if (request.getUnits() > remainingUnreserved) {
+            if (netraMetrics != null) {
+                netraMetrics.incrementFulfillmentContention();
+            }
             throw new ValidationException("Requested fulfillment units (" + request.getUnits() +
                     ") exceeds the blood request's remaining unreserved quantity (" + remainingUnreserved + ").");
         }
@@ -142,6 +152,12 @@ public class FulfillmentService {
                 userAgent,
                 "{\"fulfillmentId\":\"" + saved.getId() + "\",\"bloodRequestId\":\"" + bloodRequest.getId() + "\",\"units\":" + saved.getUnits() + "}"
         );
+
+        if (netraMetrics != null) {
+            netraMetrics.incrementFulfillmentsCreated();
+        }
+        org.netra.core.observability.StructuredLogger.logOperation(
+                "FULFILLMENT_CREATED", currentUserId, null, "Fulfillment", saved.getId(), "CREATE", null, "SUCCESS");
 
         // 9. Publish domain event
         eventPublisher.publishEvent(new FulfillmentCreatedEvent(

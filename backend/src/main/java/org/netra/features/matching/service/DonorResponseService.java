@@ -72,6 +72,13 @@ public class DonorResponseService {
     private final int maxActiveMatchesPerRequest;
     private final ApplicationEventPublisher eventPublisher;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.netra.core.observability.NetraMetrics netraMetrics;
+
+    public void setNetraMetrics(org.netra.core.observability.NetraMetrics netraMetrics) {
+        this.netraMetrics = netraMetrics;
+    }
+
     @org.springframework.beans.factory.annotation.Autowired
     public DonorResponseService(
             DonorMatchRepository donorMatchRepository,
@@ -302,6 +309,12 @@ public class DonorResponseService {
             ));
         }
 
+        if (netraMetrics != null) {
+            netraMetrics.incrementDonorMatchesCreated(1);
+        }
+        org.netra.core.observability.StructuredLogger.logOperation(
+                "DONOR_MATCH_CREATED", currentUserId, null, "DonorMatch", savedMatch.getId(), "CREATE", null, "SUCCESS");
+
         String maskedName = DonorMatchingService.maskDisplayName(donorUser.getFullName());
         return new RequesterDonorMatchDto(
                 savedMatch.getId(),
@@ -446,6 +459,12 @@ public class DonorResponseService {
             ));
         }
 
+        if (netraMetrics != null) {
+            netraMetrics.incrementDonorMatchResponse("ACCEPTED");
+        }
+        org.netra.core.observability.StructuredLogger.logOperation(
+                "DONOR_MATCH_ACCEPTED", currentUserId, null, "DonorMatch", matchId, "ACCEPT", null, "SUCCESS");
+
         DonorMatch updatedMatch = donorMatchRepository.findById(matchId)
                 .orElseThrow(() -> new ResourceNotFoundException("Donor match not found with id: " + matchId));
 
@@ -519,6 +538,12 @@ public class DonorResponseService {
                     req.getRequesterUserId()
             ));
         }
+
+        if (netraMetrics != null) {
+            netraMetrics.incrementDonorMatchResponse("DECLINED");
+        }
+        org.netra.core.observability.StructuredLogger.logOperation(
+                "DONOR_MATCH_DECLINED", currentUserId, null, "DonorMatch", matchId, "DECLINE", null, "SUCCESS");
 
         DonorMatch updatedMatch = donorMatchRepository.findById(matchId)
                 .orElseThrow(() -> new ResourceNotFoundException("Donor match not found with id: " + matchId));

@@ -20,22 +20,33 @@ public class BloodRequestExpirationService {
     private final BloodRequestRepository bloodRequestRepository;
     private final org.netra.features.matching.service.DonorMatchLifecycleService donorMatchLifecycleService;
     private final Clock clock;
+    private final org.netra.core.observability.NetraMetrics netraMetrics;
 
     @Autowired
     public BloodRequestExpirationService(
             BloodRequestRepository bloodRequestRepository,
             @Autowired(required = false)
             org.netra.features.matching.service.DonorMatchLifecycleService donorMatchLifecycleService,
-            Clock clock) {
+            Clock clock,
+            @Autowired(required = false)
+            org.netra.core.observability.NetraMetrics netraMetrics) {
         this.bloodRequestRepository = bloodRequestRepository;
         this.donorMatchLifecycleService = donorMatchLifecycleService;
         this.clock = clock != null ? clock : Clock.systemUTC();
+        this.netraMetrics = netraMetrics;
     }
 
     public BloodRequestExpirationService(
             BloodRequestRepository bloodRequestRepository,
             Clock clock) {
-        this(bloodRequestRepository, null, clock);
+        this(bloodRequestRepository, null, clock, null);
+    }
+
+    public BloodRequestExpirationService(
+            BloodRequestRepository bloodRequestRepository,
+            org.netra.features.matching.service.DonorMatchLifecycleService donorMatchLifecycleService,
+            Clock clock) {
+        this(bloodRequestRepository, donorMatchLifecycleService, clock, null);
     }
 
     /**
@@ -44,7 +55,20 @@ public class BloodRequestExpirationService {
     @Scheduled(fixedDelayString = "${netra.blood-requests.expiration-interval-ms:60000}")
     @Transactional
     public void scheduledExpiration() {
-        processExpirations(Instant.now(clock));
+        long start = System.currentTimeMillis();
+        String outcome = "SUCCESS";
+        int count = 0;
+        try {
+            count = processExpirations(Instant.now(clock));
+        } catch (Exception e) {
+            outcome = "FAILURE";
+            throw e;
+        } finally {
+            long duration = System.currentTimeMillis() - start;
+            if (netraMetrics != null) {
+                netraMetrics.recordScheduledJobExecution("blood_request_expiration", outcome, duration, count);
+            }
+        }
     }
 
     /**

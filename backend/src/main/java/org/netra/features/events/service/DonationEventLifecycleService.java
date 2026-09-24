@@ -15,9 +15,19 @@ public class DonationEventLifecycleService {
     private static final Logger log = LoggerFactory.getLogger(DonationEventLifecycleService.class);
 
     private final DonationEventRepository donationEventRepository;
+    private final org.netra.core.observability.NetraMetrics netraMetrics;
 
     public DonationEventLifecycleService(DonationEventRepository donationEventRepository) {
+        this(donationEventRepository, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public DonationEventLifecycleService(
+            DonationEventRepository donationEventRepository,
+            @org.springframework.beans.factory.annotation.Autowired(required = false)
+            org.netra.core.observability.NetraMetrics netraMetrics) {
         this.donationEventRepository = donationEventRepository;
+        this.netraMetrics = netraMetrics;
     }
 
     /**
@@ -26,7 +36,21 @@ public class DonationEventLifecycleService {
     @Scheduled(fixedDelayString = "${netra.events.lifecycle-interval-ms:60000}")
     @Transactional
     public void scheduledLifecycleTransitions() {
-        processLifecycleTransitions(Instant.now());
+        long start = System.currentTimeMillis();
+        String outcome = "SUCCESS";
+        int count = 0;
+        try {
+            LifecycleTransitionResult result = processLifecycleTransitions(Instant.now());
+            count = result.totalTransitions();
+        } catch (Exception e) {
+            outcome = "FAILURE";
+            throw e;
+        } finally {
+            long duration = System.currentTimeMillis() - start;
+            if (netraMetrics != null) {
+                netraMetrics.recordScheduledJobExecution("donation_event_lifecycle", outcome, duration, count);
+            }
+        }
     }
 
     /**

@@ -37,12 +37,13 @@ public class BloodRequestService {
     private final BloodRequestAuthorizationService authorizationService;
     private final AuditService auditService;
     private final org.netra.features.matching.service.DonorMatchLifecycleService donorMatchLifecycleService;
+    private final org.netra.core.observability.NetraMetrics netraMetrics;
 
     public BloodRequestService(
             BloodRequestRepository bloodRequestRepository,
             BloodRequestAuthorizationService authorizationService,
             AuditService auditService) {
-        this(bloodRequestRepository, authorizationService, auditService, null);
+        this(bloodRequestRepository, authorizationService, auditService, null, null);
     }
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -50,11 +51,14 @@ public class BloodRequestService {
             BloodRequestRepository bloodRequestRepository,
             BloodRequestAuthorizationService authorizationService,
             AuditService auditService,
-            org.netra.features.matching.service.DonorMatchLifecycleService donorMatchLifecycleService) {
+            org.netra.features.matching.service.DonorMatchLifecycleService donorMatchLifecycleService,
+            @org.springframework.beans.factory.annotation.Autowired(required = false)
+            org.netra.core.observability.NetraMetrics netraMetrics) {
         this.bloodRequestRepository = bloodRequestRepository;
         this.authorizationService = authorizationService;
         this.auditService = auditService;
         this.donorMatchLifecycleService = donorMatchLifecycleService;
+        this.netraMetrics = netraMetrics;
     }
 
     @Transactional
@@ -122,6 +126,15 @@ public class BloodRequestService {
                 userAgent,
                 "{\"requestId\":\"" + saved.getId() + "\"}"
         );
+
+        if (netraMetrics != null) {
+            netraMetrics.incrementBloodRequestsCreated(saved.getUrgency().name(), saved.getBloodGroup().name());
+            if (saved.getUrgency() == BloodRequestUrgency.CRITICAL) {
+                netraMetrics.incrementEmergencyRequestsCreated();
+            }
+        }
+        org.netra.core.observability.StructuredLogger.logOperation(
+                "BLOOD_REQUEST_CREATED", currentUserId, null, "BloodRequest", saved.getId(), "CREATE", null, "SUCCESS");
 
         return mapToDetailDto(saved, true, true, null);
     }
@@ -336,6 +349,12 @@ public class BloodRequestService {
                 "{\"requestId\":\"" + saved.getId() + "\"}"
         );
 
+        if (netraMetrics != null) {
+            netraMetrics.incrementBloodRequestsCancelled();
+        }
+        org.netra.core.observability.StructuredLogger.logOperation(
+                "BLOOD_REQUEST_CANCELLED", currentUserId, null, "BloodRequest", saved.getId(), "CANCEL", null, "SUCCESS");
+
         boolean isOwner = bloodRequest.getRequesterUserId().equals(currentUserId);
         return mapToDetailDto(saved, isOwner, true, null);
     }
@@ -390,6 +409,12 @@ public class BloodRequestService {
                 userAgent,
                 "{\"requestId\":\"" + saved.getId() + "\"}"
         );
+
+        if (netraMetrics != null) {
+            netraMetrics.incrementBloodRequestsCancelled();
+        }
+        org.netra.core.observability.StructuredLogger.logOperation(
+                "EMERGENCY_REQUEST_CANCELLED", currentUserId, null, "BloodRequest", saved.getId(), "CANCEL", null, "SUCCESS");
 
         boolean isOwner = bloodRequest.getRequesterUserId().equals(currentUserId);
         return mapToDetailDto(saved, isOwner, true, null);

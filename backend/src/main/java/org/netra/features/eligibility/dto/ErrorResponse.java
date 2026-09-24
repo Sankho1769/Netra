@@ -10,6 +10,7 @@ public class ErrorResponse {
     private String path;
     private Instant timestamp;
     private List<String> details;
+    private String correlationId;
 
     public ErrorResponse() {
         this.timestamp = Instant.now();
@@ -78,5 +79,13 @@ public class ErrorResponse {
 
     public void setDetails(List<String> details) {
         this.details = details;
+    }
+
+    public String getCorrelationId() {
+        return correlationId;
+    }
+
+    public void setCorrelationId(String correlationId) {
+        this.correlationId = correlationId;
     }
 }

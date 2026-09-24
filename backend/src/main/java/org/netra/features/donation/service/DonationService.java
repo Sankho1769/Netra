@@ -58,6 +58,13 @@ public class DonationService {
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.netra.core.observability.NetraMetrics netraMetrics;
+
+    public void setNetraMetrics(org.netra.core.observability.NetraMetrics netraMetrics) {
+        this.netraMetrics = netraMetrics;
+    }
+
     public DonationService(
             DonationRepository donationRepository,
             DonorProfileRepository donorProfileRepository,
@@ -124,6 +131,12 @@ public class DonationService {
                 saved.getDonationDate()
         ));
 
+        if (netraMetrics != null) {
+            netraMetrics.incrementDonationsClaimed(saved.getSourceType().name());
+        }
+        org.netra.core.observability.StructuredLogger.logOperation(
+                "DONATION_CLAIM_SUBMITTED", donorUserId, null, "Donation", saved.getId(), "CLAIM", null, "SUCCESS");
+
         return buildDetailDto(saved);
     }
 
@@ -183,6 +196,12 @@ public class DonationService {
                 saved.getDonationDate()
         ));
 
+        if (netraMetrics != null) {
+            netraMetrics.incrementDonationsVerified();
+        }
+        org.netra.core.observability.StructuredLogger.logOperation(
+                "DONATION_RECORDED_VERIFIED", verifierUserId, null, "Donation", saved.getId(), "VERIFY", null, "SUCCESS");
+
         return buildDetailDto(saved);
     }
 
@@ -223,6 +242,12 @@ public class DonationService {
                 saved.getSourceType(),
                 saved.getDonationDate()
         ));
+
+        if (netraMetrics != null) {
+            netraMetrics.incrementDonationsVerified();
+        }
+        org.netra.core.observability.StructuredLogger.logOperation(
+                "DONATION_VERIFIED", verifierUserId, null, "Donation", saved.getId(), "VERIFY", null, "SUCCESS");
 
         return buildDetailDto(saved);
     }

@@ -33,13 +33,22 @@ public class PushNotificationServiceImpl implements PushNotificationService {
     private final UserDeviceTokenRepository userDeviceTokenRepository;
     private final NotificationRepository notificationRepository;
     private final NotificationTransactionalService transactionalService;
+    private final org.netra.core.observability.NetraMetrics netraMetrics;
 
     public PushNotificationServiceImpl(
             PushNotificationProvider pushNotificationProvider,
             UserDeviceTokenRepository userDeviceTokenRepository,
             NotificationRepository notificationRepository) {
         this(pushNotificationProvider, userDeviceTokenRepository, notificationRepository,
-                new NotificationTransactionalService(notificationRepository, userDeviceTokenRepository));
+                new NotificationTransactionalService(notificationRepository, userDeviceTokenRepository), null);
+    }
+
+    public PushNotificationServiceImpl(
+            PushNotificationProvider pushNotificationProvider,
+            UserDeviceTokenRepository userDeviceTokenRepository,
+            NotificationRepository notificationRepository,
+            NotificationTransactionalService transactionalService) {
+        this(pushNotificationProvider, userDeviceTokenRepository, notificationRepository, transactionalService, null);
     }
 
     @Autowired
@@ -47,12 +56,14 @@ public class PushNotificationServiceImpl implements PushNotificationService {
             PushNotificationProvider pushNotificationProvider,
             UserDeviceTokenRepository userDeviceTokenRepository,
             NotificationRepository notificationRepository,
-            NotificationTransactionalService transactionalService) {
+            NotificationTransactionalService transactionalService,
+            @Autowired(required = false) org.netra.core.observability.NetraMetrics netraMetrics) {
         this.pushNotificationProvider = pushNotificationProvider;
         this.userDeviceTokenRepository = userDeviceTokenRepository;
         this.notificationRepository = notificationRepository;
         this.transactionalService = transactionalService != null ? transactionalService
                 : new NotificationTransactionalService(notificationRepository, userDeviceTokenRepository);
+        this.netraMetrics = netraMetrics;
     }
 
     @Override
@@ -74,6 +85,9 @@ public class PushNotificationServiceImpl implements PushNotificationService {
         if (tokens.isEmpty()) {
             log.debug("No active device tokens for recipient {}. Marking notification as NO_DEVICES.", recipientId);
             transactionalService.updateDeliveryStatus(notificationId, NotificationDeliveryStatus.NO_DEVICES);
+            if (netraMetrics != null) {
+                netraMetrics.incrementNotificationDelivery("NO_DEVICES");
+            }
             return;
         }
 
@@ -101,16 +115,28 @@ public class PushNotificationServiceImpl implements PushNotificationService {
 
                 if (result.isSuccess()) {
                     atLeastOneSuccess = true;
+                    if (netraMetrics != null) {
+                        netraMetrics.incrementNotificationDelivery("SENT");
+                    }
                     dt.markSeen(now);
                     transactionalService.saveDeviceTokenRequiresNew(dt);
                 } else if (result.isInvalidToken()) {
+                    if (netraMetrics != null) {
+                        netraMetrics.incrementNotificationDelivery("INVALID_TOKEN");
+                    }
                     log.warn("Deactivating invalid device token for user {}", recipientId);
                     dt.revoke(now);
                     transactionalService.saveDeviceTokenRequiresNew(dt);
                 } else {
+                    if (netraMetrics != null) {
+                        netraMetrics.incrementNotificationDelivery("FAILED");
+                    }
                     log.warn("Transient push delivery failure for user {}: {}", recipientId, result.getMessage());
                 }
             } catch (Exception ex) {
+                if (netraMetrics != null) {
+                    netraMetrics.incrementNotificationDelivery("FAILED");
+                }
                 log.error("Unexpected error during push dispatch to device: {}", ex.getMessage());
             }
         }
@@ -120,5 +146,15 @@ public class PushNotificationServiceImpl implements PushNotificationService {
                 : NotificationDeliveryStatus.FAILED;
 
         transactionalService.updateDeliveryStatus(notificationId, finalStatus);
+        org.netra.core.observability.StructuredLogger.logOperation(
+                "PUSH_DISPATCH",
+                recipientId,
+                null,
+                "Notification",
+                notificationId,
+                "DISPATCH",
+                null,
+                finalStatus.name()
+        );
     }
 }

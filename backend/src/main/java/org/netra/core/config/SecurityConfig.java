@@ -147,12 +147,15 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/profile/**").authenticated()
                 .requestMatchers("/api/v1/donor/**").authenticated()
                 .requestMatchers("/api/v1/donations/**").authenticated()
-                .requestMatchers("/api/v1/fulfillments/**").authenticated()
+                // Actuator Health and Monitoring Endpoints
+                .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                .requestMatchers("/actuator/**").hasRole("ADMIN")
 
                 .requestMatchers("/error").permitAll()
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userRepository), UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userRepository), UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(new org.netra.core.observability.CorrelationIdFilter(), JwtAuthenticationFilter.class);
 
         return http.build();
     }
@@ -184,11 +187,13 @@ public class SecurityConfig {
                 "X-Capability-Token",
                 "X-Session-Token",
                 "Idempotency-Key",
+                "X-Correlation-ID",
+                "X-Request-ID",
                 "Origin",
                 "Access-Control-Request-Method",
                 "Access-Control-Request-Headers"
         ));
-        configuration.setExposedHeaders(Arrays.asList("X-Capability-Token", "X-Session-Token"));
+        configuration.setExposedHeaders(Arrays.asList("X-Capability-Token", "X-Session-Token", "X-Correlation-ID"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 

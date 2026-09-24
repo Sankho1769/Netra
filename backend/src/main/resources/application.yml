@@ -15,6 +15,8 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME:sa}
     password: ${SPRING_DATASOURCE_PASSWORD:}
     hikari:
+      pool-name: NetraHikariPool
+      register-mbeans: true
       maximum-pool-size: 30
       minimum-idle: 5
 
@@ -71,3 +73,31 @@ netra:
       fcm:
         project-id: ${FCM_PROJECT_ID:}
         credentials-path: ${FCM_CREDENTIALS_PATH:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      roles: ROLE_ADMIN
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+    db:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  pattern:
+    level: "%5p [corr=%X{correlationId:-NONE}]"
+

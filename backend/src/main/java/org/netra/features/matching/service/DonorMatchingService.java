@@ -64,6 +64,13 @@ public class DonorMatchingService {
     private final int maxLimit;
     private final int minDonationIntervalDays;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.netra.core.observability.NetraMetrics netraMetrics;
+
+    public void setNetraMetrics(org.netra.core.observability.NetraMetrics netraMetrics) {
+        this.netraMetrics = netraMetrics;
+    }
+
     @org.springframework.beans.factory.annotation.Autowired
     public DonorMatchingService(
             BloodRequestRepository bloodRequestRepository,
@@ -139,6 +146,8 @@ public class DonorMatchingService {
             Integer requestedLimit,
             String clientIp,
             String userAgent) {
+
+        long startMs = System.currentTimeMillis();
 
         // 1. Authenticate user & enforce anti-abuse rate limiting
         authorizationService.verifyActiveUser(currentUserId);
@@ -336,6 +345,13 @@ public class DonorMatchingService {
                 String.format("{\"requestId\":\"%s\",\"candidateCount\":%d,\"radiusKm\":%.1f}",
                         requestId, limitedMatches.size(), radiusKm)
         );
+
+        long durationMs = System.currentTimeMillis() - startMs;
+        if (netraMetrics != null) {
+            netraMetrics.recordMatchingDuration(durationMs);
+        }
+        org.netra.core.observability.StructuredLogger.logOperation(
+                "DONOR_MATCHING_SEARCH", currentUserId, null, "BloodRequest", requestId, "SEARCH", durationMs, "SUCCESS");
 
         return new DonorMatchResponse(
                 requestId,

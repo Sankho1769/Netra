@@ -174,27 +174,41 @@ class ApiClient {
       message = responseBody['message'].toString();
     }
 
+    final correlationId = response.headers['x-correlation-id'] ??
+        response.headers['X-Correlation-ID'] ??
+        (responseBody is Map
+            ? responseBody['correlationId']?.toString()
+            : null);
+
     switch (statusCode) {
       case 400:
-        throw ValidationException(message,
-            statusCode: statusCode, details: responseBody);
+        throw ValidationException(
+          message,
+          statusCode: statusCode,
+          details: responseBody,
+          correlationId: correlationId,
+        );
       case 401:
       case 403:
-        throw UnauthorizedException(message);
+        throw UnauthorizedException(message, correlationId);
       case 404:
-        throw NotFoundException(message);
+        throw NotFoundException(message, correlationId);
       case 409:
-        throw ConflictException(message);
+        throw ConflictException(message, correlationId);
       case 410:
-        throw SessionExpiredException(message);
+        throw SessionExpiredException(message, correlationId);
       case 429:
-        throw RateLimitException(message);
+        throw RateLimitException(message, correlationId);
       default:
         if (statusCode >= 500) {
-          throw ServerException(message);
+          throw ServerException(message, correlationId);
         }
-        throw ValidationException(message,
-            statusCode: statusCode, details: responseBody);
+        throw ValidationException(
+          message,
+          statusCode: statusCode,
+          details: responseBody,
+          correlationId: correlationId,
+        );
     }
   }
 

@@ -31,13 +31,22 @@ public class NotificationService {
     private final UserDeviceTokenRepository userDeviceTokenRepository;
     private final PushNotificationService pushNotificationService;
     private final NotificationTransactionalService transactionalService;
+    private final org.netra.core.observability.NetraMetrics netraMetrics;
 
     public NotificationService(
             NotificationRepository notificationRepository,
             UserDeviceTokenRepository userDeviceTokenRepository,
             PushNotificationService pushNotificationService) {
         this(notificationRepository, userDeviceTokenRepository, pushNotificationService,
-                new NotificationTransactionalService(notificationRepository, userDeviceTokenRepository));
+                new NotificationTransactionalService(notificationRepository, userDeviceTokenRepository), null);
+    }
+
+    public NotificationService(
+            NotificationRepository notificationRepository,
+            UserDeviceTokenRepository userDeviceTokenRepository,
+            PushNotificationService pushNotificationService,
+            NotificationTransactionalService transactionalService) {
+        this(notificationRepository, userDeviceTokenRepository, pushNotificationService, transactionalService, null);
     }
 
     @Autowired
@@ -45,12 +54,14 @@ public class NotificationService {
             NotificationRepository notificationRepository,
             UserDeviceTokenRepository userDeviceTokenRepository,
             PushNotificationService pushNotificationService,
-            NotificationTransactionalService transactionalService) {
+            NotificationTransactionalService transactionalService,
+            @Autowired(required = false) org.netra.core.observability.NetraMetrics netraMetrics) {
         this.notificationRepository = notificationRepository;
         this.userDeviceTokenRepository = userDeviceTokenRepository;
         this.pushNotificationService = pushNotificationService;
         this.transactionalService = transactionalService != null ? transactionalService
                 : new NotificationTransactionalService(notificationRepository, userDeviceTokenRepository);
+        this.netraMetrics = netraMetrics;
     }
 
     /**
@@ -122,6 +133,19 @@ public class NotificationService {
         }
 
         log.info("Created notification {} of type {} for user {}", saved.getId(), type, recipientUserId);
+        if (netraMetrics != null) {
+            netraMetrics.incrementNotificationsCreated(type.name());
+        }
+        org.netra.core.observability.StructuredLogger.logOperation(
+                "NOTIFICATION_CREATED",
+                recipientUserId,
+                null,
+                "Notification",
+                saved.getId(),
+                "CREATE",
+                null,
+                "SUCCESS"
+        );
 
         // Asynchronously dispatch push delivery
         try {

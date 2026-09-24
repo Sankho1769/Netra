@@ -16,6 +16,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import org.netra.core.observability.CorrelationIdFilter;
+import org.netra.core.observability.NetraMetrics;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,10 +28,32 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    private final NetraMetrics netraMetrics;
+
+    public GlobalExceptionHandler() {
+        this(null);
+    }
+
+    public GlobalExceptionHandler(@Autowired(required = false) NetraMetrics netraMetrics) {
+        this.netraMetrics = netraMetrics;
+    }
+
+    private ErrorResponse createErrorResponse(int status, String error, String message, String path) {
+        ErrorResponse resp = new ErrorResponse(status, error, message, path);
+        resp.setCorrelationId(CorrelationIdFilter.getCurrentCorrelationId());
+        return resp;
+    }
+
+    private ErrorResponse createErrorResponse(int status, String error, String message, String path, List<String> details) {
+        ErrorResponse resp = new ErrorResponse(status, error, message, path, details);
+        resp.setCorrelationId(CorrelationIdFilter.getCurrentCorrelationId());
+        return resp;
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
         log.warn("Resource not found: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
                 "NOT_FOUND",
                 ex.getMessage(),
@@ -39,7 +65,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(SessionExpiredException.class)
     public ResponseEntity<ErrorResponse> handleSessionExpired(SessionExpiredException ex, HttpServletRequest request) {
         log.warn("Session expired: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.GONE.value(),
                 "SESSION_EXPIRED",
                 ex.getMessage(),
@@ -51,7 +77,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UnauthorizedSessionAccessException.class)
     public ResponseEntity<ErrorResponse> handleUnauthorizedSession(UnauthorizedSessionAccessException ex, HttpServletRequest request) {
         log.warn("Unauthorized session access attempt: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.FORBIDDEN.value(),
                 "FORBIDDEN",
                 ex.getMessage(),
@@ -63,7 +89,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidCredentialsException ex, HttpServletRequest request) {
         log.warn("Authentication failed: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.UNAUTHORIZED.value(),
                 "INVALID_CREDENTIALS",
                 ex.getMessage(),
@@ -75,7 +101,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(TokenReuseException.class)
     public ResponseEntity<ErrorResponse> handleTokenReuse(TokenReuseException ex, HttpServletRequest request) {
         log.warn("Security alert - Token reuse detected: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.UNAUTHORIZED.value(),
                 "REFRESH_TOKEN_REUSED",
                 ex.getMessage(),
@@ -87,7 +113,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccountStatusException.class)
     public ResponseEntity<ErrorResponse> handleAccountStatus(AccountStatusException ex, HttpServletRequest request) {
         log.warn("Account status restriction: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.FORBIDDEN.value(),
                 "ACCOUNT_DISABLED",
                 ex.getMessage(),
@@ -99,7 +125,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PasswordPolicyException.class)
     public ResponseEntity<ErrorResponse> handlePasswordPolicy(PasswordPolicyException ex, HttpServletRequest request) {
         log.warn("Password policy violation: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "INVALID_PASSWORD_POLICY",
                 ex.getMessage(),
@@ -111,7 +137,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateEmailException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateEmail(DuplicateEmailException ex, HttpServletRequest request) {
         log.warn("Registration conflict: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "REGISTRATION_FAILED",
                 ex.getMessage(),
@@ -123,7 +149,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateResource(DuplicateResourceException ex, HttpServletRequest request) {
         log.warn("Resource conflict: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.CONFLICT.value(),
                 "CONFLICT",
                 ex.getMessage(),
@@ -135,7 +161,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IdempotencyKeyReuseException.class)
     public ResponseEntity<ErrorResponse> handleIdempotencyKeyReuse(IdempotencyKeyReuseException ex, HttpServletRequest request) {
         log.warn("Idempotency key reuse conflict: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.CONFLICT.value(),
                 "IDEMPOTENCY_KEY_REUSE",
                 ex.getMessage(),
@@ -147,10 +173,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(OptimisticLockingFailureException.class)
     public ResponseEntity<ErrorResponse> handleOptimisticLocking(OptimisticLockingFailureException ex, HttpServletRequest request) {
         log.warn("Optimistic locking conflict at {}: {}", request.getRequestURI(), ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        if (netraMetrics != null) {
+            String aggregate = request.getRequestURI().contains("inventory") ? "INVENTORY" : "GENERAL";
+            netraMetrics.incrementOptimisticLockConflict(aggregate);
+        }
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.CONFLICT.value(),
                 "CONFLICT",
-                "Inventory was updated by another operation. Please refresh and retry.",
+                "Resource was updated by another concurrent operation. Please refresh and retry.",
                 request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
@@ -159,7 +189,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex, HttpServletRequest request) {
         log.warn("Data integrity conflict at {}: {}", request.getRequestURI(), ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.CONFLICT.value(),
                 "CONFLICT",
                 "A conflicting record already exists or was modified by another operation. Please refresh and retry.",
@@ -171,7 +201,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateRegistrationException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateRegistration(DuplicateRegistrationException ex, HttpServletRequest request) {
         log.warn("Duplicate event registration attempt: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.CONFLICT.value(),
                 "ALREADY_REGISTERED",
                 ex.getMessage(),
@@ -183,7 +213,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EventFullException.class)
     public ResponseEntity<ErrorResponse> handleEventFull(EventFullException ex, HttpServletRequest request) {
         log.warn("Event registration full: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.CONFLICT.value(),
                 "EVENT_FULL",
                 ex.getMessage(),
@@ -195,7 +225,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EventRegistrationClosedException.class)
     public ResponseEntity<ErrorResponse> handleEventRegistrationClosed(EventRegistrationClosedException ex, HttpServletRequest request) {
         log.warn("Event registration closed or unavailable: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "REGISTRATION_CLOSED",
                 ex.getMessage(),
@@ -208,7 +238,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<ErrorResponse> handleValidation(ValidationException ex, HttpServletRequest request) {
         log.warn("Validation error: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "VALIDATION_ERROR",
                 ex.getMessage(),
@@ -220,7 +250,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
         log.warn("Illegal argument error: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "INVALID_ARGUMENT",
                 ex.getMessage(),
@@ -233,7 +263,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
         log.warn("Type mismatch error for parameter '{}': {}", ex.getName(), ex.getMessage());
         String message = "Invalid parameter value for '" + ex.getName() + "'.";
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "INVALID_ARGUMENT",
                 message,
@@ -245,7 +275,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RateLimitExceededException.class)
     public ResponseEntity<ErrorResponse> handleRateLimit(RateLimitExceededException ex, HttpServletRequest request) {
         log.warn("Rate limit exceeded: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        if (netraMetrics != null) {
+            netraMetrics.incrementRateLimitRejected(request.getRequestURI());
+        }
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.TOO_MANY_REQUESTS.value(),
                 "RATE_LIMIT_EXCEEDED",
                 ex.getMessage(),
@@ -257,7 +290,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidAnswerException.class)
     public ResponseEntity<ErrorResponse> handleInvalidAnswer(InvalidAnswerException ex, HttpServletRequest request) {
         log.warn("Invalid answer submitted: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "INVALID_ANSWER",
                 ex.getMessage(),
@@ -272,7 +305,7 @@ public class GlobalExceptionHandler {
                 .map(err -> err.getField() + ": " + err.getDefaultMessage())
                 .collect(Collectors.toList());
 
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "VALIDATION_FAILED",
                 "Input validation failed",
@@ -285,7 +318,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleMalformedJson(HttpMessageNotReadableException ex, HttpServletRequest request) {
         log.warn("Malformed JSON payload received: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "MALFORMED_REQUEST",
                 "Request body is malformed or invalid",
@@ -296,7 +329,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.FORBIDDEN.value(),
                 "ACCESS_DENIED",
                 "Access is denied",
@@ -309,7 +342,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, HttpServletRequest request) {
         // Log internally; NEVER expose stack traces or database internals to client
         log.error("Unhandled server exception at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse error = createErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "INTERNAL_ERROR",
                 "An unexpected error occurred while processing your request. Please try again later.",
