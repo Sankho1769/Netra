@@ -1,5 +1,6 @@
 import 'dart:math';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_config.dart';
 import '../../../core/network/network_exception.dart';
 import '../../auth/services/secure_token_storage.dart';
 import '../../blood_request/models/blood_request.dart';
@@ -20,8 +21,7 @@ class EmergencyApiService {
     BloodRequestApiService? bloodRequestApiService,
     String? baseUrl,
   })  : _client = client ??
-            ApiClient(
-                baseUrl: baseUrl ?? 'http://localhost:8080/api/v1/emergency'),
+            ApiClient(baseUrl: baseUrl ?? ApiConfig.endpoint('/emergency')),
         _tokenStorage = tokenStorage ?? PlatformSecureTokenStorage(),
         _bloodBankApiService = bloodBankApiService ?? BloodBankApiService(),
         _bloodRequestApiService =

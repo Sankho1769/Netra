@@ -1,4 +1,5 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_config.dart';
 import '../../../core/network/network_exception.dart';
 import '../../auth/services/secure_token_storage.dart';
 import '../models/donor_match_model.dart';
@@ -14,8 +15,7 @@ class MatchingApiService {
     String? baseUrl,
   })  : _client = client ??
             ApiClient(
-                baseUrl:
-                    baseUrl ?? 'http://localhost:8080/api/v1/blood-requests'),
+                baseUrl: baseUrl ?? ApiConfig.endpoint('/blood-requests')),
         _tokenStorage = tokenStorage ?? PlatformSecureTokenStorage();
 
   /// Fetches ranked donor candidates matching the specified blood request.

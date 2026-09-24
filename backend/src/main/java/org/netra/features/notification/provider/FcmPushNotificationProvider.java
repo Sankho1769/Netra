@@ -9,6 +9,7 @@ import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.MessagingErrorCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -38,6 +39,7 @@ public class FcmPushNotificationProvider implements PushNotificationProvider {
     private final FirebaseApp firebaseApp;
     private final String initErrorMessage;
 
+    @Autowired
     public FcmPushNotificationProvider(
             @Value("${netra.notifications.push.fcm.project-id:${FCM_PROJECT_ID:}}") String projectId,
             @Value("${netra.notifications.push.fcm.credentials-path:${FCM_CREDENTIALS_PATH:}}") String credentialsPath) {

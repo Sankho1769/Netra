@@ -1,4 +1,5 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_config.dart';
 import '../../../core/network/network_exception.dart';
 import '../models/auth_models.dart';
 
@@ -14,7 +15,7 @@ class AuthApiService {
 
   AuthApiService({ApiClient? client, String? baseUrl})
       : _client = client ??
-            ApiClient(baseUrl: baseUrl ?? 'http://localhost:8080/api/v1/auth');
+            ApiClient(baseUrl: baseUrl ?? ApiConfig.endpoint('/auth'));
 
   Future<AuthResponseBundle> register(RegisterRequest request) async {
     try {

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import '../../../core/network/api_config.dart';
 import '../../../core/network/network_exception.dart';
 import '../models/eligibility_models.dart';
 
@@ -31,7 +32,7 @@ class EligibilityApiService {
   EligibilityApiService({
     String? baseUrl,
     http.Client? client,
-  })  : baseUrl = baseUrl ?? 'http://localhost:8080/api/v1/eligibility',
+  })  : baseUrl = baseUrl ?? ApiConfig.endpoint('/eligibility'),
         _client = client ?? http.Client();
 
   String? get currentCapabilityToken => _cachedCapabilityToken;

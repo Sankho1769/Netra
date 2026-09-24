@@ -1,4 +1,5 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_config.dart';
 import '../../../core/network/network_exception.dart';
 import '../models/donor_profile.dart';
 
@@ -7,9 +8,7 @@ class DonorApiService {
 
   DonorApiService({ApiClient? client, String? baseUrl})
       : _client = client ??
-            ApiClient(
-                baseUrl:
-                    baseUrl ?? 'http://localhost:8080/api/v1/donor/profile');
+            ApiClient(baseUrl: baseUrl ?? ApiConfig.endpoint('/donor/profile'));
 
   Future<DonorProfile?> getDonorProfile(String accessToken) async {
     try {

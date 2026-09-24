@@ -1,4 +1,5 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_config.dart';
 import '../../../core/network/network_exception.dart';
 import '../models/donation_event.dart';
 import '../models/event_registration.dart';
@@ -9,8 +10,7 @@ class DonationEventApiService {
   DonationEventApiService({ApiClient? client, String? baseUrl})
       : _client = client ??
             ApiClient(
-                baseUrl:
-                    baseUrl ?? 'http://localhost:8080/api/v1/donation-events');
+                baseUrl: baseUrl ?? ApiConfig.endpoint('/donation-events'));
 
   Future<List<DonationEventSummary>> discoverEvents({
     String? city,

@@ -1,4 +1,5 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_config.dart';
 import '../../../core/network/network_exception.dart';
 import '../models/blood_request.dart';
 
@@ -8,8 +9,7 @@ class BloodRequestApiService {
   BloodRequestApiService({ApiClient? client, String? baseUrl})
       : _client = client ??
             ApiClient(
-                baseUrl:
-                    baseUrl ?? 'http://localhost:8080/api/v1/blood-requests');
+                baseUrl: baseUrl ?? ApiConfig.endpoint('/blood-requests'));
 
   Future<List<BloodRequestSummary>> discoverRequests({
     String? bloodGroup,

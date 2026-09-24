@@ -1,4 +1,5 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_config.dart';
 import '../../../core/network/network_exception.dart';
 import '../../auth/services/secure_token_storage.dart';
 import '../models/donor_match_response_model.dart';
@@ -12,8 +13,7 @@ class DonorResponseApiService {
     ApiClient? client,
     SecureTokenStorage? tokenStorage,
     String? baseUrl,
-  })  : _client = client ??
-            ApiClient(baseUrl: baseUrl ?? 'http://localhost:8080/api/v1'),
+  })  : _client = client ?? ApiClient(baseUrl: baseUrl ?? ApiConfig.baseUrl),
         _tokenStorage = tokenStorage ?? PlatformSecureTokenStorage();
 
   Future<Map<String, String>> _authHeaders() async {

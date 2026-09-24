@@ -1,4 +1,5 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_config.dart';
 import '../../../core/network/network_exception.dart';
 import '../models/user_profile.dart';
 
@@ -7,8 +8,7 @@ class ProfileApiService {
 
   ProfileApiService({ApiClient? client, String? baseUrl})
       : _client = client ??
-            ApiClient(
-                baseUrl: baseUrl ?? 'http://localhost:8080/api/v1/profile');
+            ApiClient(baseUrl: baseUrl ?? ApiConfig.endpoint('/profile'));
 
   Future<UserProfile> getMyProfile(String accessToken) async {
     try {

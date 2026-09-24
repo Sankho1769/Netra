@@ -1,4 +1,4 @@
-﻿# Backend build artifacts
+# Backend build artifacts
 **/target/
 *.class
 **/*.class
@@ -27,3 +27,15 @@ frontend/.flutter-plugins-dependencies
 Thumbs.db
 *.log
 scratch/
+
+# Secrets, credentials and environment variables
+*.env
+.env*
+!*.env.example
+*.pem
+*.key
+*.pkcs12
+*.p12
+*service-account*.json
+*firebase*.json
+secrets/
