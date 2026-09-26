@@ -225,6 +225,28 @@ class ProductionConfigurationIntegrationTest {
     }
 
     @Test
+    @DisplayName("Prod profile fails fast when CORS allowed origins uses HTTP instead of HTTPS")
+    void testProdProfileFailsFastWhenCorsOriginIsNotHttps() {
+        runner.withPropertyValues(
+                "spring.profiles.active=prod",
+                "spring.datasource.driver-class-name=org.postgresql.Driver",
+                "spring.datasource.url=jdbc:postgresql://localhost:5432/netra",
+                "spring.flyway.enabled=true",
+                "spring.jpa.hibernate.ddl-auto=validate",
+                "netra.security.jwt.secret=" + STRONG_PROD_SECRET,
+                "netra.security.cors.allowed-origins=http://netra.health",
+                "netra.security.trusted-proxies=10.0.0.0/8",
+                "netra.notifications.push.provider=fcm"
+        ).run(context -> {
+            assertThat(context).hasFailed();
+            assertThat(context.getStartupFailure())
+                    .rootCause()
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Production origins must use HTTPS");
+        });
+    }
+
+    @Test
     @DisplayName("Prod profile fails fast when trusted reverse proxies is blank")
     void testProdProfileFailsFastWhenTrustedProxiesBlank() {
         runner.withPropertyValues(

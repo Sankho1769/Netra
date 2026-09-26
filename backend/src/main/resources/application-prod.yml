@@ -26,7 +26,6 @@ spring:
       register-mbeans: true
 
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: validate
     open-in-view: false

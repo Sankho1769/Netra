@@ -202,6 +202,52 @@ class RateLimitingServiceTest {
         assertTrue(customService.containsKey("matching:user-F:" + minute3), "Current minute matching key must be retained");
     }
 
+    @Test
+    @DisplayName("IPv6 Rate-limit: emergency rate limiting and rollback work seamlessly with IPv6 client addresses")
+    void testIPv6ClientEmergencyRateLimitAndRollback() {
+        String ipv6Client = "2001:0db8:85a3:0000:0000:8a2e:0370:7334";
+        long currentWindow = rateLimitingService.getEmergencyWindow();
+
+        String windowKey = rateLimitingService.checkEmergencyRateLimit(ipv6Client);
+        assertNotNull(windowKey);
+        assertTrue(windowKey.startsWith("emergency:" + ipv6Client + ":"));
+
+        assertEquals(1, rateLimitingService.getEmergencyCount(ipv6Client, currentWindow));
+
+        // Decrement using explicit window key with multiple colons
+        rateLimitingService.decrementEmergencyRateLimit(ipv6Client, windowKey);
+        assertEquals(0, rateLimitingService.getEmergencyCount(ipv6Client, currentWindow));
+    }
+
+    @Test
+    @DisplayName("IPv6 Rate-limit: cleanup correctly parses IPv6 keys using lastIndexOf colon without delimiter collision")
+    void testIPv6ClientMatchingRateLimitAndCleanup() {
+        RateLimitingService customService = new RateLimitingService(20, 5, 30, testClock, 3);
+        long minute1 = testClock.millis() / 60000;
+
+        String ipv6ClientA = "2001:db8::1";
+        String ipv6ClientB = "fe80::1ff:fe23:4567:890a";
+
+        customService.checkMatchingRateLimit(ipv6ClientA);
+        customService.checkMatchingRateLimit(ipv6ClientB);
+
+        assertTrue(customService.containsKey("matching:" + ipv6ClientA + ":" + minute1));
+        assertTrue(customService.containsKey("matching:" + ipv6ClientB + ":" + minute1));
+
+        // Advance clock by 2 minutes
+        testClock.advance(Duration.ofMinutes(2));
+        long minute3 = testClock.millis() / 60000;
+
+        // Push 2 more keys in minute 3 to exceed cleanup threshold (3)
+        customService.checkMatchingRateLimit("user-X");
+        customService.checkMatchingRateLimit("user-Y");
+
+        // Old IPv6 keys must be cleaned up properly without NumberFormatException
+        assertFalse(customService.containsKey("matching:" + ipv6ClientA + ":" + minute1), "IPv6 key from minute 1 must be evicted");
+        assertFalse(customService.containsKey("matching:" + ipv6ClientB + ":" + minute1), "IPv6 key from minute 1 must be evicted");
+        assertTrue(customService.containsKey("matching:user-X:" + minute3));
+    }
+
     private static class MutableClock extends Clock {
         private Instant instant;
         private final ZoneId zone;

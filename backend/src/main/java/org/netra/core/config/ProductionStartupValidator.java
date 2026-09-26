@@ -107,6 +107,9 @@ public class ProductionStartupValidator {
             if (trimmed.contains("localhost") || trimmed.contains("127.0.0.1")) {
                 throw new IllegalStateException("FATAL: Insecure origin '" + trimmed + "' is prohibited in production CORS configuration.");
             }
+            if (!trimmed.startsWith("https://")) {
+                throw new IllegalStateException("FATAL: Insecure origin '" + trimmed + "' is prohibited in production CORS configuration. Production origins must use HTTPS.");
+            }
         }
 
         // 5. Trusted Proxies Validation
@@ -119,6 +122,6 @@ public class ProductionStartupValidator {
             throw new IllegalStateException("FATAL: NOOP push notification provider is prohibited in production. A production provider (e.g. FCM) must be configured.");
         }
 
-        log.info("Production configuration validation passed: PostgreSQL, Flyway V15, 256-bit JWT secret, restricted CORS, and production push provider verified.");
+        log.info("Production configuration validation passed: PostgreSQL, Flyway V16, 256-bit JWT secret, restricted CORS, and production push provider verified.");
     }
 }
