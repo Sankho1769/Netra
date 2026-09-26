@@ -1,6 +1,5 @@
-import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
+import '../../../core/network/api_client.dart';
 import '../../../core/network/api_config.dart';
 import '../../../core/network/network_exception.dart';
 import '../models/eligibility_models.dart';
@@ -26,23 +25,25 @@ class EligibilitySessionInfo {
 
 class EligibilityApiService {
   final String baseUrl;
-  final http.Client _client;
+  final ApiClient _apiClient;
   String? _cachedCapabilityToken;
 
   EligibilityApiService({
     String? baseUrl,
     http.Client? client,
+    ApiClient? apiClient,
   })  : baseUrl = baseUrl ?? ApiConfig.endpoint('/eligibility'),
-        _client = client ?? http.Client();
+        _apiClient = apiClient ??
+            ApiClient(
+              baseUrl: baseUrl ?? ApiConfig.endpoint('/eligibility'),
+              client: client,
+            );
 
   String? get currentCapabilityToken => _cachedCapabilityToken;
   set currentCapabilityToken(String? token) => _cachedCapabilityToken = token;
 
   Map<String, String> _buildHeaders([String? capabilityToken]) {
-    final headers = <String, String>{
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+    final headers = <String, String>{};
     final effectiveToken = capabilityToken ?? _cachedCapabilityToken;
     if (effectiveToken != null && effectiveToken.isNotEmpty) {
       headers['X-Capability-Token'] = effectiveToken;
@@ -52,16 +53,15 @@ class EligibilityApiService {
 
   Future<String> fetchRuleVersion() async {
     try {
-      final response = await _client.get(Uri.parse('$baseUrl/rules/version'));
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data['activeVersion'] ?? 'INDIA-NBTC-2026-01';
+      final data = await _apiClient.get('/rules/version');
+      if (data is Map && data['activeVersion'] != null) {
+        return data['activeVersion'].toString();
       }
-      throw EligibilityApiException(
-          'Failed to load rules version', response.statusCode);
-    } on SocketException {
-      throw EligibilityApiException(
-          'Unable to reach NETRA rules engine. Please check your internet connection.');
+      return 'INDIA-NBTC-2026-01';
+    } on NetworkException {
+      rethrow;
+    } catch (e) {
+      throw EligibilityApiException('Failed to load rules version: $e');
     }
   }
 
@@ -72,19 +72,14 @@ class EligibilityApiService {
 
   Future<EligibilitySessionInfo> createSessionDetailed() async {
     try {
-      final response = await _client.post(
-        Uri.parse('$baseUrl/sessions'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: jsonEncode({
+      final data = await _apiClient.post(
+        '/sessions',
+        body: {
           'clientTimestamp': DateTime.now().toUtc().toIso8601String(),
-        }),
+        },
       );
 
-      if (response.statusCode == 201) {
-        final data = jsonDecode(response.body);
+      if (data is Map<String, dynamic>) {
         final sessionId = data['sessionId'] as String;
         final ruleVersion =
             data['ruleVersion'] as String? ?? 'INDIA-NBTC-2026-01';
@@ -93,7 +88,7 @@ class EligibilityApiService {
 
         DateTime? expiresAt;
         if (data['expiresAt'] != null) {
-          expiresAt = DateTime.tryParse(data['expiresAt']);
+          expiresAt = DateTime.tryParse(data['expiresAt'].toString());
         }
 
         return EligibilitySessionInfo(
@@ -104,10 +99,11 @@ class EligibilityApiService {
         );
       }
       throw EligibilityApiException(
-          'Failed to create screening session', response.statusCode);
-    } on SocketException {
-      throw EligibilityApiException(
-          'Unable to reach NETRA service. Pre-screening requires active clinical connection.');
+          'Failed to create screening session: unexpected response format');
+    } on NetworkException {
+      rethrow;
+    } catch (e) {
+      throw EligibilityApiException('Failed to create screening session: $e');
     }
   }
 
@@ -118,60 +114,58 @@ class EligibilityApiService {
           .map((e) => {'questionKey': e.key, 'value': e.value})
           .toList();
 
-      final response = await _client.post(
-        Uri.parse('$baseUrl/sessions/$sessionId/answers'),
+      await _apiClient.post(
+        '/sessions/$sessionId/answers',
         headers: _buildHeaders(capabilityToken),
-        body: jsonEncode({'answers': list}),
+        body: {'answers': list},
       );
-
-      if (response.statusCode != 200) {
-        throw EligibilityApiException(
-            'Failed to save screening responses', response.statusCode);
-      }
-    } on SocketException {
-      throw EligibilityApiException('Network error while saving answers.');
+    } on NetworkException {
+      rethrow;
+    } catch (e) {
+      throw EligibilityApiException('Failed to save screening responses: $e');
     }
   }
 
   Future<EligibilityResult> checkEligibility(String sessionId,
       {String? capabilityToken}) async {
     try {
-      // Critical Zero-Trust Guard: Request body contains NO result parameter
-      final response = await _client.post(
-        Uri.parse('$baseUrl/sessions/$sessionId/check'),
+      // Critical Zero-Trust Guard: Request body contains NO client-calculated result parameter
+      final data = await _apiClient.post(
+        '/sessions/$sessionId/check',
         headers: _buildHeaders(capabilityToken),
-        body: jsonEncode({'clientReviewConfirmed': true}),
+        body: {'clientReviewConfirmed': true},
       );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      if (data is Map<String, dynamic>) {
         return EligibilityResult.fromJson(data);
       }
       throw EligibilityApiException(
-          'Failed to evaluate donation eligibility', response.statusCode);
-    } on SocketException {
+          'Failed to evaluate donation eligibility: unexpected response format');
+    } on NetworkException {
+      rethrow;
+    } catch (e) {
       throw EligibilityApiException(
-          'Unable to verify eligibility offline. Donor safety requires verified server evaluation.');
+          'Failed to evaluate donation eligibility: $e');
     }
   }
 
   Future<EligibilityResult> getSessionResult(String sessionId,
       {String? capabilityToken}) async {
     try {
-      final response = await _client.get(
-        Uri.parse('$baseUrl/sessions/$sessionId/result'),
+      final data = await _apiClient.get(
+        '/sessions/$sessionId/result',
         headers: _buildHeaders(capabilityToken),
       );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      if (data is Map<String, dynamic>) {
         return EligibilityResult.fromJson(data);
       }
       throw EligibilityApiException(
-          'Failed to retrieve evaluation result', response.statusCode);
-    } on SocketException {
-      throw EligibilityApiException(
-          'Unable to load screening result. Please check connection.');
+          'Failed to retrieve evaluation result: unexpected response format');
+    } on NetworkException {
+      rethrow;
+    } catch (e) {
+      throw EligibilityApiException('Failed to retrieve evaluation result: $e');
     }
   }
 }

@@ -3,14 +3,18 @@ import 'notification_api_service.dart';
 
 class PushNotificationService {
   final NotificationApiService _apiService;
+  String? _currentDeviceToken;
 
   PushNotificationService({NotificationApiService? apiService})
       : _apiService = apiService ?? NotificationApiService();
+
+  String? get currentDeviceToken => _currentDeviceToken;
 
   /// Registers client device push token with the NETRA backend.
   Future<void> registerDeviceToken(String token,
       {String platform = 'ANDROID'}) async {
     try {
+      _currentDeviceToken = token;
       await _apiService.registerDeviceToken(
         token: token,
         platform: platform,
@@ -18,6 +22,18 @@ class PushNotificationService {
       );
     } catch (e) {
       debugPrint('Failed to register device token: $e');
+    }
+  }
+
+  /// Revokes client device push token with the NETRA backend.
+  Future<void> revokeCurrentDeviceToken() async {
+    if (_currentDeviceToken != null && _currentDeviceToken!.isNotEmpty) {
+      try {
+        await _apiService.revokeDeviceTokenByToken(_currentDeviceToken!);
+        _currentDeviceToken = null;
+      } catch (e) {
+        debugPrint('Failed to revoke device token: $e');
+      }
     }
   }
 

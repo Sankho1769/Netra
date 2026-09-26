@@ -34,7 +34,7 @@ class EmergencyModeScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFDC2626).withOpacity(0.3),
+                    color: const Color(0xFFDC2626).withValues(alpha: 0.3),
                     blurRadius: 16,
                     offset: const Offset(0, 4),
                   ),
@@ -48,7 +48,7 @@ class EmergencyModeScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -73,8 +73,8 @@ class EmergencyModeScreen extends StatelessWidget {
                             Text(
                               "Priority visibility across emergency & discovery workflows",
                               style: NetraTypography.bodySmall.copyWith(
-                                color:
-                                    NetraColors.surfaceWhite.withOpacity(0.9),
+                                color: NetraColors.surfaceWhite
+                                    .withValues(alpha: 0.9),
                               ),
                             ),
                           ],
@@ -86,7 +86,7 @@ class EmergencyModeScreen extends StatelessWidget {
                   Text(
                     "Use Emergency Mode when every minute counts. This creates a CRITICAL blood request that becomes available through NETRA's supported emergency and discovery workflows.",
                     style: NetraTypography.bodyMedium.copyWith(
-                      color: NetraColors.surfaceWhite.withOpacity(0.95),
+                      color: NetraColors.surfaceWhite.withValues(alpha: 0.95),
                     ),
                   ),
                 ],
@@ -221,7 +221,7 @@ class EmergencyModeScreen extends StatelessWidget {
         border: Border.all(color: NetraColors.borderSubtle),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

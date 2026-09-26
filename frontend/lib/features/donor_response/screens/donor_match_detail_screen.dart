@@ -178,10 +178,11 @@ class _DonorMatchDetailScreenState extends State<DonorMatchDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope<bool>(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         Navigator.of(context).pop(_detail?.responseStatus.isTerminal == true);
-        return false;
       },
       child: Scaffold(
         appBar: AppBar(

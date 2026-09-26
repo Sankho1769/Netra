@@ -102,6 +102,7 @@ class BloodRequestSummary {
   final DateTime requiredBy;
   final double? distanceKm;
   final DateTime createdAt;
+  final String verificationStatus;
 
   const BloodRequestSummary({
     required this.id,
@@ -115,7 +116,10 @@ class BloodRequestSummary {
     required this.requiredBy,
     this.distanceKm,
     required this.createdAt,
+    this.verificationStatus = 'UNVERIFIED',
   });
+
+  bool get isVerified => verificationStatus.toUpperCase() == 'VERIFIED';
 
   factory BloodRequestSummary.fromJson(Map<String, dynamic> json) {
     return BloodRequestSummary(
@@ -132,6 +136,8 @@ class BloodRequestSummary {
           ? (json['distanceKm'] as num).toDouble()
           : null,
       createdAt: DateTime.parse(json['createdAt'] as String),
+      verificationStatus:
+          (json['verificationStatus'] as String?) ?? 'UNVERIFIED',
     );
   }
 }
@@ -149,6 +155,9 @@ class BloodRequestDetail extends BloodRequestSummary {
   final DateTime? cancelledAt;
   final String? cancellationReason;
   final DateTime? fulfilledAt;
+  final String? verifiedBy;
+  final DateTime? verifiedAt;
+  final String? verificationNotes;
 
   const BloodRequestDetail({
     required super.id,
@@ -162,6 +171,7 @@ class BloodRequestDetail extends BloodRequestSummary {
     required super.requiredBy,
     super.distanceKm,
     required super.createdAt,
+    super.verificationStatus = 'UNVERIFIED',
     this.requesterUserId,
     this.isOwner = false,
     this.canManage = false,
@@ -174,6 +184,9 @@ class BloodRequestDetail extends BloodRequestSummary {
     this.cancelledAt,
     this.cancellationReason,
     this.fulfilledAt,
+    this.verifiedBy,
+    this.verifiedAt,
+    this.verificationNotes,
   });
 
   factory BloodRequestDetail.fromJson(Map<String, dynamic> json) {
@@ -191,6 +204,8 @@ class BloodRequestDetail extends BloodRequestSummary {
           ? (json['distanceKm'] as num).toDouble()
           : null,
       createdAt: DateTime.parse(json['createdAt'] as String),
+      verificationStatus:
+          (json['verificationStatus'] as String?) ?? 'UNVERIFIED',
       requesterUserId: json['requesterUserId'] as String?,
       isOwner: json['isOwner'] as bool? ?? false,
       canManage: json['canManage'] as bool? ?? false,
@@ -211,6 +226,11 @@ class BloodRequestDetail extends BloodRequestSummary {
       fulfilledAt: json['fulfilledAt'] != null
           ? DateTime.parse(json['fulfilledAt'] as String)
           : null,
+      verifiedBy: json['verifiedBy'] as String?,
+      verifiedAt: json['verifiedAt'] != null
+          ? DateTime.parse(json['verifiedAt'] as String)
+          : null,
+      verificationNotes: json['verificationNotes'] as String?,
     );
   }
 }

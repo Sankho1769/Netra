@@ -130,7 +130,7 @@ class DonorProfileScreen extends StatelessWidget {
                     color: NetraColors.backgroundRed,
                     borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
                     border: Border.all(
-                        color: NetraColors.primaryRed.withOpacity(0.3),
+                        color: NetraColors.primaryRed.withValues(alpha: 0.3),
                         width: 1.5),
                   ),
                   alignment: Alignment.center,
@@ -338,6 +338,50 @@ class DonorProfileScreen extends StatelessWidget {
                 NetraSpacing.gapH4,
                 Text(
                   "Verified donation dates are recorded directly by blood bank staff upon donation completion.",
+                  style: NetraTypography.bodySmall
+                      .copyWith(color: NetraColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ),
+        NetraSpacing.gapH16,
+
+        // Biological Sex & Recovery Interval
+        Card(
+          elevation: 0,
+          color: NetraColors.surfaceWhite,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
+            side: const BorderSide(color: NetraColors.borderGray),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(NetraSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.person_outline_rounded,
+                        color: NetraColors.textSecondary, size: 20),
+                    NetraSpacing.gapW12,
+                    Text("Biological Sex & Recovery Interval",
+                        style: NetraTypography.titleMedium),
+                  ],
+                ),
+                NetraSpacing.gapH8,
+                Text(
+                  profile.biologicalSex != null
+                      ? "${profile.biologicalSex} (${profile.biologicalSex == 'FEMALE' ? '120 days' : '90 days'} recovery interval per NBTC guidelines)"
+                      : "Not specified (Defaults to 90 days recovery interval)",
+                  style: NetraTypography.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: NetraColors.textPrimary,
+                  ),
+                ),
+                NetraSpacing.gapH4,
+                Text(
+                  "Authoritative recovery intervals ensure safe hemoglobin replenishment between whole blood donations.",
                   style: NetraTypography.bodySmall
                       .copyWith(color: NetraColors.textSecondary),
                 ),

@@ -284,9 +284,13 @@ class DeviceToken {
       id: json['id'] as String? ?? '',
       platform: json['platform'] as String? ?? 'ANDROID',
       provider: json['provider'] as String? ?? 'FCM',
-      active: json['active'] as bool? ?? true,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      lastSeenAt: DateTime.parse(json['lastSeenAt'] as String),
+      active: (json['active'] ?? json['isActive']) as bool? ?? true,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
+      lastSeenAt: json['lastSeenAt'] != null
+          ? DateTime.parse(json['lastSeenAt'] as String)
+          : DateTime.now(),
     );
   }
 }

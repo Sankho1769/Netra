@@ -33,7 +33,7 @@ class DonorMatchCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color: isExact
-              ? const Color(0xFFDC2626).withOpacity(0.3)
+              ? const Color(0xFFDC2626).withValues(alpha: 0.3)
               : Colors.grey.shade300,
           width: isExact ? 1.5 : 1.0,
         ),

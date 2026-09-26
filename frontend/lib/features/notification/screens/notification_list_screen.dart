@@ -193,7 +193,8 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
                           _loadData();
                         }
                       },
-                      selectedColor: const Color(0xFFDC2626).withOpacity(0.15),
+                      selectedColor:
+                          const Color(0xFFDC2626).withValues(alpha: 0.15),
                       checkmarkColor: const Color(0xFFDC2626),
                     ),
                     const SizedBox(width: 8),
@@ -206,7 +207,8 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
                           _loadData();
                         }
                       },
-                      selectedColor: const Color(0xFFDC2626).withOpacity(0.15),
+                      selectedColor:
+                          const Color(0xFFDC2626).withValues(alpha: 0.15),
                       checkmarkColor: const Color(0xFFDC2626),
                     ),
                   ],

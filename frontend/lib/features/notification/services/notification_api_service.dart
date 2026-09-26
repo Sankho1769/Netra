@@ -151,11 +151,26 @@ class NotificationApiService {
     }
   }
 
-  /// Revokes a device token for the authenticated user.
+  /// Revokes a device token for the authenticated user by token ID.
   Future<void> revokeDeviceToken(String tokenId) async {
     try {
       final headers = await _authHeaders();
       await _client.delete('/devices/tokens/$tokenId', headers: headers);
+    } catch (e) {
+      if (e is NetworkException) rethrow;
+      throw ValidationException(_sanitizeErrorMessage(e));
+    }
+  }
+
+  /// Revokes a device token by raw token string for the authenticated user.
+  Future<void> revokeDeviceTokenByToken(String token) async {
+    try {
+      final headers = await _authHeaders();
+      await _client.post(
+        '/devices/tokens/revoke',
+        headers: headers,
+        body: {'token': token},
+      );
     } catch (e) {
       if (e is NetworkException) rethrow;
       throw ValidationException(_sanitizeErrorMessage(e));

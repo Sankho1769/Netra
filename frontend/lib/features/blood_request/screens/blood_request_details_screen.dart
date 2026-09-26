@@ -138,7 +138,7 @@ class _BloodRequestDetailsScreenState extends State<BloodRequestDetailsScreen> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<BloodRequestUrgency>(
-                  value: selectedUrgency,
+                  initialValue: selectedUrgency,
                   decoration: const InputDecoration(labelText: 'Urgency'),
                   items: BloodRequestUrgency.values.map((u) {
                     return DropdownMenuItem(

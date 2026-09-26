@@ -215,7 +215,7 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                   Expanded(
                     flex: 1,
                     child: DropdownButtonFormField<String>(
-                      value: _selectedBloodGroup,
+                      initialValue: _selectedBloodGroup,
                       decoration: const InputDecoration(
                         labelText: 'Blood Group',
                         border: OutlineInputBorder(),

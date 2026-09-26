@@ -25,6 +25,7 @@ class EditDonorProfileScreen extends StatefulWidget {
 class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
   late String _selectedBloodGroup;
   late String _selectedAvailability;
+  String? _selectedBiologicalSex;
   final SecureTokenStorage _tokenStorage = PlatformSecureTokenStorage();
   bool _isSaving = false;
 
@@ -34,6 +35,7 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
     _selectedBloodGroup = widget.currentProfile?.bloodGroup ?? 'O+';
     _selectedAvailability =
         widget.currentProfile?.availabilityStatus ?? 'AVAILABLE';
+    _selectedBiologicalSex = widget.currentProfile?.biologicalSex;
   }
 
   Future<void> _handleSave() async {
@@ -58,6 +60,7 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
         CreateDonorProfileRequest(
           bloodGroup: _selectedBloodGroup,
           availabilityStatus: _selectedAvailability,
+          biologicalSex: _selectedBiologicalSex,
         ),
       );
     } else {
@@ -66,6 +69,7 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
         UpdateDonorProfileRequest(
           bloodGroup: _selectedBloodGroup,
           availabilityStatus: _selectedAvailability,
+          biologicalSex: _selectedBiologicalSex,
         ),
       );
     }
@@ -206,6 +210,29 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
                       NetraSpacing.gapH24,
 
                       Text(
+                        "Biological Sex",
+                        style: NetraTypography.titleLarge,
+                      ),
+                      NetraSpacing.gapH4,
+                      Text(
+                        "Required for calculating safe donation intervals (Male: 90 days, Female: 120 days per NBTC guidelines).",
+                        style: NetraTypography.bodyMedium
+                            .copyWith(color: NetraColors.textSecondary),
+                      ),
+                      NetraSpacing.gapH16,
+
+                      Row(
+                        children: [
+                          _buildSexChip("MALE", "Male (90d)"),
+                          NetraSpacing.gapW12,
+                          _buildSexChip("FEMALE", "Female (120d)"),
+                          NetraSpacing.gapW12,
+                          _buildSexChip("OTHER", "Other"),
+                        ],
+                      ),
+                      NetraSpacing.gapH24,
+
+                      Text(
                         "Donation Availability",
                         style: NetraTypography.titleLarge,
                       ),
@@ -217,31 +244,44 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
                       ),
                       NetraSpacing.gapH16,
 
-                      _buildAvailabilityOption(
-                        status: 'AVAILABLE',
-                        title: "Available",
-                        subtitle:
-                            "You may be considered for approved donor requests.",
-                        icon: Icons.check_circle_outline_rounded,
-                        activeColor: NetraColors.successGreen,
-                      ),
-                      NetraSpacing.gapH12,
-                      _buildAvailabilityOption(
-                        status: 'PAUSED',
-                        title: "Paused",
-                        subtitle:
-                            "Temporarily pause donor matching and notifications.",
-                        icon: Icons.pause_circle_outline_rounded,
-                        activeColor: Colors.amber.shade800,
-                      ),
-                      NetraSpacing.gapH12,
-                      _buildAvailabilityOption(
-                        status: 'UNAVAILABLE',
-                        title: "Unavailable",
-                        subtitle:
-                            "You will not be considered for donor contact.",
-                        icon: Icons.do_not_disturb_on_outlined,
-                        activeColor: NetraColors.errorRed,
+                      RadioGroup<String>(
+                        groupValue: _selectedAvailability,
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() => _selectedAvailability = val);
+                          }
+                        },
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildAvailabilityOption(
+                              status: 'AVAILABLE',
+                              title: "Available",
+                              subtitle:
+                                  "You may be considered for approved donor requests.",
+                              icon: Icons.check_circle_outline_rounded,
+                              activeColor: NetraColors.successGreen,
+                            ),
+                            NetraSpacing.gapH12,
+                            _buildAvailabilityOption(
+                              status: 'PAUSED',
+                              title: "Paused",
+                              subtitle:
+                                  "Temporarily pause donor matching and notifications.",
+                              icon: Icons.pause_circle_outline_rounded,
+                              activeColor: Colors.amber.shade800,
+                            ),
+                            NetraSpacing.gapH12,
+                            _buildAvailabilityOption(
+                              status: 'UNAVAILABLE',
+                              title: "Unavailable",
+                              subtitle:
+                                  "You will not be considered for donor contact.",
+                              icon: Icons.do_not_disturb_on_outlined,
+                              activeColor: NetraColors.errorRed,
+                            ),
+                          ],
+                        ),
                       ),
                       NetraSpacing.gapH32,
 
@@ -286,7 +326,7 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
         padding: const EdgeInsets.all(NetraSpacing.md),
         decoration: BoxDecoration(
           color: isSelected
-              ? activeColor.withOpacity(0.08)
+              ? activeColor.withValues(alpha: 0.08)
               : NetraColors.surfaceWhite,
           borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
           border: Border.all(
@@ -318,13 +358,44 @@ class _EditDonorProfileScreenState extends State<EditDonorProfileScreen> {
             ),
             Radio<String>(
               value: status,
-              groupValue: _selectedAvailability,
               activeColor: activeColor,
-              onChanged: (val) {
-                if (val != null) setState(() => _selectedAvailability = val);
-              },
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSexChip(String sex, String label) {
+    final isSelected = _selectedBiologicalSex == sex;
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _selectedBiologicalSex = sex),
+        borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          height: 48,
+          decoration: BoxDecoration(
+            color:
+                isSelected ? NetraColors.primaryRed : NetraColors.surfaceWhite,
+            borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+            border: Border.all(
+              color:
+                  isSelected ? NetraColors.primaryRed : NetraColors.borderGray,
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: NetraTypography.bodyMedium.copyWith(
+              color: isSelected
+                  ? NetraColors.surfaceWhite
+                  : NetraColors.textPrimary,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
         ),
       ),
     );

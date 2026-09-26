@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/location/location_service.dart';
 import '../models/blood_request.dart';
 import '../state/blood_request_controller.dart';
 import '../widgets/blood_request_card.dart';
@@ -8,8 +9,13 @@ import 'my_blood_requests_screen.dart';
 
 class BloodRequestListScreen extends StatefulWidget {
   final BloodRequestController? controller;
+  final LocationService? locationService;
 
-  const BloodRequestListScreen({super.key, this.controller});
+  const BloodRequestListScreen({
+    super.key,
+    this.controller,
+    this.locationService,
+  });
 
   @override
   State<BloodRequestListScreen> createState() => _BloodRequestListScreenState();
@@ -18,6 +24,7 @@ class BloodRequestListScreen extends StatefulWidget {
 class _BloodRequestListScreenState extends State<BloodRequestListScreen>
     with SingleTickerProviderStateMixin {
   late final BloodRequestController _controller;
+  late final LocationService _locationService;
   late final TabController _tabController;
   final TextEditingController _citySearchController = TextEditingController();
 
@@ -34,19 +41,48 @@ class _BloodRequestListScreenState extends State<BloodRequestListScreen>
   ];
   String _selectedGroup = 'All';
   String _selectedUrgency = 'All';
+  bool _locationUnavailable = false;
+  double? _userLatitude;
+  double? _userLongitude;
 
   @override
   void initState() {
     super.initState();
     _controller = widget.controller ?? BloodRequestController();
+    _locationService = widget.locationService ?? DefaultLocationService();
     _tabController = TabController(length: 2, vsync: this);
     _controller.addListener(_onControllerUpdate);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _controller.loadDiscoverableRequests();
-      // Default nearby search using Mumbai coords as fallback if geolocator is omitted
-      _controller.loadNearbyRequests(latitude: 18.9401, longitude: 72.8347);
+      _fetchNearbyRequests();
     });
+  }
+
+  Future<void> _fetchNearbyRequests() async {
+    final loc =
+        await _locationService.getCurrentLocation(approximateOnly: true);
+    if (loc != null && loc.latitude != null && loc.longitude != null) {
+      if (mounted) {
+        setState(() {
+          _userLatitude = loc.latitude;
+          _userLongitude = loc.longitude;
+          _locationUnavailable = false;
+        });
+      }
+      await _controller.loadNearbyRequests(
+        latitude: loc.latitude!,
+        longitude: loc.longitude!,
+      );
+    } else {
+      if (mounted) {
+        setState(() {
+          _userLatitude = null;
+          _userLongitude = null;
+          _locationUnavailable = true;
+        });
+      }
+    }
   }
 
   @override
@@ -121,15 +157,59 @@ class _BloodRequestListScreenState extends State<BloodRequestListScreen>
                             'No active blood requests found matching your filters.',
                       ),
                       // Tab 2: Nearby requests
-                      _buildRequestsList(
-                        requests: _controller.nearbyRequests,
-                        onRefresh: () => _controller.loadNearbyRequests(
-                          latitude: 18.9401,
-                          longitude: 72.8347,
-                        ),
-                        emptyMessage:
-                            'No nearby blood requests found within search radius.',
-                      ),
+                      (_locationUnavailable ||
+                              _userLatitude == null ||
+                              _userLongitude == null)
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.location_off_outlined,
+                                        size: 64, color: Colors.grey.shade400),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Device location unavailable or permission denied.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey.shade800,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Enable location access to discover urgent blood requests near your area.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    ElevatedButton.icon(
+                                      onPressed: _fetchNearbyRequests,
+                                      icon: const Icon(Icons.my_location),
+                                      label:
+                                          const Text('Retry Location Access'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            const Color(0xFFDC2626),
+                                        foregroundColor: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : _buildRequestsList(
+                              requests: _controller.nearbyRequests,
+                              onRefresh: _fetchNearbyRequests,
+                              emptyMessage:
+                                  'No nearby blood requests found within search radius.',
+                            ),
                     ],
                   ),
           ),

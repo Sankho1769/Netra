@@ -5,6 +5,10 @@ class DonorProfile {
   final String availabilityStatus;
   final String donorStatus;
   final DateTime? lastDonationDate;
+  final String? biologicalSex;
+  final String? verifiedBy;
+  final DateTime? verifiedAt;
+  final String? verificationNotes;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -15,6 +19,10 @@ class DonorProfile {
     required this.availabilityStatus,
     required this.donorStatus,
     this.lastDonationDate,
+    this.biologicalSex,
+    this.verifiedBy,
+    this.verifiedAt,
+    this.verificationNotes,
     this.createdAt,
     this.updatedAt,
   });
@@ -33,6 +41,12 @@ class DonorProfile {
       lastDonationDate: json['lastDonationDate'] != null
           ? DateTime.tryParse(json['lastDonationDate'].toString())
           : null,
+      biologicalSex: json['biologicalSex'] as String?,
+      verifiedBy: json['verifiedBy'] as String?,
+      verifiedAt: json['verifiedAt'] != null
+          ? DateTime.tryParse(json['verifiedAt'].toString())
+          : null,
+      verificationNotes: json['verificationNotes'] as String?,
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString())
           : null,
@@ -52,6 +66,10 @@ class DonorProfile {
       if (lastDonationDate != null)
         'lastDonationDate':
             "${lastDonationDate!.year.toString().padLeft(4, '0')}-${lastDonationDate!.month.toString().padLeft(2, '0')}-${lastDonationDate!.day.toString().padLeft(2, '0')}",
+      if (biologicalSex != null) 'biologicalSex': biologicalSex,
+      if (verifiedBy != null) 'verifiedBy': verifiedBy,
+      if (verifiedAt != null) 'verifiedAt': verifiedAt!.toIso8601String(),
+      if (verificationNotes != null) 'verificationNotes': verificationNotes,
       if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
       if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
     };
@@ -61,16 +79,19 @@ class DonorProfile {
 class CreateDonorProfileRequest {
   final String bloodGroup;
   final String? availabilityStatus;
+  final String? biologicalSex;
 
   const CreateDonorProfileRequest({
     required this.bloodGroup,
     this.availabilityStatus,
+    this.biologicalSex,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'bloodGroup': bloodGroup,
       if (availabilityStatus != null) 'availabilityStatus': availabilityStatus,
+      if (biologicalSex != null) 'biologicalSex': biologicalSex,
     };
   }
 }
@@ -78,16 +99,19 @@ class CreateDonorProfileRequest {
 class UpdateDonorProfileRequest {
   final String? bloodGroup;
   final String? availabilityStatus;
+  final String? biologicalSex;
 
   const UpdateDonorProfileRequest({
     this.bloodGroup,
     this.availabilityStatus,
+    this.biologicalSex,
   });
 
   Map<String, dynamic> toJson() {
     return {
       if (bloodGroup != null) 'bloodGroup': bloodGroup,
       if (availabilityStatus != null) 'availabilityStatus': availabilityStatus,
+      if (biologicalSex != null) 'biologicalSex': biologicalSex,
     };
   }
 }

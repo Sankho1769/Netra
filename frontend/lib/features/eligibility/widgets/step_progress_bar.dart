@@ -59,7 +59,7 @@ class StepProgressBar extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 6,
-              backgroundColor: NetraColors.borderGray.withOpacity(0.4),
+              backgroundColor: NetraColors.borderGray.withValues(alpha: 0.4),
               valueColor:
                   const AlwaysStoppedAnimation<Color>(NetraColors.primaryRed),
             ),

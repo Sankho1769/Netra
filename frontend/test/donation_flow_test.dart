@@ -58,7 +58,7 @@ void main() {
       final json = {
         'id': 'don-100',
         'donorUserId': 'user-100',
-        'donorName': 'Jane Donor',
+        'donorName': 'Jolly Banerjee',
         'sourceType': 'BLOOD_REQUEST',
         'bloodRequestId': 'req-100',
         'referenceTitle': 'City General Hospital',
@@ -76,7 +76,7 @@ void main() {
 
       expect(donation.id, equals('don-100'));
       expect(donation.donorUserId, equals('user-100'));
-      expect(donation.donorName, equals('Jane Donor'));
+      expect(donation.donorName, equals('Jolly Banerjee'));
       expect(donation.sourceType, equals(DonationSourceType.bloodRequest));
       expect(donation.bloodRequestId, equals('req-100'));
       expect(donation.referenceTitle, equals('City General Hospital'));

@@ -66,13 +66,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
 
+    String rawPhone = _phoneController.text.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+    if (rawPhone.isNotEmpty && !rawPhone.startsWith('+91')) {
+      if (rawPhone.startsWith('91') && rawPhone.length == 12) {
+        rawPhone = '+$rawPhone';
+      } else {
+        rawPhone = '+91$rawPhone';
+      }
+    }
+
     final success = await widget.controller.updateProfile(
       token,
       UpdateUserProfileRequest(
         fullName: _nameController.text.trim(),
-        phone: _phoneController.text.trim().isEmpty
-            ? null
-            : _phoneController.text.trim(),
+        phone: rawPhone.isEmpty ? null : rawPhone,
       ),
     );
 
@@ -143,8 +150,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         // Full Name
                         NetraTextField(
                           label: "Full Name",
-                          hint: "John Doe",
+                          hint: "Jolly Banerjee",
                           controller: _nameController,
+                          validator: (val) {
+                            if (val == null || val.trim().isEmpty) {
+                              return "Full name is required";
+                            }
+                            if (val.trim().length < 2) {
+                              return "Name must be at least 2 characters";
+                            }
+                            return null;
+                          },
                         ),
                         NetraSpacing.gapH16,
 
@@ -160,12 +176,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                         // Phone Number
                         NetraTextField(
-                          label: "Phone Number (Optional)",
+                          label: "Mobile Number *",
                           hint: "+91 98765 43210",
                           controller: _phoneController,
                           keyboardType: TextInputType.phone,
                           helperText:
                               "Used only for urgent blood donation contact when availability is enabled.",
+                          validator: (val) {
+                            if (val == null || val.trim().isEmpty) {
+                              return "Mobile number is required";
+                            }
+                            final clean =
+                                val.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+                            final phoneRegex =
+                                RegExp(r'^(?:\+91|91)?[6-9]\d{9}$');
+                            if (!phoneRegex.hasMatch(clean)) {
+                              return "Enter a valid 10-digit Indian mobile number";
+                            }
+                            return null;
+                          },
                         ),
                         NetraSpacing.gapH24,
 
