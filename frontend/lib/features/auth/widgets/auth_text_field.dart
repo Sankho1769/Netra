@@ -19,6 +19,9 @@ class AuthTextField extends StatefulWidget {
   final Widget? suffixIcon;
   final bool autofocus;
   final bool enabled;
+  final bool? autocorrect;
+  final bool? enableSuggestions;
+  final TextCapitalization? textCapitalization;
 
   const AuthTextField({
     super.key,
@@ -37,6 +40,9 @@ class AuthTextField extends StatefulWidget {
     this.suffixIcon,
     this.autofocus = false,
     this.enabled = true,
+    this.autocorrect,
+    this.enableSuggestions,
+    this.textCapitalization,
   });
 
   @override
@@ -95,6 +101,20 @@ class _AuthTextFieldState extends State<AuthTextField> {
           onFieldSubmitted: widget.onFieldSubmitted,
           onChanged: widget.onChanged,
           obscureText: _obscureText,
+          autocorrect: widget.autocorrect ??
+              !(widget.isPassword ||
+                  widget.keyboardType == TextInputType.emailAddress ||
+                  widget.keyboardType == TextInputType.phone),
+          enableSuggestions: widget.enableSuggestions ??
+              !(widget.isPassword ||
+                  widget.keyboardType == TextInputType.emailAddress ||
+                  widget.keyboardType == TextInputType.phone),
+          textCapitalization: widget.textCapitalization ??
+              (widget.isPassword ||
+                      widget.keyboardType == TextInputType.emailAddress ||
+                      widget.keyboardType == TextInputType.phone
+                  ? TextCapitalization.none
+                  : TextCapitalization.words),
           autofocus: widget.autofocus,
           enabled: widget.enabled,
           style: NetraTypography.bodyLarge,

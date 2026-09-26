@@ -47,12 +47,24 @@ class ValidationException extends NetworkException {
         );
 }
 
-/// Thrown on HTTP 401 Unauthorized or 403 Forbidden.
+/// Thrown on HTTP 401 Unauthorized.
 class UnauthorizedException extends NetworkException {
   const UnauthorizedException([
-    String message = 'Session unauthorized or capability token is invalid.',
+    String message =
+        'Session unauthorized or authentication token is invalid or expired.',
     String? correlationId,
-  ]) : super(message, statusCode: 403, correlationId: correlationId);
+    int? statusCode,
+  ]) : super(message,
+            statusCode: statusCode ?? 401, correlationId: correlationId);
+}
+
+/// Thrown on HTTP 403 Forbidden.
+class ForbiddenException extends UnauthorizedException {
+  const ForbiddenException([
+    String message =
+        'Access denied. You do not have permission to perform this action.',
+    String? correlationId,
+  ]) : super(message, correlationId, 403);
 }
 
 /// Thrown on HTTP 404 Not Found.

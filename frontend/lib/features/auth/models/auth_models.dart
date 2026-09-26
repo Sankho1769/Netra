@@ -98,7 +98,7 @@ class LoginRequest {
   });
 
   Map<String, dynamic> toJson() => {
-        'email': email.trim(),
+        'email': email.trim().toLowerCase(),
         'password': password,
         if (deviceId != null) 'deviceId': deviceId,
       };
@@ -107,20 +107,20 @@ class LoginRequest {
 class RegisterRequest {
   final String fullName;
   final String email;
-  final String? phone;
+  final String phone;
   final String password;
 
   const RegisterRequest({
     required this.fullName,
     required this.email,
-    this.phone,
+    required this.phone,
     required this.password,
   });
 
   Map<String, dynamic> toJson() => {
         'fullName': fullName.trim(),
-        'email': email.trim(),
-        if (phone != null && phone!.trim().isNotEmpty) 'phone': phone!.trim(),
+        'email': email.trim().toLowerCase(),
+        'phone': phone.trim(),
         'password': password,
       };
 }

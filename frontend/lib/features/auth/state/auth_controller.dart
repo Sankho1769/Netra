@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/network/network_exception.dart';
+import '../../notification/services/push_notification_service.dart';
 import '../models/auth_models.dart';
 import '../services/auth_api_service.dart';
 import '../services/secure_token_storage.dart';
@@ -6,6 +9,7 @@ import '../services/secure_token_storage.dart';
 class AuthController extends ChangeNotifier {
   final AuthApiService _apiService;
   final SecureTokenStorage _tokenStorage;
+  final PushNotificationService? _pushNotificationService;
 
   AuthStatus _status = AuthStatus.unknown;
   User? _currentUser;
@@ -14,8 +18,35 @@ class AuthController extends ChangeNotifier {
   AuthController({
     AuthApiService? apiService,
     SecureTokenStorage? tokenStorage,
+    PushNotificationService? pushNotificationService,
+    bool configureGlobalAuth = true,
   })  : _apiService = apiService ?? AuthApiService(),
-        _tokenStorage = tokenStorage ?? PlatformSecureTokenStorage();
+        _tokenStorage = tokenStorage ?? PlatformSecureTokenStorage(),
+        _pushNotificationService = pushNotificationService {
+    if (configureGlobalAuth) {
+      ApiClient.configureAuth(
+        tokenProvider: () => _tokenStorage.getAccessToken(),
+        onTokenRefresh: () async {
+          final currentRefresh = await _tokenStorage.getRefreshToken();
+          if (currentRefresh == null || currentRefresh.isEmpty) {
+            await _tokenStorage.clearTokens();
+            return false;
+          }
+          try {
+            final bundle = await _apiService.refresh(currentRefresh);
+            await _tokenStorage.saveTokens(
+              accessToken: bundle.tokens.accessToken,
+              refreshToken: bundle.tokens.refreshToken,
+            );
+            return true;
+          } catch (_) {
+            await _tokenStorage.clearTokens();
+            return false;
+          }
+        },
+      );
+    }
+  }
 
   AuthStatus get status => _status;
   User? get currentUser => _currentUser;
@@ -61,9 +92,11 @@ class AuthController extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final normalizedEmail = email.trim().toLowerCase();
+
     try {
       final bundle = await _apiService
-          .login(LoginRequest(email: email, password: password));
+          .login(LoginRequest(email: normalizedEmail, password: password));
       await _tokenStorage.saveTokens(
         accessToken: bundle.tokens.accessToken,
         refreshToken: bundle.tokens.refreshToken,
@@ -71,10 +104,15 @@ class AuthController extends ChangeNotifier {
 
       _currentUser = bundle.user;
       _status = AuthStatus.authenticated;
+      _errorMessage = null;
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      if (e is NetworkException) {
+        _errorMessage = e.message;
+      } else {
+        _errorMessage = 'Invalid email or password';
+      }
       _status = AuthStatus.unauthenticated;
       notifyListeners();
       return false;
@@ -84,17 +122,24 @@ class AuthController extends ChangeNotifier {
   Future<bool> register({
     required String fullName,
     required String email,
-    String? phone,
+    required String phone,
     required String password,
   }) async {
     _status = AuthStatus.authenticating;
     _errorMessage = null;
     notifyListeners();
 
+    final normalizedEmail = email.trim().toLowerCase();
+    final normalizedPhone = phone.trim();
+
     try {
       final bundle = await _apiService.register(
         RegisterRequest(
-            fullName: fullName, email: email, phone: phone, password: password),
+          fullName: fullName.trim(),
+          email: normalizedEmail,
+          phone: normalizedPhone,
+          password: password,
+        ),
       );
       await _tokenStorage.saveTokens(
         accessToken: bundle.tokens.accessToken,
@@ -103,10 +148,15 @@ class AuthController extends ChangeNotifier {
 
       _currentUser = bundle.user;
       _status = AuthStatus.authenticated;
+      _errorMessage = null;
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      if (e is NetworkException) {
+        _errorMessage = e.message;
+      } else {
+        _errorMessage = 'Unable to complete registration. Please try again.';
+      }
       _status = AuthStatus.unauthenticated;
       notifyListeners();
       return false;
@@ -114,23 +164,31 @@ class AuthController extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    final refreshToken = await _tokenStorage.getRefreshToken();
-    final accessToken = await _tokenStorage.getAccessToken();
+    try {
+      final refreshToken = await _tokenStorage.getRefreshToken();
+      final accessToken = await _tokenStorage.getAccessToken();
 
-    // Call server to invalidate refresh session
-    await _apiService.logout(
-        refreshToken: refreshToken, accessToken: accessToken);
+      // Revoke device push token if registered
+      await _pushNotificationService?.revokeCurrentDeviceToken();
 
-    // Clear local storage
-    await _tokenStorage.clearTokens();
-    _currentUser = null;
-    _status = AuthStatus.unauthenticated;
-    _errorMessage = null;
-    notifyListeners();
+      // Call server to invalidate refresh session
+      await _apiService.logout(
+          refreshToken: refreshToken, accessToken: accessToken);
+    } catch (_) {
+      // Best-effort server notification; always proceed with local clearance
+    } finally {
+      // Clear local storage deterministically
+      await _tokenStorage.clearTokens();
+      _currentUser = null;
+      _status = AuthStatus.unauthenticated;
+      _errorMessage = null;
+      notifyListeners();
+    }
   }
 
   Future<void> logoutAll() async {
     final accessToken = await _tokenStorage.getAccessToken();
+    await _pushNotificationService?.revokeCurrentDeviceToken();
     if (accessToken != null) {
       await _apiService.logoutAll(accessToken);
     }

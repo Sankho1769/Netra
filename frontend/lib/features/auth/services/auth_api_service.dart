@@ -19,7 +19,11 @@ class AuthApiService {
 
   Future<AuthResponseBundle> register(RegisterRequest request) async {
     try {
-      final response = await _client.post('/register', body: request.toJson());
+      final response = await _client.post(
+        '/register',
+        body: request.toJson(),
+        requiresAuth: false,
+      );
       final data = response as Map<String, dynamic>;
       final user = User.fromJson(data['user'] as Map<String, dynamic>);
       final tokens = AuthTokens.fromJson(data);
@@ -33,7 +37,11 @@ class AuthApiService {
 
   Future<AuthResponseBundle> login(LoginRequest request) async {
     try {
-      final response = await _client.post('/login', body: request.toJson());
+      final response = await _client.post(
+        '/login',
+        body: request.toJson(),
+        requiresAuth: false,
+      );
       final data = response as Map<String, dynamic>;
       final user = User.fromJson(data['user'] as Map<String, dynamic>);
       final tokens = AuthTokens.fromJson(data);
@@ -50,6 +58,7 @@ class AuthApiService {
       final response = await _client.post(
         '/refresh',
         body: {'refreshToken': refreshToken},
+        requiresAuth: false,
       );
       final data = response as Map<String, dynamic>;
       final user = User.fromJson(data['user'] as Map<String, dynamic>);
