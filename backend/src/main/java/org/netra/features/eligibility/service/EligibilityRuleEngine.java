@@ -24,6 +24,17 @@ public class EligibilityRuleEngine {
 
     public static final String ACTIVE_RULE_VERSION = "INDIA-NBTC-2026-01";
 
+    private final DonationEligibilityPolicy policy;
+
+    public EligibilityRuleEngine() {
+        this(new DonationEligibilityPolicy());
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public EligibilityRuleEngine(DonationEligibilityPolicy policy) {
+        this.policy = policy != null ? policy : new DonationEligibilityPolicy();
+    }
+
     public EligibilityResultResponse evaluate(UUID sessionId, String ruleVersion, Map<String, String> answers, LocalDate referenceDate) {
         if (ruleVersion == null || ruleVersion.isBlank()) {
             ruleVersion = ACTIVE_RULE_VERSION;
@@ -43,24 +54,18 @@ public class EligibilityRuleEngine {
         String medicalReviewReason = null;
         LocalDate calculatedNextDate = null;
 
+        // Parse previous donation answer upfront for age rule evaluation
+        String prevDonationStr = answers.get("PREVIOUS_DONATION");
+        boolean previousDonationAnswered = prevDonationStr != null && !prevDonationStr.isBlank();
+        boolean hasDonatedBefore = previousDonationAnswered && Boolean.parseBoolean(prevDonationStr.trim());
+
         // 1. Basic Information Validation & Evaluation
         Integer age = parseAge(answers.get("AGE"));
         if (age == null) {
             missingFields.add("AGE");
         } else {
-            if (age < 18) {
-                deferrals.add(new DeferralDetailDto(
-                        "AGE_BELOW_MINIMUM",
-                        "Donors must be at least 18 years old to voluntarily donate whole blood.",
-                        "We look forward to welcoming you once you turn 18."
-                ));
-            } else if (age > 65) {
-                deferrals.add(new DeferralDetailDto(
-                        "AGE_ABOVE_MAXIMUM",
-                        "Voluntary whole-blood donation is accepted up to 65 years of age per national guidelines.",
-                        "Please speak with the blood centre physician regarding eligibility for apheresis or replacement donation."
-                ));
-            }
+            policy.checkAgeEligibility(age, hasDonatedBefore, previousDonationAnswered)
+                    .ifPresent(deferrals::add);
         }
 
         Double weightKg = parseWeight(answers.get("WEIGHT_KG"));
@@ -83,30 +88,18 @@ public class EligibilityRuleEngine {
         }
 
         // 2. Recent Donation Interval Evaluation
-        String prevDonationStr = answers.get("PREVIOUS_DONATION");
-        if (prevDonationStr == null || prevDonationStr.isBlank()) {
+        if (!previousDonationAnswered) {
             missingFields.add("PREVIOUS_DONATION");
-        } else {
-            boolean hasDonatedBefore = Boolean.parseBoolean(prevDonationStr);
-            if (hasDonatedBefore) {
-                String lastDateStr = answers.get("LAST_DONATION_DATE");
-                if (lastDateStr == null || lastDateStr.isBlank()) {
-                    missingFields.add("LAST_DONATION_DATE");
-                } else if (sex != null && !sex.isBlank()) {
-                    LocalDate lastDonationDate = parseDate(lastDateStr, referenceDate);
-                    long daysSinceDonation = ChronoUnit.DAYS.between(lastDonationDate, referenceDate);
-                    int requiredInterval = "FEMALE".equalsIgnoreCase(sex) ? 120 : 90;
-
-                    if (daysSinceDonation < requiredInterval) {
-                        LocalDate nextEligible = lastDonationDate.plusDays(requiredInterval);
-                        calculatedNextDate = nextEligible;
-                        deferrals.add(new DeferralDetailDto(
-                                "DONATION_INTERVAL_DEFICIT",
-                                String.format("%s donors must wait a minimum of %d days between whole-blood donations.",
-                                        "FEMALE".equalsIgnoreCase(sex) ? "Female" : "Male", requiredInterval),
-                                String.format("Your estimated next eligible date is %s. Set a reminder in the app.", nextEligible)
-                        ));
-                    }
+        } else if (hasDonatedBefore) {
+            String lastDateStr = answers.get("LAST_DONATION_DATE");
+            if (lastDateStr == null || lastDateStr.isBlank()) {
+                missingFields.add("LAST_DONATION_DATE");
+            } else if (sex != null && !sex.isBlank()) {
+                LocalDate lastDonationDate = parseDate(lastDateStr, referenceDate);
+                Optional<DeferralDetailDto> intervalDeferral = policy.checkIntervalEligibility(sex, lastDonationDate, referenceDate);
+                if (intervalDeferral.isPresent()) {
+                    calculatedNextDate = policy.calculateNextEligibleDate(sex, lastDonationDate);
+                    deferrals.add(intervalDeferral.get());
                 }
             }
         }

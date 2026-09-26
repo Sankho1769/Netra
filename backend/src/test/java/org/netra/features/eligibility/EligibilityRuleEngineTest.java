@@ -275,4 +275,65 @@ class EligibilityRuleEngineTest {
         assertEquals(ResultType.INSUFFICIENT_INFORMATION, result.getResult());
         assertTrue(result.getMissingFields().contains("BIOLOGICAL_SEX"));
     }
+
+    @Test
+    @DisplayName("Scenario 22: First-time donor age limit (<=60 eligible, 61 deferred with FIRST_TIME_DONOR_AGE_LIMIT)")
+    void testFirstTimeDonorAgeLimitRule() {
+        Map<String, String> answers = createEligibleMaleAnswers();
+        answers.put("PREVIOUS_DONATION", "false");
+        answers.remove("LAST_DONATION_DATE");
+
+        // Age 60 first-time donor -> LIKELY_ELIGIBLE
+        answers.put("AGE", "60");
+        EligibilityResultResponse result60 = engine.evaluate(sessionId, "INDIA-NBTC-2026-01", answers, refDate);
+        assertEquals(ResultType.LIKELY_ELIGIBLE, result60.getResult());
+
+        // Age 61 first-time donor -> TEMPORARY_DEFERRAL with FIRST_TIME_DONOR_AGE_LIMIT
+        answers.put("AGE", "61");
+        EligibilityResultResponse result61 = engine.evaluate(sessionId, "INDIA-NBTC-2026-01", answers, refDate);
+        assertEquals(ResultType.TEMPORARY_DEFERRAL, result61.getResult());
+        assertTrue(result61.getDeferralReasons().stream()
+                .anyMatch(d -> "FIRST_TIME_DONOR_AGE_LIMIT".equals(d.getCode())));
+    }
+
+    @Test
+    @DisplayName("Scenario 23: Repeat donor age limit (<=65 eligible, 66 deferred with AGE_ABOVE_MAXIMUM)")
+    void testRepeatDonorAgeLimitRule() {
+        Map<String, String> answers = createEligibleMaleAnswers();
+        answers.put("PREVIOUS_DONATION", "true");
+        answers.put("LAST_DONATION_DATE", "2026-01-01");
+
+        // Age 65 repeat donor -> LIKELY_ELIGIBLE
+        answers.put("AGE", "65");
+        EligibilityResultResponse result65 = engine.evaluate(sessionId, "INDIA-NBTC-2026-01", answers, refDate);
+        assertEquals(ResultType.LIKELY_ELIGIBLE, result65.getResult());
+
+        // Age 66 repeat donor -> TEMPORARY_DEFERRAL with AGE_ABOVE_MAXIMUM
+        answers.put("AGE", "66");
+        EligibilityResultResponse result66 = engine.evaluate(sessionId, "INDIA-NBTC-2026-01", answers, refDate);
+        assertEquals(ResultType.TEMPORARY_DEFERRAL, result66.getResult());
+        assertTrue(result66.getDeferralReasons().stream()
+                .anyMatch(d -> "AGE_ABOVE_MAXIMUM".equals(d.getCode())));
+    }
+
+    @Test
+    @DisplayName("Scenario 24: Authoritative sex-specific interval (Male: 90 days, Female: 120 days)")
+    void testSexSpecificDonationInterval() {
+        Map<String, String> answers = createEligibleMaleAnswers();
+        answers.put("PREVIOUS_DONATION", "true");
+        // Donated 100 days ago
+        answers.put("LAST_DONATION_DATE", refDate.minusDays(100).toString());
+
+        // Male: 100 >= 90 -> LIKELY_ELIGIBLE
+        answers.put("BIOLOGICAL_SEX", "MALE");
+        EligibilityResultResponse maleResult = engine.evaluate(sessionId, "INDIA-NBTC-2026-01", answers, refDate);
+        assertEquals(ResultType.LIKELY_ELIGIBLE, maleResult.getResult());
+
+        // Female: 100 < 120 -> TEMPORARY_DEFERRAL
+        answers.put("BIOLOGICAL_SEX", "FEMALE");
+        EligibilityResultResponse femaleResult = engine.evaluate(sessionId, "INDIA-NBTC-2026-01", answers, refDate);
+        assertEquals(ResultType.TEMPORARY_DEFERRAL, femaleResult.getResult());
+        assertTrue(femaleResult.getDeferralReasons().stream()
+                .anyMatch(d -> "DONATION_INTERVAL_DEFICIT".equals(d.getCode()) && d.getMessage().contains("120 days")));
+    }
 }

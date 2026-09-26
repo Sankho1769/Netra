@@ -179,6 +179,14 @@ class FulfillmentSecurityTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(failReq)))
                 .andExpect(status().isForbidden());
+
+        // Create attempt by donor -> 403 Forbidden (@PreAuthorize defense-in-depth)
+        CreateFulfillmentRequest createReq = new CreateFulfillmentRequest(bloodRequest.getId(), donation.getId(), 1, "Donor attempt");
+        mockMvc.perform(post("/api/v1/fulfillments")
+                        .header("Authorization", "Bearer " + tokenDonor)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -200,6 +208,14 @@ class FulfillmentSecurityTest {
                         .header("Authorization", "Bearer " + tokenRequester)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(failReq)))
+                .andExpect(status().isForbidden());
+
+        // Create attempt by receiver -> 403 Forbidden (@PreAuthorize defense-in-depth)
+        CreateFulfillmentRequest createReq = new CreateFulfillmentRequest(bloodRequest.getId(), donation.getId(), 1, "Receiver attempt");
+        mockMvc.perform(post("/api/v1/fulfillments")
+                        .header("Authorization", "Bearer " + tokenRequester)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
                 .andExpect(status().isForbidden());
     }
 

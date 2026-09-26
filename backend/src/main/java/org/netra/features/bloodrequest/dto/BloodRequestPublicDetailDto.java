@@ -26,6 +26,8 @@ public class BloodRequestPublicDetailDto {
     private Instant createdAt;
     private Boolean isOwner = false;
     private Boolean canManage = false;
+    private org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus verificationStatus =
+            org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus.UNVERIFIED;
 
     public BloodRequestPublicDetailDto() {
     }
@@ -148,5 +150,13 @@ public class BloodRequestPublicDetailDto {
 
     public void setCanManage(Boolean canManage) {
         this.canManage = canManage;
+    }
+
+    public org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus getVerificationStatus() {
+        return verificationStatus;
+    }
+
+    public void setVerificationStatus(org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus verificationStatus) {
+        this.verificationStatus = verificationStatus != null ? verificationStatus : org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus.UNVERIFIED;
     }
 }

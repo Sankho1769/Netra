@@ -16,6 +16,9 @@ public class BloodRequestDetailDto extends BloodRequestPublicDetailDto {
     private Instant cancelledAt;
     private String cancellationReason;
     private Instant fulfilledAt;
+    private UUID verifiedBy;
+    private Instant verifiedAt;
+    private String verificationNotes;
 
     public BloodRequestDetailDto() {
         super();
@@ -83,5 +86,29 @@ public class BloodRequestDetailDto extends BloodRequestPublicDetailDto {
 
     public void setFulfilledAt(Instant fulfilledAt) {
         this.fulfilledAt = fulfilledAt;
+    }
+
+    public UUID getVerifiedBy() {
+        return verifiedBy;
+    }
+
+    public void setVerifiedBy(UUID verifiedBy) {
+        this.verifiedBy = verifiedBy;
+    }
+
+    public Instant getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    public void setVerifiedAt(Instant verifiedAt) {
+        this.verifiedAt = verifiedAt;
+    }
+
+    public String getVerificationNotes() {
+        return verificationNotes;
+    }
+
+    public void setVerificationNotes(String verificationNotes) {
+        this.verificationNotes = verificationNotes;
     }
 }

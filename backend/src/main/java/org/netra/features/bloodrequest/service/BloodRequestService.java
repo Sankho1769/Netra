@@ -10,6 +10,7 @@ import org.netra.features.bloodrequest.dto.*;
 import org.netra.features.bloodrequest.entity.BloodRequest;
 import org.netra.features.bloodrequest.entity.BloodRequestStatus;
 import org.netra.features.bloodrequest.entity.BloodRequestUrgency;
+import org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus;
 import org.netra.features.bloodrequest.repository.BloodRequestRepository;
 import org.netra.features.donor.entity.BloodGroup;
 import org.slf4j.Logger;
@@ -420,6 +421,54 @@ public class BloodRequestService {
         return mapToDetailDto(saved, isOwner, true, null);
     }
 
+    @Transactional
+    public BloodRequestDetailDto verifyRequest(
+            UUID requestId,
+            VerifyBloodRequestDto verificationDto,
+            String clientIp,
+            String userAgent) {
+
+        UUID currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new UnauthorizedSessionAccessException("Authentication is required to verify a blood request."));
+
+        BloodRequest bloodRequest = bloodRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Blood request not found with ID: " + requestId));
+
+        // Authorization check & anti-fraud self-verification prevention
+        authorizationService.verifyCanVerifyRequest(currentUserId, bloodRequest);
+
+        if (bloodRequest.getStatus() != BloodRequestStatus.OPEN) {
+            throw new ValidationException("Only OPEN blood requests can be verified. Current status: " + bloodRequest.getStatus());
+        }
+
+        if (verificationDto == null || verificationDto.getDecision() == null ||
+                verificationDto.getDecision() == BloodRequestVerificationStatus.UNVERIFIED) {
+            throw new ValidationException("A valid verification decision (VERIFIED or REJECTED) is required.");
+        }
+
+        bloodRequest.setVerificationStatus(verificationDto.getDecision());
+        bloodRequest.setVerifiedBy(currentUserId);
+        bloodRequest.setVerifiedAt(Instant.now());
+        bloodRequest.setVerificationNotes(verificationDto.getNotes());
+        bloodRequest.setUpdatedAt(Instant.now());
+
+        BloodRequest saved = bloodRequestRepository.save(bloodRequest);
+
+        auditService.logAuthEvent(
+                "BLOOD_REQUEST_VERIFIED",
+                currentUserId,
+                clientIp,
+                userAgent,
+                "{\"requestId\":\"" + saved.getId() + "\",\"decision\":\"" + verificationDto.getDecision() + "\"}"
+        );
+
+        org.netra.core.observability.StructuredLogger.logOperation(
+                "BLOOD_REQUEST_VERIFIED", currentUserId, null, "BloodRequest", saved.getId(), "VERIFY", null, "SUCCESS");
+
+        boolean isOwner = saved.getRequesterUserId().equals(currentUserId);
+        return mapToDetailDto(saved, isOwner, true, null);
+    }
+
     private void validateCreation(CreateBloodRequestRequest request) {
         if (request.getBloodGroup() == null) {
             throw new ValidationException("Blood group is required.");
@@ -472,7 +521,8 @@ public class BloodRequestService {
                 request.getState(),
                 request.getRequiredBy(),
                 distanceKm,
-                request.getCreatedAt()
+                request.getCreatedAt(),
+                request.getVerificationStatus()
         );
     }
 
@@ -483,6 +533,7 @@ public class BloodRequestService {
         dto.setUnitsRequired(request.getUnitsRequired());
         dto.setUrgency(request.getUrgency());
         dto.setStatus(request.getStatus());
+        dto.setVerificationStatus(request.getVerificationStatus());
         dto.setHospitalName(request.getHospitalName());
         dto.setHospitalAddress(request.getHospitalAddress());
         dto.setCity(request.getCity());
@@ -503,6 +554,7 @@ public class BloodRequestService {
         dto.setUnitsRequired(request.getUnitsRequired());
         dto.setUrgency(request.getUrgency());
         dto.setStatus(request.getStatus());
+        dto.setVerificationStatus(request.getVerificationStatus());
         dto.setHospitalName(request.getHospitalName());
         dto.setHospitalAddress(request.getHospitalAddress());
         dto.setCity(request.getCity());
@@ -524,6 +576,9 @@ public class BloodRequestService {
             dto.setCancelledAt(request.getCancelledAt());
             dto.setCancellationReason(request.getCancellationReason());
             dto.setFulfilledAt(request.getFulfilledAt());
+            dto.setVerifiedBy(request.getVerifiedBy());
+            dto.setVerifiedAt(request.getVerifiedAt());
+            dto.setVerificationNotes(request.getVerificationNotes());
         }
 
         return dto;

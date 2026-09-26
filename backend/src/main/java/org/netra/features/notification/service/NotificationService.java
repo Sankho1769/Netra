@@ -308,4 +308,32 @@ public class NotificationService {
         userDeviceTokenRepository.save(token);
         log.info("Revoked device token {} for user {}", tokenId, currentUserId);
     }
+
+    @Transactional
+    public void revokeDeviceTokenByToken(String rawToken, UUID currentUserId) {
+        if (currentUserId == null) {
+            throw new UnauthorizedSessionAccessException("User authentication required.");
+        }
+        if (rawToken == null || rawToken.isBlank()) {
+            throw new ValidationException("Token string is required.");
+        }
+
+        String tokenHash = org.netra.core.security.SecurityUtils.sha256Hex(rawToken.trim());
+        java.util.Optional<UserDeviceToken> tokenOpt = userDeviceTokenRepository.findByTokenHash(tokenHash);
+        if (tokenOpt.isEmpty()) {
+            tokenOpt = userDeviceTokenRepository.findByToken(rawToken.trim());
+        }
+
+        if (tokenOpt.isPresent()) {
+            UserDeviceToken token = tokenOpt.get();
+            if (!token.getUserId().equals(currentUserId)) {
+                log.warn("IDOR attempt: User {} attempted to revoke token belonging to user {}",
+                        currentUserId, token.getUserId());
+                throw new UnauthorizedSessionAccessException("Access denied to device token.");
+            }
+            token.revoke(Instant.now());
+            userDeviceTokenRepository.save(token);
+            log.info("Revoked device token by value for user {}", currentUserId);
+        }
+    }
 }

@@ -42,4 +42,14 @@ public class DeviceTokenController {
         notificationService.revokeDeviceToken(id, currentUserId);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/revoke")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> revokeTokenByValue(@Valid @RequestBody org.netra.features.notification.dto.RevokeDeviceTokenRequest request) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new UnauthorizedSessionAccessException("User is not authenticated."));
+
+        notificationService.revokeDeviceTokenByToken(request.getToken(), currentUserId);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -18,7 +18,8 @@ public interface DonorMatchingRepository extends JpaRepository<DonorProfile, UUI
     @Query("SELECT dp.id as donorProfileId, dp.userId as userId, u.fullName as fullName, " +
            "dp.bloodGroup as bloodGroup, dp.bloodGroupVerificationStatus as bloodGroupVerificationStatus, " +
            "dp.availabilityStatus as availabilityStatus, dp.donorStatus as donorStatus, " +
-           "dp.lastDonationDate as lastDonationDate, dp.latitude as latitude, dp.longitude as longitude, " +
+           "dp.lastDonationDate as lastDonationDate, dp.biologicalSex as biologicalSex, " +
+           "dp.latitude as latitude, dp.longitude as longitude, " +
            "dp.createdAt as createdAt " +
            "FROM DonorProfile dp, User u " +
            "WHERE dp.userId = u.id " +

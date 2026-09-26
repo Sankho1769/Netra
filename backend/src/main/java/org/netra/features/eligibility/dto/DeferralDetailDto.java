@@ -26,6 +26,10 @@ public class DeferralDetailDto {
         return displayText;
     }
 
+    public String getMessage() {
+        return displayText;
+    }
+
     public void setDisplayText(String displayText) {
         this.displayText = displayText;
     }

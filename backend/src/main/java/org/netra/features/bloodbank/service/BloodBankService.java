@@ -95,7 +95,7 @@ public class BloodBankService {
         if (city != null && !city.isBlank()) {
             String trimmedCity = city.trim();
             if (bloodGroup != null) {
-                banks = bloodBankRepository.findAvailableByCityAndBloodGroup(trimmedCity, bloodGroup, verifiedStatus, boundedPageable);
+                banks = bloodBankRepository.findAvailableByCityAndBloodGroup(trimmedCity, bloodGroup, operatingStatus, verifiedStatus, boundedPageable);
             } else if (operatingStatus != null) {
                 banks = bloodBankRepository.findByCityIgnoreCaseAndOperatingStatusAndVerificationStatus(
                         trimmedCity, operatingStatus, verifiedStatus, boundedPageable);
@@ -103,7 +103,7 @@ public class BloodBankService {
                 banks = bloodBankRepository.findByCityIgnoreCaseAndVerificationStatus(trimmedCity, verifiedStatus, boundedPageable);
             }
         } else if (bloodGroup != null) {
-            banks = bloodBankRepository.findAvailableByBloodGroup(bloodGroup, verifiedStatus, boundedPageable);
+            banks = bloodBankRepository.findAvailableByBloodGroup(bloodGroup, operatingStatus, verifiedStatus, boundedPageable);
         } else if (operatingStatus != null) {
             banks = bloodBankRepository.findByOperatingStatusAndVerificationStatus(operatingStatus, verifiedStatus, boundedPageable);
         } else {
@@ -152,6 +152,13 @@ public class BloodBankService {
     public BloodBankDetailDto getBloodBankById(UUID id, Double userLat, Double userLon) {
         BloodBank bank = bloodBankRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Blood bank not found with id: " + id));
+
+        if (bank.getVerificationStatus() != BloodBankVerificationStatus.VERIFIED) {
+            UUID currentUserId = SecurityUtils.getCurrentUserId().orElse(null);
+            if (!authorizationService.isAuthorizedToManage(currentUserId, id)) {
+                throw new ResourceNotFoundException("Blood bank not found with id: " + id);
+            }
+        }
 
         Double distanceKm = null;
         if (userLat != null && userLon != null

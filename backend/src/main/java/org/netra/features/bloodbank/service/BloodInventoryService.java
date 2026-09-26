@@ -48,8 +48,18 @@ public class BloodInventoryService {
 
     @Transactional(readOnly = true)
     public List<BloodInventoryDto> getInventory(UUID bloodBankId) {
-        if (!bloodBankRepository.existsById(bloodBankId)) {
-            throw new ResourceNotFoundException("Blood bank not found with id: " + bloodBankId);
+        BloodBank bank = bloodBankRepository.findById(bloodBankId)
+                .orElseThrow(() -> new ResourceNotFoundException("Blood bank not found with id: " + bloodBankId));
+
+        if (bank.getVerificationStatus() != BloodBankVerificationStatus.VERIFIED) {
+            UUID currentUserId = SecurityUtils.getCurrentUserId().orElse(null);
+            boolean isStaffOrAdmin = false;
+            if (currentUserId != null) {
+                isStaffOrAdmin = authorizationService.isAuthorizedToManage(currentUserId, bloodBankId);
+            }
+            if (!isStaffOrAdmin) {
+                throw new ResourceNotFoundException("Blood bank not found with id: " + bloodBankId);
+            }
         }
 
         Instant now = Instant.now();

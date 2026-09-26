@@ -16,6 +16,8 @@ public interface BloodBankAccountRepository extends JpaRepository<BloodBankAccou
 
     boolean existsByUserIdAndBloodBankIdAndStatus(UUID userId, UUID bloodBankId, BloodBankAccountStatus status);
 
+    boolean existsByUserIdAndStatus(UUID userId, BloodBankAccountStatus status);
+
     List<BloodBankAccount> findByBloodBankId(UUID bloodBankId);
 
     List<BloodBankAccount> findByUserId(UUID userId);

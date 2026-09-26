@@ -44,18 +44,39 @@ public interface BloodBankRepository extends JpaRepository<BloodBank, UUID> {
             @Param("status") BloodBankVerificationStatus status
     );
 
-    @Query("SELECT b FROM BloodBank b WHERE b.verificationStatus = :status AND EXISTS (SELECT 1 FROM BloodInventory i WHERE i.bloodBankId = b.id AND i.bloodGroup = :bloodGroup AND i.unitsAvailable > 0)")
+    @Query("SELECT b FROM BloodBank b WHERE b.verificationStatus = :status " +
+           "AND (:operatingStatus IS NULL OR b.operatingStatus = :operatingStatus) " +
+           "AND EXISTS (SELECT 1 FROM BloodInventory i WHERE i.bloodBankId = b.id AND i.bloodGroup = :bloodGroup AND i.unitsAvailable > 0)")
     Page<BloodBank> findAvailableByBloodGroup(
             @Param("bloodGroup") org.netra.features.donor.entity.BloodGroup bloodGroup,
+            @Param("operatingStatus") BloodBankOperatingStatus operatingStatus,
             @Param("status") BloodBankVerificationStatus status,
             Pageable pageable
     );
 
-    @Query("SELECT b FROM BloodBank b WHERE LOWER(b.city) = LOWER(:city) AND b.verificationStatus = :status AND EXISTS (SELECT 1 FROM BloodInventory i WHERE i.bloodBankId = b.id AND i.bloodGroup = :bloodGroup AND i.unitsAvailable > 0)")
+    default Page<BloodBank> findAvailableByBloodGroup(
+            org.netra.features.donor.entity.BloodGroup bloodGroup,
+            BloodBankVerificationStatus status,
+            Pageable pageable) {
+        return findAvailableByBloodGroup(bloodGroup, null, status, pageable);
+    }
+
+    @Query("SELECT b FROM BloodBank b WHERE LOWER(b.city) = LOWER(:city) AND b.verificationStatus = :status " +
+           "AND (:operatingStatus IS NULL OR b.operatingStatus = :operatingStatus) " +
+           "AND EXISTS (SELECT 1 FROM BloodInventory i WHERE i.bloodBankId = b.id AND i.bloodGroup = :bloodGroup AND i.unitsAvailable > 0)")
     Page<BloodBank> findAvailableByCityAndBloodGroup(
             @Param("city") String city,
             @Param("bloodGroup") org.netra.features.donor.entity.BloodGroup bloodGroup,
+            @Param("operatingStatus") BloodBankOperatingStatus operatingStatus,
             @Param("status") BloodBankVerificationStatus status,
             Pageable pageable
     );
+
+    default Page<BloodBank> findAvailableByCityAndBloodGroup(
+            String city,
+            org.netra.features.donor.entity.BloodGroup bloodGroup,
+            BloodBankVerificationStatus status,
+            Pageable pageable) {
+        return findAvailableByCityAndBloodGroup(city, bloodGroup, null, status, pageable);
+    }
 }

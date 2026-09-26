@@ -20,6 +20,8 @@ public class BloodRequestSummaryDto {
     private Instant requiredBy;
     private Double distanceKm;
     private Instant createdAt;
+    private org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus verificationStatus =
+            org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus.UNVERIFIED;
 
     public BloodRequestSummaryDto() {
     }
@@ -28,6 +30,15 @@ public class BloodRequestSummaryDto {
                                  BloodRequestUrgency urgency, BloodRequestStatus status,
                                  String hospitalName, String city, String state,
                                  Instant requiredBy, Double distanceKm, Instant createdAt) {
+        this(id, bloodGroup, unitsRequired, urgency, status, hospitalName, city, state, requiredBy, distanceKm, createdAt,
+                org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus.UNVERIFIED);
+    }
+
+    public BloodRequestSummaryDto(UUID id, BloodGroup bloodGroup, Integer unitsRequired,
+                                 BloodRequestUrgency urgency, BloodRequestStatus status,
+                                 String hospitalName, String city, String state,
+                                 Instant requiredBy, Double distanceKm, Instant createdAt,
+                                 org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus verificationStatus) {
         this.id = id;
         this.bloodGroup = bloodGroup;
         this.unitsRequired = unitsRequired;
@@ -39,6 +50,7 @@ public class BloodRequestSummaryDto {
         this.requiredBy = requiredBy;
         this.distanceKm = distanceKm;
         this.createdAt = createdAt;
+        this.verificationStatus = verificationStatus != null ? verificationStatus : org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus.UNVERIFIED;
     }
 
     public UUID getId() {
@@ -127,5 +139,13 @@ public class BloodRequestSummaryDto {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus getVerificationStatus() {
+        return verificationStatus;
+    }
+
+    public void setVerificationStatus(org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus verificationStatus) {
+        this.verificationStatus = verificationStatus != null ? verificationStatus : org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus.UNVERIFIED;
     }
 }

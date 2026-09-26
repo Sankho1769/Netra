@@ -19,6 +19,10 @@ public class DonorProfileDto {
     private LocalDate lastDonationDate;
     private Double latitude;
     private Double longitude;
+    private String biologicalSex;
+    private UUID verifiedBy;
+    private Instant verifiedAt;
+    private String verificationNotes;
     private Instant createdAt;
     private Instant updatedAt;
 
@@ -138,5 +142,37 @@ public class DonorProfileDto {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getBiologicalSex() {
+        return biologicalSex;
+    }
+
+    public void setBiologicalSex(String biologicalSex) {
+        this.biologicalSex = biologicalSex;
+    }
+
+    public UUID getVerifiedBy() {
+        return verifiedBy;
+    }
+
+    public void setVerifiedBy(UUID verifiedBy) {
+        this.verifiedBy = verifiedBy;
+    }
+
+    public Instant getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    public void setVerifiedAt(Instant verifiedAt) {
+        this.verifiedAt = verifiedAt;
+    }
+
+    public String getVerificationNotes() {
+        return verificationNotes;
+    }
+
+    public void setVerificationNotes(String verificationNotes) {
+        this.verificationNotes = verificationNotes;
     }
 }

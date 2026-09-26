@@ -31,6 +31,8 @@ public interface DonorCandidateProjection {
 
     LocalDate getLastDonationDate();
 
+    String getBiologicalSex();
+
     Double getLatitude();
 
     Double getLongitude();

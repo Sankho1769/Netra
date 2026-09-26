@@ -13,7 +13,9 @@ import org.netra.features.donor.entity.BloodGroup;
 import org.netra.features.donor.entity.BloodGroupVerificationStatus;
 import org.netra.features.eligibility.entity.EligibilitySession;
 import org.netra.features.eligibility.entity.ResultType;
+import org.netra.features.eligibility.entity.SessionStatus;
 import org.netra.features.eligibility.repository.EligibilitySessionRepository;
+import org.netra.features.eligibility.service.DonationEligibilityPolicy;
 import org.netra.features.matching.dto.DonorMatchDto;
 import org.netra.features.matching.dto.DonorMatchResponse;
 import org.netra.features.matching.dto.MatchQuality;
@@ -56,6 +58,7 @@ public class DonorMatchingService {
     private final EligibilitySessionRepository eligibilitySessionRepository;
     private final RateLimitingService rateLimitingService;
     private final AuditService auditService;
+    private final DonationEligibilityPolicy donationEligibilityPolicy;
     private final Clock clock;
 
     private final double defaultRadiusKm;
@@ -80,6 +83,7 @@ public class DonorMatchingService {
             EligibilitySessionRepository eligibilitySessionRepository,
             RateLimitingService rateLimitingService,
             AuditService auditService,
+            DonationEligibilityPolicy donationEligibilityPolicy,
             java.util.Optional<Clock> clock,
             @Value("${netra.matching.default-radius-km:25.0}") double defaultRadiusKm,
             @Value("${netra.matching.max-radius-km:100.0}") double maxRadiusKm,
@@ -87,7 +91,8 @@ public class DonorMatchingService {
             @Value("${netra.matching.max-limit:50}") int maxLimit,
             @Value("${netra.matching.min-donation-interval-days:90}") int minDonationIntervalDays) {
         this(bloodRequestRepository, authorizationService, donorMatchingRepository, compatibilityMatrix,
-                eligibilitySessionRepository, rateLimitingService, auditService, clock.orElse(Clock.systemUTC()),
+                eligibilitySessionRepository, rateLimitingService, auditService, donationEligibilityPolicy,
+                clock.orElse(Clock.systemUTC()),
                 defaultRadiusKm, maxRadiusKm, defaultLimit, maxLimit, minDonationIntervalDays);
     }
 
@@ -105,6 +110,26 @@ public class DonorMatchingService {
             int defaultLimit,
             int maxLimit,
             int minDonationIntervalDays) {
+        this(bloodRequestRepository, authorizationService, donorMatchingRepository, compatibilityMatrix,
+                eligibilitySessionRepository, rateLimitingService, auditService, new DonationEligibilityPolicy(),
+                clock, defaultRadiusKm, maxRadiusKm, defaultLimit, maxLimit, minDonationIntervalDays);
+    }
+
+    public DonorMatchingService(
+            BloodRequestRepository bloodRequestRepository,
+            BloodRequestAuthorizationService authorizationService,
+            DonorMatchingRepository donorMatchingRepository,
+            BloodCompatibilityMatrix compatibilityMatrix,
+            EligibilitySessionRepository eligibilitySessionRepository,
+            RateLimitingService rateLimitingService,
+            AuditService auditService,
+            DonationEligibilityPolicy donationEligibilityPolicy,
+            Clock clock,
+            double defaultRadiusKm,
+            double maxRadiusKm,
+            int defaultLimit,
+            int maxLimit,
+            int minDonationIntervalDays) {
         this.bloodRequestRepository = bloodRequestRepository;
         this.authorizationService = authorizationService;
         this.donorMatchingRepository = donorMatchingRepository;
@@ -112,6 +137,7 @@ public class DonorMatchingService {
         this.eligibilitySessionRepository = eligibilitySessionRepository;
         this.rateLimitingService = rateLimitingService;
         this.auditService = auditService;
+        this.donationEligibilityPolicy = donationEligibilityPolicy != null ? donationEligibilityPolicy : new DonationEligibilityPolicy();
         this.clock = clock != null ? clock : Clock.systemUTC();
         this.defaultRadiusKm = defaultRadiusKm;
         this.maxRadiusKm = maxRadiusKm;
@@ -134,8 +160,8 @@ public class DonorMatchingService {
             int maxLimit,
             int minDonationIntervalDays) {
         this(bloodRequestRepository, authorizationService, donorMatchingRepository, compatibilityMatrix,
-                eligibilitySessionRepository, rateLimitingService, auditService, Clock.systemUTC(),
-                defaultRadiusKm, maxRadiusKm, defaultLimit, maxLimit, minDonationIntervalDays);
+                eligibilitySessionRepository, rateLimitingService, auditService, new DonationEligibilityPolicy(),
+                Clock.systemUTC(), defaultRadiusKm, maxRadiusKm, defaultLimit, maxLimit, minDonationIntervalDays);
     }
 
     @Transactional(readOnly = true)
@@ -236,7 +262,8 @@ public class DonorMatchingService {
 
         Map<UUID, EligibilitySession> latestSessionMap = new HashMap<>();
         if (!candidateUserIds.isEmpty()) {
-            List<EligibilitySession> sessions = eligibilitySessionRepository.findByUserIdInOrderByStartedAtDesc(candidateUserIds);
+            List<EligibilitySession> sessions = eligibilitySessionRepository
+                    .findByUserIdInAndStatusOrderByCompletedAtDesc(candidateUserIds, SessionStatus.COMPLETED);
             for (EligibilitySession session : sessions) {
                 latestSessionMap.putIfAbsent(session.getUserId(), session);
             }
@@ -245,11 +272,10 @@ public class DonorMatchingService {
         List<CandidateMatch> candidateMatches = new ArrayList<>();
 
         for (DonorCandidateProjection candidate : candidates) {
-            // Filter 1: Donation history interval check (defensive, also filtered in SQL)
+            // Filter 1: Donation history interval check using authoritative policy (Male: 90d, Female: 120d)
             if (candidate.getLastDonationDate() != null) {
-                long daysSinceLast = ChronoUnit.DAYS.between(candidate.getLastDonationDate(), today);
-                if (daysSinceLast < minDonationIntervalDays) {
-                    continue; // Exclude due to mandatory recovery interval
+                if (!donationEligibilityPolicy.isIntervalEligible(candidate.getBiologicalSex(), candidate.getLastDonationDate(), today)) {
+                    continue; // Exclude due to mandatory sex-specific recovery interval
                 }
             }
 
@@ -257,7 +283,7 @@ public class DonorMatchingService {
             // Eligibility Semantics:
             // - Eligibility sessions represent preliminary self-screening, NOT permanent medical clearance.
             // - No permanent donor.isEligible flag exists.
-            // - If the donor's latest session indicates an active TEMPORARY_DEFERRAL (with estimatedEligibleDate > today)
+            // - If the donor's latest session indicates an active TEMPORARY_DEFERRAL (with estimatedEligibleDate > today or null)
             //   or MEDICAL_REVIEW_REQUIRED, the donor is excluded from the match candidate pool.
             // - Donors without screening sessions, or whose deferral has elapsed, or who completed self-screening with LIKELY_ELIGIBLE
             //   are included as preliminary candidates, but still require formal clinical evaluation prior to donation.
@@ -268,7 +294,7 @@ public class DonorMatchingService {
                     continue;
                 }
                 if (latest.getResult() == ResultType.TEMPORARY_DEFERRAL) {
-                    if (latest.getEstimatedEligibleDate() != null && latest.getEstimatedEligibleDate().isAfter(today)) {
+                    if (latest.getEstimatedEligibleDate() == null || latest.getEstimatedEligibleDate().isAfter(today)) {
                         continue;
                     }
                 }

@@ -7,16 +7,21 @@ import org.netra.core.exception.ResourceNotFoundException;
 import org.netra.core.exception.UnauthorizedSessionAccessException;
 import org.netra.core.exception.ValidationException;
 import org.netra.core.security.SecurityUtils;
+import org.netra.features.bloodbank.entity.BloodBankAccountStatus;
+import org.netra.features.bloodbank.repository.BloodBankAccountRepository;
 import org.netra.features.donor.dto.CreateDonorProfileRequest;
 import org.netra.features.donor.dto.DonorProfileDto;
 import org.netra.features.donor.dto.UpdateDonorProfileRequest;
+import org.netra.features.donor.dto.VerifyDonorBloodGroupRequest;
 import org.netra.features.donor.entity.BloodGroupVerificationStatus;
 import org.netra.features.donor.entity.DonorAvailabilityStatus;
 import org.netra.features.donor.entity.DonorProfile;
 import org.netra.features.donor.entity.DonorStatus;
 import org.netra.features.donor.repository.DonorProfileRepository;
 import org.netra.features.user.entity.User;
+import org.netra.features.user.entity.UserRole;
 import org.netra.features.user.repository.UserRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,14 +34,25 @@ public class DonorService {
     private final DonorProfileRepository donorProfileRepository;
     private final UserRepository userRepository;
     private final AuditService auditService;
+    private final BloodBankAccountRepository bloodBankAccountRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public DonorService(
+            DonorProfileRepository donorProfileRepository,
+            UserRepository userRepository,
+            AuditService auditService,
+            BloodBankAccountRepository bloodBankAccountRepository) {
+        this.donorProfileRepository = donorProfileRepository;
+        this.userRepository = userRepository;
+        this.auditService = auditService;
+        this.bloodBankAccountRepository = bloodBankAccountRepository;
+    }
 
     public DonorService(
             DonorProfileRepository donorProfileRepository,
             UserRepository userRepository,
             AuditService auditService) {
-        this.donorProfileRepository = donorProfileRepository;
-        this.userRepository = userRepository;
-        this.auditService = auditService;
+        this(donorProfileRepository, userRepository, auditService, null);
     }
 
     @Transactional(readOnly = true)
@@ -77,6 +93,9 @@ public class DonorService {
         profile.setBloodGroupVerificationStatus(BloodGroupVerificationStatus.SELF_REPORTED);
         profile.setDonorStatus(DonorStatus.ACTIVE);
         profile.setLastDonationDate(null);
+        if (request.getBiologicalSex() != null) {
+            profile.setBiologicalSex(request.getBiologicalSex().toUpperCase());
+        }
         if (request.getLatitude() != null && request.getLongitude() != null) {
             profile.setLatitude(request.getLatitude());
             profile.setLongitude(request.getLongitude());
@@ -138,6 +157,12 @@ public class DonorService {
             modified = true;
         }
 
+        // 3. Biological sex change
+        if (request.getBiologicalSex() != null && !request.getBiologicalSex().equalsIgnoreCase(profile.getBiologicalSex())) {
+            profile.setBiologicalSex(request.getBiologicalSex().toUpperCase());
+            modified = true;
+        }
+
         // 3. Location coordinates change
         if (request.getLatitude() != null && request.getLongitude() != null) {
             if (!request.getLatitude().equals(profile.getLatitude())) {
@@ -186,8 +211,62 @@ public class DonorService {
         }
     }
 
+    @Transactional
+    public DonorProfileDto verifyDonorBloodGroup(UUID targetUserId, VerifyDonorBloodGroupRequest request, String clientIp, String userAgent) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new UnauthorizedSessionAccessException("User is not authenticated."));
+
+        validateUserActive(currentUserId);
+
+        // Anti-fraud: Verifier cannot verify their own blood group
+        if (currentUserId.equals(targetUserId)) {
+            throw new ValidationException("Users cannot verify their own blood group.");
+        }
+
+        // Authorization check: Must be ADMIN or active BLOODBANK staff
+        User verifier = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Verifier user not found: " + currentUserId));
+
+        boolean isAdmin = verifier.getRoles().contains(UserRole.ROLE_ADMIN);
+        boolean isBloodBankStaff = verifier.getRoles().contains(UserRole.ROLE_BLOODBANK);
+
+        if (!isAdmin && !isBloodBankStaff) {
+            throw new AccessDeniedException("Only authorized blood bank personnel and administrators can verify donor blood groups.");
+        }
+
+        if (isBloodBankStaff && !isAdmin) {
+            boolean hasActiveBloodBankAccount = bloodBankAccountRepository != null &&
+                    bloodBankAccountRepository.existsByUserIdAndStatus(currentUserId, BloodBankAccountStatus.ACTIVE);
+            if (!hasActiveBloodBankAccount) {
+                throw new AccessDeniedException("User does not have an active blood bank account to verify blood groups.");
+            }
+        }
+
+        DonorProfile profile = donorProfileRepository.findByUserId(targetUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Donor profile not found for user: " + targetUserId));
+
+        profile.setBloodGroupVerificationStatus(BloodGroupVerificationStatus.VERIFIED);
+        profile.setVerifiedBy(currentUserId);
+        profile.setVerifiedAt(Instant.now());
+        profile.setVerificationNotes(request != null ? request.getNotes() : null);
+        profile.setUpdatedAt(Instant.now());
+
+        DonorProfile savedProfile = donorProfileRepository.save(profile);
+
+        auditService.logAuthEvent(
+                "DONOR_BLOOD_GROUP_VERIFIED",
+                currentUserId,
+                clientIp,
+                userAgent,
+                String.format("{\"action\":\"DONOR_BLOOD_GROUP_VERIFIED\",\"targetUserId\":\"%s\",\"bloodGroup\":\"%s\"}",
+                        targetUserId, savedProfile.getBloodGroup())
+        );
+
+        return mapToDto(savedProfile);
+    }
+
     private DonorProfileDto mapToDto(DonorProfile profile) {
-        return new DonorProfileDto(
+        DonorProfileDto dto = new DonorProfileDto(
                 profile.getId(),
                 profile.getBloodGroup(),
                 profile.getBloodGroupVerificationStatus(),
@@ -199,5 +278,10 @@ public class DonorService {
                 profile.getCreatedAt(),
                 profile.getUpdatedAt()
         );
+        dto.setBiologicalSex(profile.getBiologicalSex());
+        dto.setVerifiedBy(profile.getVerifiedBy());
+        dto.setVerifiedAt(profile.getVerifiedAt());
+        dto.setVerificationNotes(profile.getVerificationNotes());
+        return dto;
     }
 }

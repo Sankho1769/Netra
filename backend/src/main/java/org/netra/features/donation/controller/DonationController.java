@@ -100,7 +100,7 @@ public class DonationController {
      * List pending verification queue for authorized staff.
      */
     @GetMapping("/pending")
-    @PreAuthorize("hasAnyRole('ROLE_BLOODBANK', 'ROLE_ORGANIZATION', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('BLOODBANK', 'ORGANIZATION', 'ADMIN')")
     public ResponseEntity<Page<DonationDetailDto>> getPendingDonations(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size) {
@@ -115,7 +115,7 @@ public class DonationController {
      * Verify a donation claim (by authorized staff).
      */
     @PostMapping("/{id}/verify")
-    @PreAuthorize("hasAnyRole('ROLE_BLOODBANK', 'ROLE_ORGANIZATION', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('BLOODBANK', 'ORGANIZATION', 'ADMIN')")
     public ResponseEntity<DonationDetailDto> verifyDonation(
             @PathVariable("id") UUID id,
             @Valid @RequestBody(required = false) VerifyDonationRequest request,
@@ -134,7 +134,7 @@ public class DonationController {
      * Reject a donation claim (by authorized staff).
      */
     @PostMapping("/{id}/reject")
-    @PreAuthorize("hasAnyRole('ROLE_BLOODBANK', 'ROLE_ORGANIZATION', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('BLOODBANK', 'ORGANIZATION', 'ADMIN')")
     public ResponseEntity<DonationDetailDto> rejectDonation(
             @PathVariable("id") UUID id,
             @Valid @RequestBody RejectDonationRequest request,
@@ -153,7 +153,7 @@ public class DonationController {
      * Directly record and verify an in-person donation (by authorized staff).
      */
     @PostMapping("/record-verified")
-    @PreAuthorize("hasAnyRole('ROLE_BLOODBANK', 'ROLE_ORGANIZATION', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('BLOODBANK', 'ORGANIZATION', 'ADMIN')")
     public ResponseEntity<DonationDetailDto> recordVerifiedDonation(
             @Valid @RequestBody RecordVerifiedDonationRequest request,
             HttpServletRequest servletRequest) {
@@ -171,7 +171,7 @@ public class DonationController {
      * Admin correction endpoint.
      */
     @PostMapping("/{id}/admin-correction")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<DonationDetailDto> adminCorrection(
             @PathVariable("id") UUID id,
             @Valid @RequestBody AdminCorrectionRequest request,

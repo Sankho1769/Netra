@@ -144,7 +144,8 @@ class SecurityHardeningIntegrationTest {
     }
 
     private User createUser(String name, String email, Set<UserRole> roles) {
-        User user = new User(name, email.toLowerCase(), "+919876543210", passwordEncoder.encode("SecurePass123"), roles);
+        String uniquePhone = "+919" + String.format("%09d", Math.abs((long) email.hashCode()) % 1_000_000_000L);
+        User user = new User(name, email.toLowerCase(), uniquePhone, passwordEncoder.encode("SecurePass123"), roles);
         user.setStatus(UserStatus.ACTIVE);
         return userRepository.save(user);
     }

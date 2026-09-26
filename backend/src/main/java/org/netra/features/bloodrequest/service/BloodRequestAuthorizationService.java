@@ -3,6 +3,7 @@ package org.netra.features.bloodrequest.service;
 import org.netra.core.exception.AccountStatusException;
 import org.netra.core.exception.ResourceNotFoundException;
 import org.netra.core.exception.UnauthorizedSessionAccessException;
+import org.netra.core.exception.ValidationException;
 import org.netra.features.bloodrequest.entity.BloodRequest;
 import org.netra.features.user.entity.User;
 import org.netra.features.user.entity.UserRole;
@@ -59,5 +60,27 @@ public class BloodRequestAuthorizationService {
             return false;
         }
         return request.getRequesterUserId().equals(currentUserId);
+    }
+
+    public void verifyCanVerifyRequest(UUID currentUserId, BloodRequest request) {
+        User user = verifyActiveUser(currentUserId);
+        if (request == null) {
+            throw new ResourceNotFoundException("Blood request not found.");
+        }
+
+        // Anti-fraud: Requesters cannot verify their own blood requests
+        if (request.getRequesterUserId().equals(currentUserId)) {
+            log.warn("User {} attempted to self-verify own blood request {}", currentUserId, request.getId());
+            throw new ValidationException("Requesters are not permitted to verify their own blood requests.");
+        }
+
+        boolean isAuthorized = user.getRoles().contains(UserRole.ROLE_BLOODBANK)
+                || user.getRoles().contains(UserRole.ROLE_ADMIN);
+
+        if (!isAuthorized) {
+            log.warn("User {} unauthorized to verify blood request {}", currentUserId, request.getId());
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Only blood bank personnel and administrators are authorized to verify blood requests.");
+        }
     }
 }

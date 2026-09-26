@@ -14,7 +14,9 @@ import org.netra.features.donor.entity.*;
 import org.netra.features.donor.repository.DonorProfileRepository;
 import org.netra.features.eligibility.entity.EligibilitySession;
 import org.netra.features.eligibility.entity.ResultType;
+import org.netra.features.eligibility.entity.SessionStatus;
 import org.netra.features.eligibility.repository.EligibilitySessionRepository;
+import org.netra.features.eligibility.service.DonationEligibilityPolicy;
 import org.netra.features.matching.dto.CreateDonorMatchRequest;
 import org.netra.features.matching.dto.DonorMatchDetailDto;
 import org.netra.features.matching.dto.RequesterDonorMatchDto;
@@ -65,6 +67,7 @@ public class DonorResponseService {
     private final EligibilitySessionRepository eligibilitySessionRepository;
     private final BloodCompatibilityMatrix compatibilityMatrix;
     private final AuditService auditService;
+    private final DonationEligibilityPolicy donationEligibilityPolicy;
     private final Clock clock;
     private final Duration matchResponseTtl;
     private final double maxRadiusKm;
@@ -89,12 +92,36 @@ public class DonorResponseService {
             EligibilitySessionRepository eligibilitySessionRepository,
             BloodCompatibilityMatrix compatibilityMatrix,
             AuditService auditService,
+            DonationEligibilityPolicy donationEligibilityPolicy,
             Clock clock,
             @Value("${netra.donor-matching.match-response-ttl:24h}") Duration matchResponseTtl,
             @Value("${netra.matching.max-radius-km:100.0}") double maxRadiusKm,
             @Value("${netra.matching.min-donation-interval-days:90}") int minDonationIntervalDays,
             @Value("${netra.donor-matching.max-active-matches-per-request:10}") int maxActiveMatchesPerRequest,
             org.springframework.beans.factory.ObjectProvider<ApplicationEventPublisher> eventPublisherProvider) {
+        this(donorMatchRepository, bloodRequestRepository, authorizationService, donorProfileRepository,
+                userRepository, eligibilitySessionRepository, compatibilityMatrix, auditService,
+                donationEligibilityPolicy, clock, matchResponseTtl, maxRadiusKm, minDonationIntervalDays,
+                maxActiveMatchesPerRequest,
+                eventPublisherProvider != null ? eventPublisherProvider.getIfAvailable() : null);
+    }
+
+    public DonorResponseService(
+            DonorMatchRepository donorMatchRepository,
+            BloodRequestRepository bloodRequestRepository,
+            BloodRequestAuthorizationService authorizationService,
+            DonorProfileRepository donorProfileRepository,
+            UserRepository userRepository,
+            EligibilitySessionRepository eligibilitySessionRepository,
+            BloodCompatibilityMatrix compatibilityMatrix,
+            AuditService auditService,
+            DonationEligibilityPolicy donationEligibilityPolicy,
+            Clock clock,
+            Duration matchResponseTtl,
+            double maxRadiusKm,
+            int minDonationIntervalDays,
+            int maxActiveMatchesPerRequest,
+            ApplicationEventPublisher eventPublisher) {
         this.donorMatchRepository = donorMatchRepository;
         this.bloodRequestRepository = bloodRequestRepository;
         this.authorizationService = authorizationService;
@@ -103,12 +130,34 @@ public class DonorResponseService {
         this.eligibilitySessionRepository = eligibilitySessionRepository;
         this.compatibilityMatrix = compatibilityMatrix;
         this.auditService = auditService;
+        this.donationEligibilityPolicy = donationEligibilityPolicy != null ? donationEligibilityPolicy : new DonationEligibilityPolicy();
         this.clock = clock != null ? clock : Clock.systemUTC();
         this.matchResponseTtl = matchResponseTtl;
         this.maxRadiusKm = maxRadiusKm;
         this.minDonationIntervalDays = minDonationIntervalDays;
         this.maxActiveMatchesPerRequest = maxActiveMatchesPerRequest;
-        this.eventPublisher = eventPublisherProvider != null ? eventPublisherProvider.getIfAvailable() : null;
+        this.eventPublisher = eventPublisher;
+    }
+
+    public DonorResponseService(
+            DonorMatchRepository donorMatchRepository,
+            BloodRequestRepository bloodRequestRepository,
+            BloodRequestAuthorizationService authorizationService,
+            DonorProfileRepository donorProfileRepository,
+            UserRepository userRepository,
+            EligibilitySessionRepository eligibilitySessionRepository,
+            BloodCompatibilityMatrix compatibilityMatrix,
+            AuditService auditService,
+            Clock clock,
+            Duration matchResponseTtl,
+            double maxRadiusKm,
+            int minDonationIntervalDays,
+            int maxActiveMatchesPerRequest,
+            ApplicationEventPublisher eventPublisher) {
+        this(donorMatchRepository, bloodRequestRepository, authorizationService, donorProfileRepository,
+                userRepository, eligibilitySessionRepository, compatibilityMatrix, auditService,
+                new DonationEligibilityPolicy(), clock, matchResponseTtl, maxRadiusKm,
+                minDonationIntervalDays, maxActiveMatchesPerRequest, eventPublisher);
     }
 
     public DonorResponseService(
@@ -245,25 +294,27 @@ public class DonorResponseService {
 
         double distanceKm = Math.round(rawDistanceKm * 10.0) / 10.0;
 
-        // Mandatory Donation Interval
+        // Mandatory Donation Interval using authoritative DonationEligibilityPolicy
         LocalDate today = LocalDate.ofInstant(now, clock.getZone());
         if (donorProfile.getLastDonationDate() != null) {
-            long daysSinceLast = ChronoUnit.DAYS.between(donorProfile.getLastDonationDate(), today);
-            if (daysSinceLast < minDonationIntervalDays) {
-                throw new ValidationException("Donor has donated too recently. Minimum interval is " + minDonationIntervalDays + " days.");
+            if (!donationEligibilityPolicy.isIntervalEligible(donorProfile.getBiologicalSex(), donorProfile.getLastDonationDate(), today)) {
+                int requiredDays = donationEligibilityPolicy.getRequiredIntervalDays(donorProfile.getBiologicalSex());
+                throw new ValidationException("Donor has donated too recently. Minimum interval is " + requiredDays + " days.");
             }
         }
 
-        // Eligibility Screening Session Recheck
-        List<EligibilitySession> sessions = eligibilitySessionRepository.findByUserIdInOrderByStartedAtDesc(List.of(donorUserId));
+        // Eligibility Screening Session Recheck (COMPLETED sessions only)
+        List<EligibilitySession> sessions = eligibilitySessionRepository
+                .findByUserIdInAndStatusOrderByCompletedAtDesc(List.of(donorUserId), SessionStatus.COMPLETED);
         if (!sessions.isEmpty()) {
             EligibilitySession latest = sessions.get(0);
             if (latest.getResult() == ResultType.MEDICAL_REVIEW_REQUIRED) {
                 throw new ValidationException("Donor requires medical review prior to donation.");
             }
             if (latest.getResult() == ResultType.TEMPORARY_DEFERRAL) {
-                if (latest.getEstimatedEligibleDate() != null && latest.getEstimatedEligibleDate().isAfter(today)) {
-                    throw new ValidationException("Donor has an active temporary deferral until " + latest.getEstimatedEligibleDate());
+                if (latest.getEstimatedEligibleDate() == null || latest.getEstimatedEligibleDate().isAfter(today)) {
+                    throw new ValidationException("Donor has an active temporary deferral" +
+                            (latest.getEstimatedEligibleDate() != null ? " until " + latest.getEstimatedEligibleDate() : "."));
                 }
             }
         }
@@ -422,6 +473,32 @@ public class DonorResponseService {
         }
 
         Instant now = clock.instant();
+
+        // Re-validate donor eligibility prior to CAS acceptance
+        Optional<DonorProfile> donorProfileOpt = donorProfileRepository.findByUserId(currentUserId);
+        if (donorProfileOpt.isPresent()) {
+            DonorProfile donorProfile = donorProfileOpt.get();
+            LocalDate today = LocalDate.ofInstant(now, clock.getZone());
+            if (donorProfile.getLastDonationDate() != null &&
+                    !donationEligibilityPolicy.isIntervalEligible(donorProfile.getBiologicalSex(), donorProfile.getLastDonationDate(), today)) {
+                int requiredDays = donationEligibilityPolicy.getRequiredIntervalDays(donorProfile.getBiologicalSex());
+                throw new ValidationException("Donor has donated too recently. Minimum interval is " + requiredDays + " days.");
+            }
+            List<EligibilitySession> completedSessions = eligibilitySessionRepository
+                    .findByUserIdInAndStatusOrderByCompletedAtDesc(List.of(currentUserId), SessionStatus.COMPLETED);
+            if (!completedSessions.isEmpty()) {
+                EligibilitySession latest = completedSessions.get(0);
+                if (latest.getResult() == ResultType.MEDICAL_REVIEW_REQUIRED) {
+                    throw new ValidationException("Donor requires medical review prior to donation.");
+                }
+                if (latest.getResult() == ResultType.TEMPORARY_DEFERRAL) {
+                    if (latest.getEstimatedEligibleDate() == null || latest.getEstimatedEligibleDate().isAfter(today)) {
+                        throw new ValidationException("Donor has an active temporary deferral" +
+                                (latest.getEstimatedEligibleDate() != null ? " until " + latest.getEstimatedEligibleDate() : "."));
+                    }
+                }
+            }
+        }
 
         // Atomic CAS transition: MATCHED -> ACCEPTED where expiresAt > now
         int updated = donorMatchRepository.atomicTransitionStatus(

@@ -35,11 +35,23 @@ public class DonorProfile {
     @Column(name = "last_donation_date")
     private LocalDate lastDonationDate;
 
+    @Column(name = "biological_sex", length = 16)
+    private String biologicalSex;
+
     @Column(name = "latitude")
     private Double latitude;
 
     @Column(name = "longitude")
     private Double longitude;
+
+    @Column(name = "verified_by")
+    private UUID verifiedBy;
+
+    @Column(name = "verified_at")
+    private Instant verifiedAt;
+
+    @Column(name = "verification_notes", length = 500)
+    private String verificationNotes;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
@@ -116,6 +128,14 @@ public class DonorProfile {
         this.lastDonationDate = lastDonationDate;
     }
 
+    public String getBiologicalSex() {
+        return biologicalSex;
+    }
+
+    public void setBiologicalSex(String biologicalSex) {
+        this.biologicalSex = biologicalSex;
+    }
+
     public Double getLatitude() {
         return latitude;
     }
@@ -146,5 +166,29 @@ public class DonorProfile {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public UUID getVerifiedBy() {
+        return verifiedBy;
+    }
+
+    public void setVerifiedBy(UUID verifiedBy) {
+        this.verifiedBy = verifiedBy;
+    }
+
+    public Instant getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    public void setVerifiedAt(Instant verifiedAt) {
+        this.verifiedAt = verifiedAt;
+    }
+
+    public String getVerificationNotes() {
+        return verificationNotes;
+    }
+
+    public void setVerificationNotes(String verificationNotes) {
+        this.verificationNotes = verificationNotes;
     }
 }

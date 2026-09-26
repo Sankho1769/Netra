@@ -111,4 +111,18 @@ public class BloodRequestController {
         BloodRequestDetailDto cancelled = bloodRequestService.cancelRequest(id, request, clientIp, userAgent);
         return ResponseEntity.ok(cancelled);
     }
+
+    @PostMapping("/{id}/verify")
+    @PreAuthorize("hasAnyRole('BLOODBANK', 'ADMIN')")
+    public ResponseEntity<BloodRequestDetailDto> verifyRequest(
+            @PathVariable UUID id,
+            @Valid @RequestBody VerifyBloodRequestDto request,
+            HttpServletRequest servletRequest) {
+
+        String clientIp = clientIpResolver.resolveClientIp(servletRequest);
+        String userAgent = servletRequest.getHeader("User-Agent");
+
+        BloodRequestDetailDto verified = bloodRequestService.verifyRequest(id, request, clientIp, userAgent);
+        return ResponseEntity.ok(verified);
+    }
 }

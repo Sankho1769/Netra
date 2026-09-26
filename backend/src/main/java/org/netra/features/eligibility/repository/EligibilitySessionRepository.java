@@ -14,5 +14,7 @@ public interface EligibilitySessionRepository extends JpaRepository<EligibilityS
     Optional<EligibilitySession> findByIdAndUserId(UUID id, UUID userId);
     List<EligibilitySession> findByUserIdOrderByStartedAtDesc(UUID userId);
     List<EligibilitySession> findByUserIdInOrderByStartedAtDesc(java.util.Collection<UUID> userIds);
+    List<EligibilitySession> findByUserIdInAndStatusOrderByCompletedAtDesc(java.util.Collection<UUID> userIds, org.netra.features.eligibility.entity.SessionStatus status);
+    List<EligibilitySession> findByUserIdAndStatusOrderByCompletedAtDesc(UUID userId, org.netra.features.eligibility.entity.SessionStatus status);
     List<EligibilitySession> findByExpiresAtBeforeAndCompletedAtIsNull(Instant cutoff);
 }

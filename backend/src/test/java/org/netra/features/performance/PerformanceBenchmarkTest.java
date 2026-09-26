@@ -195,7 +195,8 @@ class PerformanceBenchmarkTest {
 
     private User createUser(String name, String email, Set<UserRole> roles) {
         return userRepository.findByEmailIgnoreCase(email).orElseGet(() -> {
-            User u = new User(name, email.toLowerCase(), "+919876543210", passwordEncoder.encode("SecretPass123"), roles);
+            String uniquePhone = "+919" + String.format("%09d", Math.abs((long) email.hashCode()) % 1_000_000_000L);
+            User u = new User(name, email.toLowerCase(), uniquePhone, passwordEncoder.encode("SecretPass123"), roles);
             u.setStatus(UserStatus.ACTIVE);
             return userRepository.save(u);
         });

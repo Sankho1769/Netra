@@ -20,6 +20,12 @@ public class UpdateDonorProfileRequest {
     @DecimalMax(value = "180.0", message = "Longitude must be between -180.0 and 180.0.")
     private Double longitude;
 
+    @jakarta.validation.constraints.Pattern(
+            regexp = "^(?i)(MALE|FEMALE|OTHER)$",
+            message = "Biological sex must be MALE, FEMALE, or OTHER."
+    )
+    private String biologicalSex;
+
     @JsonIgnore
     @AssertTrue(message = "Latitude and longitude must either both be supplied or both be omitted.")
     public boolean isCoordinatesPairValid() {
@@ -69,7 +75,23 @@ public class UpdateDonorProfileRequest {
         return longitude;
     }
 
+    public UpdateDonorProfileRequest(BloodGroup bloodGroup, DonorAvailabilityStatus availabilityStatus, Double latitude, Double longitude, String biologicalSex) {
+        this.bloodGroup = bloodGroup;
+        this.availabilityStatus = availabilityStatus;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.biologicalSex = biologicalSex;
+    }
+
     public void setLongitude(Double longitude) {
         this.longitude = longitude;
+    }
+
+    public String getBiologicalSex() {
+        return biologicalSex;
+    }
+
+    public void setBiologicalSex(String biologicalSex) {
+        this.biologicalSex = biologicalSex;
     }
 }

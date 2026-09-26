@@ -11,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -27,11 +29,12 @@ import java.util.Map;
  * - Raw credentials or secret keys are never committed to the repository.
  * - If FCM credentials or configuration are missing, fails explicitly with descriptive error
  *   (never silently fakes delivery).
+ * - Implements HealthIndicator to dynamically expose FCM status on Actuator readiness probes.
  * - Device tokens are masked in operational logging to protect recipient privacy.
  */
 @Component
 @ConditionalOnProperty(name = "netra.notifications.push.provider", havingValue = "fcm")
-public class FcmPushNotificationProvider implements PushNotificationProvider {
+public class FcmPushNotificationProvider implements PushNotificationProvider, HealthIndicator {
 
     private static final Logger log = LoggerFactory.getLogger(FcmPushNotificationProvider.class);
     private static final String APP_NAME = "NETRA_FCM_APP";
@@ -151,6 +154,21 @@ public class FcmPushNotificationProvider implements PushNotificationProvider {
     @Override
     public String getProviderName() {
         return "FCM";
+    }
+
+    @Override
+    public Health health() {
+        if (firebaseApp != null) {
+            return Health.up()
+                    .withDetail("provider", "fcm")
+                    .withDetail("appName", firebaseApp.getName())
+                    .build();
+        } else {
+            return Health.down()
+                    .withDetail("provider", "fcm")
+                    .withDetail("error", initErrorMessage != null ? initErrorMessage : "Firebase Admin SDK uninitialized")
+                    .build();
+        }
     }
 
     private String maskToken(String token) {

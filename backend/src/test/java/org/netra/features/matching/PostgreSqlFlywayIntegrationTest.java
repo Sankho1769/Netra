@@ -108,16 +108,16 @@ public class PostgreSqlFlywayIntegrationTest {
 
     @Test
     @Order(1)
-    @DisplayName("PostgreSQL Gate: Verify Flyway V1->V14 executed cleanly and created all schema objects")
-    void testFlywayV1ThroughV14SchemaMetadata() throws Exception {
+    @DisplayName("PostgreSQL Gate: Verify Flyway V1->V17 executed cleanly and created all schema objects")
+    void testFlywayV1ThroughV17SchemaMetadata() throws Exception {
         assertNotNull(dataSource, "DataSource must be injected");
         assertNotNull(jdbcTemplate, "JdbcTemplate must be injected");
 
-        // 1. Verify Flyway schema history table exists and contains 14 successful migrations
+        // 1. Verify Flyway schema history table exists and contains 17 successful migrations
         List<Map<String, Object>> history = jdbcTemplate.queryForList(
                 "SELECT version, description, type, script, success FROM flyway_schema_history ORDER BY installed_rank"
         );
-        assertEquals(15, history.size(), "Flyway must have applied exactly 15 migrations (V1 through V15)");
+        assertEquals(17, history.size(), "Flyway must have applied exactly 17 migrations (V1 through V17)");
 
         for (Map<String, Object> row : history) {
             Boolean success = (Boolean) row.get("success");
@@ -332,6 +332,44 @@ public class PostgreSqlFlywayIntegrationTest {
             assertTrue(fulfillmentIndexes.contains("idx_fulfillments_status"), "Index idx_fulfillments_status must exist");
             assertTrue(fulfillmentIndexes.contains("idx_fulfillments_created_by"), "Index idx_fulfillments_created_by must exist");
             assertTrue(fulfillmentIndexes.contains("uq_fulfillments_active_donation"), "Unique index uq_fulfillments_active_donation must exist");
+
+            // 16. Verify V16 eligibility unification and blood request verification
+            Integer chkBioSex = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'chk_donor_profiles_biological_sex'",
+                    Integer.class
+            );
+            assertEquals(1, chkBioSex, "Check constraint 'chk_donor_profiles_biological_sex' must exist");
+
+            Integer chkReqVerifStatus = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'chk_blood_request_verification_status'",
+                    Integer.class
+            );
+            assertEquals(1, chkReqVerifStatus, "Check constraint 'chk_blood_request_verification_status' must exist");
+
+            List<String> dpIndexes = jdbcTemplate.queryForList(
+                    "SELECT indexname FROM pg_indexes WHERE tablename = 'donor_profiles'",
+                    String.class
+            );
+            assertTrue(dpIndexes.contains("idx_donor_profiles_biological_sex"), "Index idx_donor_profiles_biological_sex must exist");
+
+            List<String> brIndexes = jdbcTemplate.queryForList(
+                    "SELECT indexname FROM pg_indexes WHERE tablename = 'blood_requests'",
+                    String.class
+            );
+            assertTrue(brIndexes.contains("idx_blood_requests_verification_status"), "Index idx_blood_requests_verification_status must exist");
+
+            // 17. Verify V17 phone uniqueness and index
+            Integer uqUsersPhone = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'uq_users_phone'",
+                    Integer.class
+            );
+            assertEquals(1, uqUsersPhone, "Unique constraint 'uq_users_phone' must exist");
+
+            List<String> usersIndexes = jdbcTemplate.queryForList(
+                    "SELECT indexname FROM pg_indexes WHERE tablename = 'users'",
+                    String.class
+            );
+            assertTrue(usersIndexes.contains("idx_users_phone"), "Index idx_users_phone must exist");
         }
     }
 

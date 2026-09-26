@@ -156,10 +156,17 @@ public class DonationEventService {
         if (request.getPostalCode() != null && !request.getPostalCode().isBlank()) {
             event.setPostalCode(request.getPostalCode().trim());
         }
-        if (request.getLatitude() != null) {
+        if (request.getLatitude() != null || request.getLongitude() != null) {
+            if (request.getLatitude() == null || request.getLongitude() == null) {
+                throw new ValidationException("Latitude and longitude must either both be supplied or both be omitted.");
+            }
+            if (request.getLatitude() < -90.0 || request.getLatitude() > 90.0) {
+                throw new ValidationException("Latitude must be between -90.0 and 90.0 degrees.");
+            }
+            if (request.getLongitude() < -180.0 || request.getLongitude() > 180.0) {
+                throw new ValidationException("Longitude must be between -180.0 and 180.0 degrees.");
+            }
             event.setLatitude(request.getLatitude());
-        }
-        if (request.getLongitude() != null) {
             event.setLongitude(request.getLongitude());
         }
 
@@ -403,10 +410,10 @@ public class DonationEventService {
 
         Page<DonationEvent> events;
         if (bloodBankId != null) {
-            if (status != null) {
-                events = donationEventRepository.findByBloodBankIdAndStatus(bloodBankId, status, bounded);
-            } else if (Boolean.TRUE.equals(upcomingOnly)) {
+            if (Boolean.TRUE.equals(upcomingOnly)) {
                 events = donationEventRepository.findUpcomingEventsByBloodBankId(bloodBankId, allowedStatuses, now, bounded);
+            } else if (status != null) {
+                events = donationEventRepository.findByBloodBankIdAndStatus(bloodBankId, status, bounded);
             } else {
                 events = donationEventRepository.findByBloodBankIdAndStatusIn(bloodBankId, allowedStatuses, bounded);
             }

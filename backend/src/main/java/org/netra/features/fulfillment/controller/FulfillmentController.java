@@ -29,6 +29,7 @@ public class FulfillmentController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('BLOODBANK', 'ADMIN')")
     public ResponseEntity<FulfillmentDto> createFulfillment(
             @Valid @RequestBody CreateFulfillmentRequest request,
             HttpServletRequest httpRequest) {

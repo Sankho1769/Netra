@@ -84,6 +84,19 @@ public class BloodRequest {
     @Column(name = "fulfilled_by")
     private UUID fulfilledBy;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "verification_status", nullable = false, length = 32)
+    private BloodRequestVerificationStatus verificationStatus = BloodRequestVerificationStatus.UNVERIFIED;
+
+    @Column(name = "verified_by")
+    private UUID verifiedBy;
+
+    @Column(name = "verified_at")
+    private Instant verifiedAt;
+
+    @Column(name = "verification_notes", length = 500)
+    private String verificationNotes;
+
     @Version
     @Column(name = "version", nullable = false)
     private Long version = 0L;
@@ -285,5 +298,37 @@ public class BloodRequest {
 
     public int getRemainingUnits() {
         return Math.max(0, (unitsRequired != null ? unitsRequired : 0) - getUnitsFulfilled());
+    }
+
+    public BloodRequestVerificationStatus getVerificationStatus() {
+        return verificationStatus;
+    }
+
+    public void setVerificationStatus(BloodRequestVerificationStatus verificationStatus) {
+        this.verificationStatus = verificationStatus != null ? verificationStatus : BloodRequestVerificationStatus.UNVERIFIED;
+    }
+
+    public UUID getVerifiedBy() {
+        return verifiedBy;
+    }
+
+    public void setVerifiedBy(UUID verifiedBy) {
+        this.verifiedBy = verifiedBy;
+    }
+
+    public Instant getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    public void setVerifiedAt(Instant verifiedAt) {
+        this.verifiedAt = verifiedAt;
+    }
+
+    public String getVerificationNotes() {
+        return verificationNotes;
+    }
+
+    public void setVerificationNotes(String verificationNotes) {
+        this.verificationNotes = verificationNotes;
     }
 }
