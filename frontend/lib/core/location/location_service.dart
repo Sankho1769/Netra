@@ -12,13 +12,22 @@ abstract class LocationService {
 /// Production implementation with privacy fuzzing and graceful fallbacks.
 class DefaultLocationService implements LocationService {
   final PermissionService _permissionService;
+  final Future<Coordinates?> Function()? _deviceCoordinateProvider;
 
-  DefaultLocationService({PermissionService? permissionService})
-      : _permissionService = permissionService ?? DefaultPermissionService();
+  DefaultLocationService({
+    PermissionService? permissionService,
+    Future<Coordinates?> Function()? deviceCoordinateProvider,
+  })  : _permissionService = permissionService ?? DefaultPermissionService(),
+        _deviceCoordinateProvider = deviceCoordinateProvider;
 
   @override
   Future<ApproximateLocation?> getCurrentLocation(
       {bool approximateOnly = true}) async {
+    final enabled = await _permissionService.isLocationServiceEnabled();
+    if (!enabled) {
+      return null;
+    }
+
     final permission = await _permissionService.checkLocationPermission();
     if (permission != LocationPermissionStatus.granted) {
       final requested = await _permissionService.requestLocationPermission();
@@ -27,22 +36,30 @@ class DefaultLocationService implements LocationService {
       }
     }
 
-    // Default fallback center (e.g. Mumbai center for demo/discovery)
-    // Coarse coordinates rounded to 2 decimal places (~1.1 km resolution)
-    const double rawLat = 19.0760;
-    const double rawLng = 72.8777;
+    if (_deviceCoordinateProvider != null) {
+      final coords = await _deviceCoordinateProvider!();
+      if (coords == null) return null;
 
-    final double lat = approximateOnly ? (rawLat * 100).round() / 100 : rawLat;
-    final double lng = approximateOnly ? (rawLng * 100).round() / 100 : rawLng;
+      final double rawLat = coords.latitude;
+      final double rawLng = coords.longitude;
+      final double lat =
+          approximateOnly ? (rawLat * 100).round() / 100 : rawLat;
+      final double lng =
+          approximateOnly ? (rawLng * 100).round() / 100 : rawLng;
 
-    return ApproximateLocation(
-      city: "Mumbai",
-      district: "Mumbai Suburban",
-      state: "Maharashtra",
-      postalCode: "400012",
-      coordinates: Coordinates(latitude: lat, longitude: lng),
-      isApproximate: approximateOnly,
-    );
+      return ApproximateLocation(
+        coordinates: Coordinates(
+          latitude: lat,
+          longitude: lng,
+          accuracy: coords.accuracy,
+        ),
+        isApproximate: approximateOnly,
+      );
+    }
+
+    // When native device GPS hardware/bridge is not present, return null
+    // rather than faking coordinates to prevent incorrect emergency or blood request proximity matching.
+    return null;
   }
 
   @override

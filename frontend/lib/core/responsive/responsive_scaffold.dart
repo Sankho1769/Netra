@@ -30,6 +30,7 @@ class ResponsiveScaffold extends StatelessWidget {
   final Widget? floatingActionButton;
   final FloatingActionButtonLocation? floatingActionButtonLocation;
   final Color? backgroundColor;
+  final Widget? customBottomBar;
 
   const ResponsiveScaffold({
     super.key,
@@ -43,6 +44,7 @@ class ResponsiveScaffold extends StatelessWidget {
     this.floatingActionButton,
     this.floatingActionButtonLocation,
     this.backgroundColor,
+    this.customBottomBar,
   });
 
   @override
@@ -60,24 +62,25 @@ class ResponsiveScaffold extends StatelessWidget {
         body: body,
         floatingActionButton: floatingActionButton,
         floatingActionButtonLocation: floatingActionButtonLocation,
-        bottomNavigationBar: hasNavigation
-            ? NavigationBar(
-                selectedIndex: selectedIndex,
-                onDestinationSelected: onDestinationSelected,
-                backgroundColor: NetraColors.surfaceWhite,
-                indicatorColor: NetraColors.backgroundRed,
-                elevation: 3,
-                destinations: destinations!.map((d) {
-                  return NavigationDestination(
-                    icon: Icon(d.icon),
-                    selectedIcon: Icon(d.selectedIcon ?? d.icon,
-                        color: NetraColors.primaryRed),
-                    label: d.label,
-                    tooltip: d.tooltip,
-                  );
-                }).toList(),
-              )
-            : null,
+        bottomNavigationBar: customBottomBar ??
+            (hasNavigation
+                ? NavigationBar(
+                    selectedIndex: selectedIndex,
+                    onDestinationSelected: onDestinationSelected,
+                    backgroundColor: NetraColors.surfaceWhite,
+                    indicatorColor: NetraColors.backgroundRed,
+                    elevation: 3,
+                    destinations: destinations!.map((d) {
+                      return NavigationDestination(
+                        icon: Icon(d.icon),
+                        selectedIcon: Icon(d.selectedIcon ?? d.icon,
+                            color: NetraColors.primaryRed),
+                        label: d.label,
+                        tooltip: d.tooltip,
+                      );
+                    }).toList(),
+                  )
+                : null),
       );
     }
 
