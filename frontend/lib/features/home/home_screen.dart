@@ -4,6 +4,9 @@ import '../../core/theme/netra_colors.dart';
 import '../../core/theme/netra_spacing.dart';
 import '../../core/theme/netra_typography.dart';
 import '../../common/widgets/common_widgets.dart';
+import '../../common/widgets/netra_bottom_nav_bar.dart';
+import '../../common/widgets/blood_action_sheet.dart';
+import '../about/screens/about_screen.dart';
 import '../eligibility/screens/eligibility_intro_screen.dart';
 import '../bloodbank/screens/nearby_blood_banks_screen.dart';
 import '../events/screens/donation_event_list_screen.dart';
@@ -28,7 +31,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return ResponsiveScaffold(
       selectedIndex: _selectedTab,
-      onDestinationSelected: (idx) => setState(() => _selectedTab = idx),
+      onDestinationSelected: (idx) {
+        if (idx == 2) {
+          BloodActionSheet.show(context);
+        } else {
+          setState(() => _selectedTab = idx);
+        }
+      },
       destinations: const [
         ResponsiveNavigationDestination(
           icon: Icons.home_outlined,
@@ -37,12 +46,35 @@ class _HomeScreenState extends State<HomeScreen> {
           tooltip: "Home Dashboard",
         ),
         ResponsiveNavigationDestination(
+          icon: Icons.calendar_today_outlined,
+          selectedIcon: Icons.calendar_today_rounded,
+          label: "Events",
+          tooltip: "Donation Camps & Events",
+        ),
+        ResponsiveNavigationDestination(
+          icon: Icons.water_drop_outlined,
+          selectedIcon: Icons.water_drop_rounded,
+          label: "Donate",
+          tooltip: "Quick Action Hub",
+        ),
+        ResponsiveNavigationDestination(
+          icon: Icons.article_outlined,
+          selectedIcon: Icons.article_rounded,
+          label: "About",
+          tooltip: "Donor Guidelines & Facts",
+        ),
+        ResponsiveNavigationDestination(
           icon: Icons.person_outline_rounded,
           selectedIcon: Icons.person_rounded,
           label: "Profile",
           tooltip: "Donor Profile",
         ),
       ],
+      customBottomBar: NetraBottomNavBar(
+        selectedIndex: _selectedTab,
+        onItemSelected: (idx) => setState(() => _selectedTab = idx),
+        onCenterActionTap: () => BloodActionSheet.show(context),
+      ),
       appBar: NetraAppBar(
         title: "NETRA",
         leading: Padding(
@@ -50,14 +82,14 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: NetraColors.primaryRed,
-                  borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
+                child: Image.asset(
+                  'assets/branding/netra_logo.png',
+                  width: 32,
+                  height: 32,
+                  fit: BoxFit.contain,
                 ),
-                child: const Icon(Icons.water_drop_rounded,
-                    color: NetraColors.surfaceWhite, size: 18),
               ),
             ],
           ),
@@ -67,10 +99,23 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
         showBackButton: false,
       ),
-      body: _selectedTab == 0
-          ? _buildHomeTab(context)
-          : _buildProfileTab(context),
+      body: _buildCurrentTab(context),
     );
+  }
+
+  Widget _buildCurrentTab(BuildContext context) {
+    switch (_selectedTab) {
+      case 0:
+        return _buildHomeTab(context);
+      case 1:
+        return const DonationEventListScreen(isEmbedded: true);
+      case 3:
+        return const AboutScreen(isEmbedded: true);
+      case 4:
+        return _buildProfileTab(context);
+      default:
+        return _buildHomeTab(context);
+    }
   }
 
   Widget _buildHomeTab(BuildContext context) {
@@ -107,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
               boxShadow: [
                 BoxShadow(
-                  color: NetraColors.primaryRed.withOpacity(0.25),
+                  color: NetraColors.primaryRed.withValues(alpha: 0.25),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -121,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Container(
                       padding: NetraSpacing.paddingSm,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius:
                             BorderRadius.circular(NetraSpacing.radiusMd),
                       ),
@@ -194,7 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 border: Border.all(color: const Color(0xFFFCA5A5), width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFDC2626).withOpacity(0.08),
+                    color: const Color(0xFFDC2626).withValues(alpha: 0.08),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -282,13 +327,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   subtitle: "Find & register",
                   bgColor: NetraColors.backgroundRed,
                   iconColor: NetraColors.primaryRed,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              const DonationEventListScreen()),
-                    );
-                  },
+                  onTap: () => setState(() => _selectedTab = 1),
                 ),
               ),
               NetraSpacing.gapW12,
@@ -327,7 +366,122 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
               ),
+              NetraSpacing.gapW12,
+              Expanded(
+                child: _buildQuickActionCard(
+                  icon: Icons.menu_book_outlined,
+                  title: "Donor Guidelines",
+                  subtitle: "Preparation & facts",
+                  bgColor: const Color(0xFFF0FDF4),
+                  iconColor: const Color(0xFF16A34A),
+                  onTap: () => setState(() => _selectedTab = 3),
+                ),
+              ),
             ],
+          ),
+          NetraSpacing.gapH24,
+
+          // Featured Community Drive Card (reproducing reference event.html)
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: NetraColors.surfaceWhite,
+              borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
+              border: Border.all(color: const Color(0xFFF1F5F9)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFDC2626), Color(0xFFDB2777)],
+                        ),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        "FEATURED DRIVE",
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ),
+                    const Row(
+                      children: [
+                        Icon(Icons.calendar_today_rounded,
+                            size: 14, color: NetraColors.primaryRed),
+                        SizedBox(width: 4),
+                        Text(
+                          "04 Jun 2026",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: NetraColors.primaryRed,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                NetraSpacing.gapH12,
+                const Text(
+                  "Bhawanipur Campus Blood Drive",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: NetraColors.textPrimary,
+                  ),
+                ),
+                NetraSpacing.gapH4,
+                const Row(
+                  children: [
+                    Icon(Icons.location_on_outlined,
+                        size: 14, color: NetraColors.textSecondary),
+                    SizedBox(width: 4),
+                    Text(
+                      "Bhawanipur Global Campus | 10:00 AM onwards",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: NetraColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                NetraSpacing.gapH12,
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: NetraColors.primaryRed,
+                    side: const BorderSide(color: NetraColors.primaryRed),
+                    minimumSize: const Size(double.infinity, 38),
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(NetraSpacing.radiusSm),
+                    ),
+                  ),
+                  onPressed: () => setState(() => _selectedTab = 1),
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                  label: const Text(
+                    "View All Camps & Register",
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
           ),
           NetraSpacing.gapH24,
         ],

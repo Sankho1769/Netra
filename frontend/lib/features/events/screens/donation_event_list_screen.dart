@@ -12,8 +12,13 @@ import 'create_donation_event_screen.dart';
 
 class DonationEventListScreen extends StatefulWidget {
   final DonationEventController? controller;
+  final bool isEmbedded;
 
-  const DonationEventListScreen({super.key, this.controller});
+  const DonationEventListScreen({
+    super.key,
+    this.controller,
+    this.isEmbedded = false,
+  });
 
   @override
   State<DonationEventListScreen> createState() =>
@@ -57,6 +62,111 @@ class _DonationEventListScreenState extends State<DonationEventListScreen> {
           crossAxisCount = 2;
         }
 
+        final bodyContent = Column(
+          children: [
+            if (widget.isEmbedded)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Donation Camps',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.bookmark_outline, size: 20),
+                          tooltip: 'My Registrations',
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) =>
+                                      const MyEventRegistrationsScreen()),
+                            );
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle_outline, size: 20),
+                          tooltip: 'Host a Camp',
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) =>
+                                      const CreateDonationEventScreen()),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            // Search & Filter Header
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _cityController,
+                    decoration: InputDecoration(
+                      hintText: 'Search camps by city (e.g. Mumbai, Pune)',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _cityController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _cityController.clear();
+                                _controller.setCity(null);
+                              },
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                    ),
+                    onSubmitted: _onCitySubmitted,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      FilterChip(
+                        label: const Text('Upcoming Only'),
+                        selected: _controller.upcomingOnly,
+                        onSelected: (val) => _controller.setUpcomingOnly(val),
+                      ),
+                      const SizedBox(width: 8),
+                      ActionChip(
+                        avatar: const Icon(Icons.refresh, size: 16),
+                        label: const Text('Refresh'),
+                        onPressed: () => _controller.loadEvents(),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Content Area
+            Expanded(
+              child: _buildContent(crossAxisCount),
+            ),
+          ],
+        );
+
+        if (widget.isEmbedded) {
+          return bodyContent;
+        }
+
         return ResponsiveScaffold(
           title: 'Donation Camps',
           actions: [
@@ -83,62 +193,7 @@ class _DonationEventListScreenState extends State<DonationEventListScreen> {
               },
             ),
           ],
-          body: Column(
-            children: [
-              // Search & Filter Header
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: _cityController,
-                      decoration: InputDecoration(
-                        hintText: 'Search camps by city (e.g. Mumbai, Pune)',
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: _cityController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  _cityController.clear();
-                                  _controller.setCity(null);
-                                },
-                              )
-                            : null,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                      ),
-                      onSubmitted: _onCitySubmitted,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        FilterChip(
-                          label: const Text('Upcoming Only'),
-                          selected: _controller.upcomingOnly,
-                          onSelected: (val) => _controller.setUpcomingOnly(val),
-                        ),
-                        const SizedBox(width: 8),
-                        ActionChip(
-                          avatar: const Icon(Icons.refresh, size: 16),
-                          label: const Text('Refresh'),
-                          onPressed: () => _controller.loadEvents(),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              // Content Area
-              Expanded(
-                child: _buildContent(crossAxisCount),
-              ),
-            ],
-          ),
+          body: bodyContent,
         );
       },
     );
