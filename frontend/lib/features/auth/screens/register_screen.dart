@@ -23,6 +23,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   bool _hasMinLength = false;
   bool _hasUpperCase = false;
@@ -42,6 +43,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -62,19 +64,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    String rawPhone = _phoneController.text.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+    if (!rawPhone.startsWith('+91')) {
+      if (rawPhone.startsWith('91') && rawPhone.length == 12) {
+        rawPhone = '+$rawPhone';
+      } else {
+        rawPhone = '+91$rawPhone';
+      }
+    }
+
     final success = await authController.register(
       fullName: _fullNameController.text.trim(),
-      email: _emailController.text.trim(),
-      phone: _phoneController.text.trim().isEmpty
-          ? null
-          : _phoneController.text.trim(),
+      email: _emailController.text.trim().toLowerCase(),
+      phone: rawPhone,
       password: _passwordController.text,
     );
 
     if (success && mounted) {
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-        (route) => false,
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        barrierColor: Colors.black.withValues(alpha: 0.65),
+        builder: (_) => _RegisterSuccessDialog(
+          fullName: _fullNameController.text.trim(),
+          email: _emailController.text.trim().toLowerCase(),
+          phone: rawPhone,
+          onProceed: () {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const HomeScreen()),
+              (route) => false,
+            );
+          },
+        ),
       );
     }
   }
@@ -164,7 +185,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               borderRadius:
                                   BorderRadius.circular(NetraSpacing.radiusSm),
                               border: Border.all(
-                                  color: NetraColors.errorRed.withOpacity(0.4)),
+                                  color: NetraColors.errorRed
+                                      .withValues(alpha: 0.4)),
                             ),
                             child: Row(
                               children: [
@@ -194,8 +216,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         // Full Name
                         AuthTextField(
                           label: "Full Name",
-                          hint: "John Doe",
+                          hint: "Jolly Banerjee",
                           controller: _fullNameController,
+                          autofocus: true,
                           textInputAction: TextInputAction.next,
                           prefixIcon:
                               const Icon(Icons.badge_outlined, size: 20),
@@ -234,9 +257,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         NetraSpacing.gapH16,
 
-                        // Phone (Optional)
+                        // Mobile Number
                         AuthTextField(
-                          label: "Phone Number (Optional)",
+                          label: "Mobile Number *",
                           hint: "+91 98765 43210",
                           controller: _phoneController,
                           keyboardType: TextInputType.phone,
@@ -244,12 +267,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           prefixIcon:
                               const Icon(Icons.phone_outlined, size: 20),
                           validator: (val) {
-                            if (val != null && val.trim().isNotEmpty) {
-                              final phoneRegex =
-                                  RegExp(r'^\+?[0-9\s\-]{7,16}$');
-                              if (!phoneRegex.hasMatch(val.trim())) {
-                                return "Enter a valid phone number";
-                              }
+                            if (val == null || val.trim().isEmpty) {
+                              return "Mobile number is required";
+                            }
+                            final clean =
+                                val.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+                            final phoneRegex =
+                                RegExp(r'^(?:\+91|91)?[6-9]\d{9}$');
+                            if (!phoneRegex.hasMatch(clean)) {
+                              return "Enter a valid 10-digit Indian mobile number";
                             }
                             return null;
                           },
@@ -262,11 +288,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           hint: "Create a secure password",
                           controller: _passwordController,
                           isPassword: true,
-                          textInputAction: TextInputAction.done,
+                          textInputAction: TextInputAction.next,
                           prefixIcon:
                               const Icon(Icons.lock_outline_rounded, size: 20),
-                          onFieldSubmitted: (_) =>
-                              _handleRegister(authController),
                           validator: (val) {
                             if (val == null || val.isEmpty) {
                               return "Password is required";
@@ -316,6 +340,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   "At least one number (0-9)", _hasDigit),
                             ],
                           ),
+                        ),
+                        NetraSpacing.gapH16,
+
+                        // Confirm Password
+                        AuthTextField(
+                          label: "Confirm Password *",
+                          hint: "Re-enter your password",
+                          controller: _confirmPasswordController,
+                          isPassword: true,
+                          textInputAction: TextInputAction.done,
+                          prefixIcon:
+                              const Icon(Icons.lock_outline_rounded, size: 20),
+                          onFieldSubmitted: (_) =>
+                              _handleRegister(authController),
+                          validator: (val) {
+                            if (val == null || val.isEmpty) {
+                              return "Please confirm your password";
+                            }
+                            if (val != _passwordController.text) {
+                              return "Passwords do not match";
+                            }
+                            return null;
+                          },
                         ),
                         NetraSpacing.gapH16,
 
@@ -414,6 +461,217 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RegisterSuccessDialog extends StatefulWidget {
+  final String fullName;
+  final String email;
+  final String phone;
+  final VoidCallback onProceed;
+
+  const _RegisterSuccessDialog({
+    required this.fullName,
+    required this.email,
+    required this.phone,
+    required this.onProceed,
+  });
+
+  @override
+  State<_RegisterSuccessDialog> createState() => _RegisterSuccessDialogState();
+}
+
+class _RegisterSuccessDialogState extends State<_RegisterSuccessDialog>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _animController;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _scaleAnimation = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeOutBack,
+    );
+    _animController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = widget.fullName.isNotEmpty
+        ? widget.fullName[0].toUpperCase()
+        : 'U';
+
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        backgroundColor: Colors.white,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Emerald Checkmark Icon (matching reference)
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDCFCE7),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFF86EFAC),
+                    width: 2,
+                  ),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.check_rounded,
+                    color: Color(0xFF16A34A),
+                    size: 36,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+
+              // Title
+              const Text(
+                "Registration Successful!",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: NetraColors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+
+              // Description
+              Text(
+                "Welcome to NETRA. Your profile has been created securely. You are now part of our lifesaver network.",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade600,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+
+              // User Preview Card (matching reference login.html)
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 22,
+                      backgroundColor: NetraColors.backgroundRed,
+                      child: Text(
+                        initial,
+                        style: const TextStyle(
+                          color: NetraColors.primaryRed,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.fullName,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: NetraColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              Container(
+                                width: 7,
+                                height: 7,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF16A34A),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Expanded(
+                                child: Text(
+                                  widget.email,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.phone,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Go to Dashboard Button
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: NetraColors.primaryRed,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 2,
+                ),
+                onPressed: widget.onProceed,
+                child: const Text(
+                  "Go to Dashboard",
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

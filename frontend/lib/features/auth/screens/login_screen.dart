@@ -44,9 +44,19 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (success && mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        barrierColor: Colors.black.withValues(alpha: 0.75),
+        builder: (_) => const _LoginSuccessDialog(),
       );
+      await Future.delayed(const Duration(milliseconds: 1400));
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (route) => false,
+        );
+      }
     }
   }
 
@@ -99,16 +109,27 @@ class _LoginScreenState extends State<LoginScreen> {
                         // App Brand Header
                         Center(
                           child: Container(
-                            padding: const EdgeInsets.all(12),
+                            width: 64,
+                            height: 64,
                             decoration: BoxDecoration(
-                              color: NetraColors.backgroundRed,
                               borderRadius:
                                   BorderRadius.circular(NetraSpacing.radiusMd),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: NetraColors.primaryRed
+                                      .withValues(alpha: 0.10),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
-                            child: const Icon(
-                              Icons.water_drop_rounded,
-                              color: NetraColors.primaryRed,
-                              size: 32,
+                            child: ClipRRect(
+                              borderRadius:
+                                  BorderRadius.circular(NetraSpacing.radiusMd),
+                              child: Image.asset(
+                                'assets/branding/netra_logo.png',
+                                fit: BoxFit.contain,
+                              ),
                             ),
                           ),
                         ),
@@ -137,7 +158,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderRadius:
                                   BorderRadius.circular(NetraSpacing.radiusSm),
                               border: Border.all(
-                                  color: NetraColors.errorRed.withOpacity(0.4)),
+                                  color: NetraColors.errorRed
+                                      .withValues(alpha: 0.4)),
                             ),
                             child: Row(
                               children: [
@@ -169,6 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           label: "Email Address",
                           hint: "name@example.com",
                           controller: _emailController,
+                          autofocus: true,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           prefixIcon:
@@ -291,6 +314,149 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LoginSuccessDialog extends StatefulWidget {
+  const _LoginSuccessDialog();
+
+  @override
+  State<_LoginSuccessDialog> createState() => _LoginSuccessDialogState();
+}
+
+class _LoginSuccessDialogState extends State<_LoginSuccessDialog>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
+  late final Animation<double> _rippleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+
+    _scaleAnimation = Tween<double>(begin: 0.85, end: 1.05).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _rippleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeOut,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 140,
+              height: 140,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  AnimatedBuilder(
+                    animation: _controller,
+                    builder: (_, __) {
+                      final ripple = _rippleAnimation.value;
+                      return Container(
+                        width: 90 + ripple * 45,
+                        height: 90 + ripple * 45,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFFFB7185).withValues(
+                              alpha: (1.0 - ripple).clamp(0.0, 1.0),
+                            ),
+                            width: 2.5,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  ScaleTransition(
+                    scale: _scaleAnimation,
+                    child: Container(
+                      width: 84,
+                      height: 84,
+                      decoration: BoxDecoration(
+                        color: NetraColors.primaryRed,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFDC2626).withValues(alpha: 0.5),
+                            blurRadius: 20,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.water_drop_rounded,
+                          color: Colors.white,
+                          size: 44,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              "Welcome Back",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFB7185)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  "Redirecting to dashboard...",
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
