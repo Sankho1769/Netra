@@ -58,11 +58,15 @@ class AuthSecurityIntegrationTest {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
+    private String uniquePhone() {
+        return "+919" + String.format("%09d", Math.abs(UUID.randomUUID().hashCode()) % 1_000_000_000L);
+    }
+
     @Test
     @DisplayName("Auth 1 & 2: Registration success & password hashing verification")
     void testRegistrationSuccessAndPasswordHashing() throws Exception {
         String email = "donor." + UUID.randomUUID() + "@netra.org";
-        RegisterRequest request = new RegisterRequest("Aarav Sharma", email, "+919876543210", "SafePass123");
+        RegisterRequest request = new RegisterRequest("Jolly Banerjee", email, uniquePhone(), "SafePass123");
 
         MvcResult result = mockMvc.perform(post("/api/v1/auth/register")
                 .with(req -> { req.setRemoteAddr("127.1.1.1"); return req; })
@@ -85,8 +89,9 @@ class AuthSecurityIntegrationTest {
     @DisplayName("Auth 3: Client role escalation attempt is blocked during registration")
     void testRoleEscalationBlocked() throws Exception {
         String email = "hacker." + UUID.randomUUID() + "@netra.org";
+        String phone = uniquePhone();
         // Attempt to pass "role": "ROLE_ADMIN" or "roles": ["ROLE_ADMIN"] in the payload
-        String forgedPayload = "{\"fullName\":\"Attacker\",\"email\":\"" + email + "\",\"password\":\"HackerPass123\",\"role\":\"ROLE_ADMIN\",\"roles\":[\"ROLE_ADMIN\"]}";
+        String forgedPayload = "{\"fullName\":\"Attacker\",\"email\":\"" + email + "\",\"phone\":\"" + phone + "\",\"password\":\"HackerPass123\",\"role\":\"ROLE_ADMIN\",\"roles\":[\"ROLE_ADMIN\"]}";
 
         mockMvc.perform(post("/api/v1/auth/register")
                 .with(req -> { req.setRemoteAddr("127.1.1.2"); return req; })
@@ -104,7 +109,7 @@ class AuthSecurityIntegrationTest {
     @DisplayName("Auth 4: Duplicate email registration handled securely without SQL leak")
     void testDuplicateEmailRegistration() throws Exception {
         String email = "duplicate." + UUID.randomUUID() + "@netra.org";
-        RegisterRequest request = new RegisterRequest("User One", email, "+919876543211", "SafePass123");
+        RegisterRequest request = new RegisterRequest("Jolly Banerjee", email, uniquePhone(), "SafePass123");
 
         mockMvc.perform(post("/api/v1/auth/register")
                 .with(req -> { req.setRemoteAddr("127.1.1.3"); return req; })
@@ -122,10 +127,48 @@ class AuthSecurityIntegrationTest {
     }
 
     @Test
+    @DisplayName("Auth 4b: Duplicate mobile registration rejected securely")
+    void testDuplicatePhoneRegistration() throws Exception {
+        String phone = uniquePhone();
+        String email1 = "donor1." + UUID.randomUUID() + "@netra.org";
+        String email2 = "donor2." + UUID.randomUUID() + "@netra.org";
+
+        RegisterRequest request1 = new RegisterRequest("Jolly Banerjee", email1, phone, "SafePass123");
+        RegisterRequest request2 = new RegisterRequest("Ram Krishna Banerjee", email2, phone, "SafePass123");
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                .with(req -> { req.setRemoteAddr("127.1.1.31"); return req; })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request1)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                .with(req -> { req.setRemoteAddr("127.1.1.32"); return req; })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request2)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("REGISTRATION_FAILED")));
+    }
+
+    @Test
+    @DisplayName("Auth 4c: Invalid or missing phone number registration rejected")
+    void testInvalidPhoneRegistration() throws Exception {
+        String email = "invalidphone." + UUID.randomUUID() + "@netra.org";
+        // Invalid 6 digit phone
+        RegisterRequest invalidPhoneReq = new RegisterRequest("Invalid Phone", email, "123456", "SafePass123");
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                .with(req -> { req.setRemoteAddr("127.1.1.33"); return req; })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidPhoneReq)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("Auth 5: Weak password policy rejection")
     void testWeakPasswordRejected() throws Exception {
         // Less than 8 chars
-        RegisterRequest shortPass = new RegisterRequest("Weak User", "weak1@netra.org", "+919876543212", "Short1");
+        RegisterRequest shortPass = new RegisterRequest("Weak User", "weak1@netra.org", uniquePhone(), "Short1");
         mockMvc.perform(post("/api/v1/auth/register")
                 .with(req -> { req.setRemoteAddr("127.1.1.4"); return req; })
                 .contentType(MediaType.APPLICATION_JSON)
@@ -133,7 +176,7 @@ class AuthSecurityIntegrationTest {
                 .andExpect(status().isBadRequest());
 
         // Missing digit
-        RegisterRequest noDigit = new RegisterRequest("Weak User", "weak2@netra.org", "+919876543212", "NoDigitHere");
+        RegisterRequest noDigit = new RegisterRequest("Weak User", "weak2@netra.org", uniquePhone(), "NoDigitHere");
         mockMvc.perform(post("/api/v1/auth/register")
                 .with(req -> { req.setRemoteAddr("127.1.1.4"); return req; })
                 .contentType(MediaType.APPLICATION_JSON)
@@ -145,7 +188,7 @@ class AuthSecurityIntegrationTest {
     @DisplayName("Auth 6, 7 & 8: Login success, wrong password, and unknown account generic error")
     void testLoginScenarios() throws Exception {
         String email = "login." + UUID.randomUUID() + "@netra.org";
-        RegisterRequest reg = new RegisterRequest("Login Donor", email, "+919876543213", "CorrectPass123");
+        RegisterRequest reg = new RegisterRequest("Login Donor", email, uniquePhone(), "CorrectPass123");
         mockMvc.perform(post("/api/v1/auth/register")
                 .with(req -> { req.setRemoteAddr("127.1.1.5"); return req; })
                 .contentType(MediaType.APPLICATION_JSON)
@@ -185,7 +228,9 @@ class AuthSecurityIntegrationTest {
     @DisplayName("Auth 9 & 10: Suspended and deactivated accounts are blocked")
     void testSuspendedAndDeactivatedUsersBlocked() throws Exception {
         // Create suspended user
-        User suspended = new User("Suspended User", "suspended." + UUID.randomUUID() + "@netra.org", null, passwordEncoder.encode("Pass12345"), Set.of(UserRole.ROLE_DONOR));
+        String suspendedEmail = "suspended." + UUID.randomUUID() + "@netra.org";
+        String suspendedPhone = "+91987" + String.format("%07d", Math.abs((long) suspendedEmail.hashCode()) % 10_000_000L);
+        User suspended = new User("Suspended User", suspendedEmail, suspendedPhone, passwordEncoder.encode("Pass12345"), Set.of(UserRole.ROLE_DONOR));
         suspended.setStatus(UserStatus.SUSPENDED);
         suspended = userRepository.save(suspended);
 
@@ -205,7 +250,9 @@ class AuthSecurityIntegrationTest {
                 .andExpect(status().isUnauthorized());
 
         // Create deactivated user
-        User deactivated = new User("Deactivated User", "deactivated." + UUID.randomUUID() + "@netra.org", null, passwordEncoder.encode("Pass12345"), Set.of(UserRole.ROLE_DONOR));
+        String deactivatedEmail = "deactivated." + UUID.randomUUID() + "@netra.org";
+        String deactivatedPhone = "+91987" + String.format("%07d", Math.abs((long) deactivatedEmail.hashCode()) % 10_000_000L);
+        User deactivated = new User("Deactivated User", deactivatedEmail, deactivatedPhone, passwordEncoder.encode("Pass12345"), Set.of(UserRole.ROLE_DONOR));
         deactivated.setStatus(UserStatus.DEACTIVATED);
         deactivated = userRepository.save(deactivated);
 
@@ -221,7 +268,9 @@ class AuthSecurityIntegrationTest {
     @Test
     @DisplayName("Auth 11, 12 & 13: Access token verification, expiry, and REFRESH token as ACCESS token rejection")
     void testAccessTokenValidationAndRejection() throws Exception {
-        User user = new User("Active User", "active." + UUID.randomUUID() + "@netra.org", null, passwordEncoder.encode("Pass12345"), Set.of(UserRole.ROLE_DONOR));
+        String activeEmail = "active." + UUID.randomUUID() + "@netra.org";
+        String activePhone = "+91987" + String.format("%07d", Math.abs((long) activeEmail.hashCode()) % 10_000_000L);
+        User user = new User("Active User", activeEmail, activePhone, passwordEncoder.encode("Pass12345"), Set.of(UserRole.ROLE_DONOR));
         user = userRepository.save(user);
 
         // 1. Valid access token -> 200 on /me
@@ -251,7 +300,7 @@ class AuthSecurityIntegrationTest {
     @DisplayName("Auth 14, 15, 16 & 17: Refresh rotation, old token rejection, and reuse anomaly detection with family revocation")
     void testRefreshRotationAndReuseAnomalyDetection() throws Exception {
         String email = "rotation." + UUID.randomUUID() + "@netra.org";
-        RegisterRequest reg = new RegisterRequest("Rotate User", email, "+919876543214", "RotatePass123");
+        RegisterRequest reg = new RegisterRequest("Rotate User", email, uniquePhone(), "RotatePass123");
         MvcResult res = mockMvc.perform(post("/api/v1/auth/register")
                 .with(req -> { req.setRemoteAddr("127.1.1.8"); return req; })
                 .contentType(MediaType.APPLICATION_JSON)
@@ -297,7 +346,7 @@ class AuthSecurityIntegrationTest {
     @DisplayName("Auth 18 & 19: Logout and logout-all invalidates refresh sessions")
     void testLogoutAndLogoutAll() throws Exception {
         String email = "logout." + UUID.randomUUID() + "@netra.org";
-        RegisterRequest reg = new RegisterRequest("Logout User", email, "+919876543215", "LogoutPass123");
+        RegisterRequest reg = new RegisterRequest("Logout User", email, uniquePhone(), "LogoutPass123");
         MvcResult regResult = mockMvc.perform(post("/api/v1/auth/register")
                 .with(req -> { req.setRemoteAddr("127.1.1.9"); return req; })
                 .contentType(MediaType.APPLICATION_JSON)

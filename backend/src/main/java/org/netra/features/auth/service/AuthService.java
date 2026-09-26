@@ -71,14 +71,28 @@ public class AuthService {
             throw new DuplicateEmailException("An account with this email address already exists.");
         }
 
-        String passwordHash = passwordEncoder.encode(request.getPassword().trim());
+        String rawPhone = request.getPhone() != null ? request.getPhone().trim().replaceAll("[\\s\\-\\(\\)]", "") : "";
+        String normalizedPhone;
+        if (rawPhone.startsWith("+91")) {
+            normalizedPhone = rawPhone;
+        } else if (rawPhone.startsWith("91") && rawPhone.length() == 12) {
+            normalizedPhone = "+" + rawPhone;
+        } else {
+            normalizedPhone = "+91" + rawPhone;
+        }
+
+        if (userRepository.existsByPhone(normalizedPhone)) {
+            throw new DuplicatePhoneException("An account with this mobile number already exists.");
+        }
+
+        String passwordHash = passwordEncoder.encode(request.getPassword());
 
         // Clinical Safety & Zero-Trust: Registration role is strictly server-assigned.
         // Client cannot self-grant ROLE_ADMIN or other privileged roles.
         User user = new User(
                 request.getFullName().trim(),
                 normalizedEmail,
-                request.getPhone() != null ? request.getPhone().trim() : null,
+                normalizedPhone,
                 passwordHash,
                 Set.of(UserRole.ROLE_DONOR)
         );
@@ -216,9 +230,19 @@ public class AuthService {
             throw new AccountStatusException("Account is not active.");
         }
 
-        // Revoke the current token
-        session.revoke();
-        refreshSessionRepository.save(session);
+        // Atomic CAS revocation to prevent concurrent refresh race conditions
+        int updated = refreshSessionRepository.atomicRevokeSession(session.getId(), Instant.now());
+        if (updated == 0) {
+            auditService.logAuthEvent(
+                    "REFRESH_REUSE_DETECTED",
+                    session.getUser().getId(),
+                    clientIp,
+                    userAgent,
+                    "ConcurrentReuseFamily=" + session.getFamilyId()
+            );
+            refreshSessionRepository.revokeFamily(session.getFamilyId(), Instant.now());
+            throw new TokenReuseException("Revoked refresh token reuse detected. All sessions terminated. Please sign in again.");
+        }
 
         // Issue new rotated token in the SAME family
         String newRawRefreshToken = SecurityUtils.generateSecureToken();
@@ -259,8 +283,13 @@ public class AuthService {
         if (request != null && request.getRefreshToken() != null && !request.getRefreshToken().isBlank()) {
             String tokenHash = SecurityUtils.sha256Hex(request.getRefreshToken().trim());
             refreshSessionRepository.findByTokenHash(tokenHash).ifPresent(session -> {
-                session.revoke();
-                refreshSessionRepository.save(session);
+                if (currentUserId == null || session.getUser().getId().equals(currentUserId)) {
+                    session.revoke();
+                    refreshSessionRepository.save(session);
+                } else {
+                    log.warn("IDOR attempt: User {} attempted to logout session belonging to user {}",
+                            currentUserId, session.getUser().getId());
+                }
             });
         }
         auditService.logAuthEvent("LOGOUT", currentUserId, clientIp, userAgent, null);

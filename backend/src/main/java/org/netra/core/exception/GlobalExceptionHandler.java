@@ -146,6 +146,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
+    @ExceptionHandler(DuplicatePhoneException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicatePhone(DuplicatePhoneException ex, HttpServletRequest request) {
+        log.warn("Registration phone conflict: {}", ex.getMessage());
+        ErrorResponse error = createErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "REGISTRATION_FAILED",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateResource(DuplicateResourceException ex, HttpServletRequest request) {
         log.warn("Resource conflict: {}", ex.getMessage());

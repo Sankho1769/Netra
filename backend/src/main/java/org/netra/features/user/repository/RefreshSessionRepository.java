@@ -21,6 +21,10 @@ public interface RefreshSessionRepository extends JpaRepository<RefreshSession, 
     List<RefreshSession> findByUserIdAndRevokedAtIsNull(UUID userId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE RefreshSession r SET r.revokedAt = :now WHERE r.id = :id AND r.revokedAt IS NULL")
+    int atomicRevokeSession(@Param("id") UUID id, @Param("now") Instant now);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE RefreshSession r SET r.revokedAt = :now WHERE r.familyId = :familyId AND r.revokedAt IS NULL")
     int revokeFamily(@Param("familyId") UUID familyId, @Param("now") Instant now);
 
