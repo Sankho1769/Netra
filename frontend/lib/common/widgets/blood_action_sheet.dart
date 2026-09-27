@@ -9,13 +9,39 @@ import '../../features/bloodbank/screens/nearby_blood_banks_screen.dart';
 class BloodActionSheet extends StatelessWidget {
   const BloodActionSheet({super.key});
 
-  static Future<void> show(BuildContext context) {
-    return showModalBottomSheet(
+  static Future<void> show(BuildContext context) async {
+    final action = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => const BloodActionSheet(),
     );
+
+    if (action == null || !context.mounted) return;
+
+    switch (action) {
+      case 'eligibility':
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const EligibilityIntroScreen(),
+          ),
+        );
+        break;
+      case 'emergency':
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const EmergencyModeScreen(),
+          ),
+        );
+        break;
+      case 'bloodbanks':
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const NearbyBloodBanksScreen(),
+          ),
+        );
+        break;
+    }
   }
 
   @override
@@ -71,14 +97,7 @@ class BloodActionSheet extends StatelessWidget {
                 end: Alignment.bottomRight,
               ),
               shadowColor: const Color(0xFFDC2626).withValues(alpha: 0.35),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const EligibilityIntroScreen(),
-                  ),
-                );
-              },
+              onTap: () => Navigator.of(context).pop('eligibility'),
             ),
 
             // OR divider
@@ -117,28 +136,14 @@ class BloodActionSheet extends StatelessWidget {
                 end: Alignment.bottomRight,
               ),
               shadowColor: const Color(0xFF4F46E5).withValues(alpha: 0.35),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const EmergencyModeScreen(),
-                  ),
-                );
-              },
+              onTap: () => Navigator.of(context).pop('emergency'),
             ),
 
             NetraSpacing.gapH16,
 
             // Nearby Blood Banks Link
             TextButton.icon(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const NearbyBloodBanksScreen(),
-                  ),
-                );
-              },
+              onPressed: () => Navigator.of(context).pop('bloodbanks'),
               icon: const Icon(Icons.local_hospital_outlined,
                   size: 18, color: NetraColors.textPrimary),
               label: Text(

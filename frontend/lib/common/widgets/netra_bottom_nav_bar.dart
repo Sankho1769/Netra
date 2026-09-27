@@ -123,6 +123,7 @@ class NetraBottomNavBar extends StatelessWidget {
         child: Transform.translate(
           offset: const Offset(0, -14),
           child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: onCenterActionTap,
             child: Container(
               width: 62,
