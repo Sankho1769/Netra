@@ -331,6 +331,8 @@ public class GlobalExceptionHandler {
                 .map(err -> err.getField() + ": " + err.getDefaultMessage())
                 .collect(Collectors.toList());
 
+        log.warn("Input validation failed at {}: {}", request.getRequestURI(), details);
+
         ErrorResponse error = createErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "VALIDATION_FAILED",

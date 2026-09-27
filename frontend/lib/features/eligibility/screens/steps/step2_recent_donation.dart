@@ -81,7 +81,7 @@ class Step2RecentDonation extends StatelessWidget {
             onChanged: (val) {
               controller.setBoolAnswer('PREVIOUS_DONATION', val);
               if (val == false) {
-                controller.setAnswer('LAST_DONATION_DATE', '');
+                controller.removeAnswer('LAST_DONATION_DATE');
               }
             },
           ),

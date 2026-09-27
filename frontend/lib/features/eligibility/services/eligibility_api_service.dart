@@ -111,7 +111,8 @@ class EligibilityApiService {
       {String? capabilityToken}) async {
     try {
       final list = answers.entries
-          .map((e) => {'questionKey': e.key, 'value': e.value})
+          .where((e) => e.key.trim().isNotEmpty && e.value.trim().isNotEmpty)
+          .map((e) => {'questionKey': e.key.trim(), 'value': e.value.trim()})
           .toList();
 
       await _apiClient.post(

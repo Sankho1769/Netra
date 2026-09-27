@@ -248,5 +248,32 @@ void main() {
         throwsA(isA<ConnectionException>()),
       );
     });
+
+    test('submitAnswers filters out blank or whitespace keys and values',
+        () async {
+      late Map<String, dynamic> sentPayload;
+      final mockClient = MockHttpClient((req) async {
+        expect(req.url.path, '/eligibility/sessions/sess-1/answers');
+        sentPayload = jsonDecode((req as http.Request).body) as Map<String, dynamic>;
+        return http.Response(jsonEncode({'status': 'SUCCESS', 'savedCount': 2}), 200);
+      });
+
+      final service = EligibilityApiService(
+        baseUrl: 'http://localhost:8080/eligibility',
+        client: mockClient,
+      );
+
+      await service.submitAnswers('sess-1', {
+        'AGE': '28',
+        'LAST_DONATION_DATE': '   ', // Blank whitespace
+        'PREVIOUS_DONATION': 'false',
+        '': 'some_val',              // Empty key
+      });
+
+      final answers = (sentPayload['answers'] as List).cast<Map<String, dynamic>>();
+      expect(answers.length, equals(2));
+      expect(answers.any((a) => a['questionKey'] == 'AGE' && a['value'] == '28'), isTrue);
+      expect(answers.any((a) => a['questionKey'] == 'PREVIOUS_DONATION' && a['value'] == 'false'), isTrue);
+    });
   });
 }

@@ -32,7 +32,17 @@ class EligibilityController extends ChangeNotifier {
   String get ruleVersion => _ruleVersion;
 
   void setAnswer(String key, String value) {
-    _answers[key] = value;
+    if (value.trim().isEmpty) {
+      _answers.remove(key);
+    } else {
+      _answers[key] = value;
+    }
+    _errors.remove(key);
+    notifyListeners();
+  }
+
+  void removeAnswer(String key) {
+    _answers.remove(key);
     _errors.remove(key);
     notifyListeners();
   }
