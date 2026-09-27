@@ -11,6 +11,8 @@ public class StringToBloodGroupConverter implements Converter<String, BloodGroup
         if (source == null || source.trim().isEmpty()) {
             return null;
         }
-        return BloodGroup.fromCode(source);
+        // In HTTP query strings, '+' is decoded as ' ' by servlet containers (e.g. "B " instead of "B+")
+        String normalized = source.replace(" ", "+").trim();
+        return BloodGroup.fromCode(normalized);
     }
 }
