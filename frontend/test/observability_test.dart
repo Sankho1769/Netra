@@ -138,5 +138,27 @@ void main() {
       expect(const RateLimitException('msg', corr).correlationId, equals(corr));
       expect(const ServerException('msg', corr).correlationId, equals(corr));
     });
+
+    test('ApiClient formats URLs cleanly without trailing slashes on empty paths', () async {
+      String? requestedUrl;
+      final mockClient = MockHttpClient((req) async {
+        requestedUrl = req.url.toString();
+        return http.Response('{}', 200);
+      });
+
+      final apiClient = ApiClient(
+        baseUrl: 'http://localhost:8080/api/v1/donation-events',
+        client: mockClient,
+      );
+
+      await apiClient.get('');
+      expect(requestedUrl, equals('http://localhost:8080/api/v1/donation-events'));
+
+      await apiClient.get('/');
+      expect(requestedUrl, equals('http://localhost:8080/api/v1/donation-events'));
+
+      await apiClient.get('/upcoming');
+      expect(requestedUrl, equals('http://localhost:8080/api/v1/donation-events/upcoming'));
+    });
   });
 }

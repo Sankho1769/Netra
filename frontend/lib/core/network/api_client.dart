@@ -176,7 +176,12 @@ class ApiClient {
     final cleanBase = baseUrl.endsWith('/')
         ? baseUrl.substring(0, baseUrl.length - 1)
         : baseUrl;
-    final cleanPath = path.startsWith('/') ? path : '/$path';
+    final String cleanPath;
+    if (path.isEmpty || path == '/') {
+      cleanPath = '';
+    } else {
+      cleanPath = path.startsWith('/') ? path : '/$path';
+    }
     final urlString = '$cleanBase$cleanPath';
     final uri = Uri.parse(urlString);
 

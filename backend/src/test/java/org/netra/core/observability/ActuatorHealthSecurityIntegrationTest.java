@@ -114,4 +114,18 @@ class ActuatorHealthSecurityIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.names", hasItem("jvm.memory.used")));
     }
+
+    @Test
+    @DisplayName("Error Handling: Unmapped resource URL returns 404 NOT_FOUND instead of 500 INTERNAL_ERROR")
+    void testNonExistentRouteReturns404NotFound() throws Exception {
+        String donorToken = jwtTokenProvider.generateAccessToken(donorUser.getId(), List.of("ROLE_DONOR"));
+
+        mockMvc.perform(get("/api/v1/non-existent-endpoint-" + UUID.randomUUID())
+                        .header("Authorization", "Bearer " + donorToken)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status", is(404)))
+                .andExpect(jsonPath("$.error", is("NOT_FOUND")))
+                .andExpect(header().exists(CorrelationIdFilter.CORRELATION_ID_HEADER));
+    }
 }
