@@ -209,8 +209,8 @@ class BloodRequestDetail extends BloodRequestSummary {
       requesterUserId: json['requesterUserId'] as String?,
       isOwner: json['isOwner'] as bool? ?? false,
       canManage: json['canManage'] as bool? ?? false,
-      hospitalAddress: json['hospitalAddress'] as String,
-      postalCode: json['postalCode'] as String,
+      hospitalAddress: (json['hospitalAddress'] as String?) ?? '',
+      postalCode: (json['postalCode'] as String?) ?? '',
       latitude: json['latitude'] != null
           ? (json['latitude'] as num).toDouble()
           : null,
@@ -218,7 +218,11 @@ class BloodRequestDetail extends BloodRequestSummary {
           ? (json['longitude'] as num).toDouble()
           : null,
       description: json['description'] as String?,
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'] as String)
+          : (json['createdAt'] != null
+              ? DateTime.parse(json['createdAt'] as String)
+              : DateTime.now()),
       cancelledAt: json['cancelledAt'] != null
           ? DateTime.parse(json['cancelledAt'] as String)
           : null,
