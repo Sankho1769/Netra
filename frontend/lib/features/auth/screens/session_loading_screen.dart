@@ -136,7 +136,7 @@ class _SessionLoadingScreenState extends State<SessionLoadingScreen>
   }
 
   void _navigate(bool isAuthenticated) {
-    Navigator.of(context).pushReplacement(
+    Navigator.of(context).pushAndRemoveUntil(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 600),
         pageBuilder: (_, animation, __) {
@@ -146,6 +146,7 @@ class _SessionLoadingScreenState extends State<SessionLoadingScreen>
           );
         },
       ),
+      (route) => false,
     );
   }
 

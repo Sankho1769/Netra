@@ -162,11 +162,11 @@ public class DonationService {
         validateDonorAccount(request.getDonorUserId());
         validateDonationDate(request.getDonationDate());
 
-        Donation dummyForAuth = new Donation();
-        dummyForAuth.setSourceType(request.getSourceType());
-        dummyForAuth.setBloodRequestId(request.getBloodRequestId());
-        dummyForAuth.setDonationEventId(request.getDonationEventId());
-        authorizationService.verifyCanVerifyDonation(verifierUserId, dummyForAuth);
+        Donation tempDonationForAuth = new Donation();
+        tempDonationForAuth.setSourceType(request.getSourceType());
+        tempDonationForAuth.setBloodRequestId(request.getBloodRequestId());
+        tempDonationForAuth.setDonationEventId(request.getDonationEventId());
+        authorizationService.verifyCanVerifyDonation(verifierUserId, tempDonationForAuth);
 
         if (request.getSourceType() == DonationSourceType.BLOOD_REQUEST) {
             validateBloodRequestDonationEligibility(request.getDonorUserId(), request.getBloodRequestId(), request.getDonationDate());

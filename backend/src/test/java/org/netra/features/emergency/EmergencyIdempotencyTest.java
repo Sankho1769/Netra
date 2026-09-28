@@ -448,6 +448,7 @@ class EmergencyIdempotencyTest {
     void testFingerprint_PrecisionAndDeterminism() {
         EmergencyBloodRequestRequest req1 = buildRequest();
         EmergencyBloodRequestRequest req2 = buildRequest();
+        req2.setRequiredBy(req1.getRequiredBy());
 
         String fp1 = idempotencyService.computeFingerprint(req1);
         String fp2 = idempotencyService.computeFingerprint(req2);
@@ -455,11 +456,13 @@ class EmergencyIdempotencyTest {
 
         // Meaningfully different coordinates (e.g. 19.0522 vs 19.0523)
         EmergencyBloodRequestRequest reqDiffLat = buildRequest();
+        reqDiffLat.setRequiredBy(req1.getRequiredBy());
         reqDiffLat.setLatitude(19.0523);
         String fpDiffLat = idempotencyService.computeFingerprint(reqDiffLat);
         assertNotEquals(fp1, fpDiffLat, "Meaningfully different latitude must produce different fingerprint");
 
         EmergencyBloodRequestRequest reqDiffLng = buildRequest();
+        reqDiffLng.setRequiredBy(req1.getRequiredBy());
         reqDiffLng.setLongitude(72.8296);
         String fpDiffLng = idempotencyService.computeFingerprint(reqDiffLng);
         assertNotEquals(fp1, fpDiffLng, "Meaningfully different longitude must produce different fingerprint");

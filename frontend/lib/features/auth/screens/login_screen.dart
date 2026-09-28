@@ -273,9 +273,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         OutlinedButton.icon(
                           onPressed: () {
                             authController.clearError();
-                            Navigator.of(context).pushReplacement(
+                            Navigator.of(context).pushAndRemoveUntil(
                               MaterialPageRoute(
                                   builder: (_) => const HomeScreen()),
+                              (route) => false,
                             );
                           },
                           icon: const Icon(Icons.explore_outlined, size: 18),
