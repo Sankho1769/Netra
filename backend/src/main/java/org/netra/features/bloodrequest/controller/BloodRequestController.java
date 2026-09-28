@@ -125,4 +125,22 @@ public class BloodRequestController {
         BloodRequestDetailDto verified = bloodRequestService.verifyRequest(id, request, clientIp, userAgent);
         return ResponseEntity.ok(verified);
     }
+
+    @PostMapping("/{id}/confirm-fake")
+    @PreAuthorize("hasAnyRole('BLOODBANK', 'ADMIN')")
+    public ResponseEntity<BloodRequestDetailDto> confirmFakeRequest(
+            @PathVariable UUID id,
+            @RequestBody(required = false) java.util.Map<String, String> body,
+            HttpServletRequest servletRequest) {
+
+        UUID currentUserId = org.netra.core.security.SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new org.netra.core.exception.UnauthorizedSessionAccessException("User is not authenticated."));
+
+        String reason = (body != null && body.containsKey("reason")) ? body.get("reason") : "Authoritatively confirmed fraudulent request.";
+        String clientIp = clientIpResolver.resolveClientIp(servletRequest);
+        String userAgent = servletRequest.getHeader("User-Agent");
+
+        BloodRequestDetailDto result = bloodRequestService.confirmFakeRequest(id, reason, currentUserId, clientIp, userAgent);
+        return ResponseEntity.ok(result);
+    }
 }

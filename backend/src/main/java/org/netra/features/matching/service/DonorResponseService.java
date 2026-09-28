@@ -744,12 +744,18 @@ public class DonorResponseService {
     @Transactional
     public DonorMatchDetailDto confirmDonorNoShow(
             UUID matchId, String reason, UUID staffUserId, String clientIp, String userAgent) {
+        authorizationService.verifyActiveUser(staffUserId);
+
         DonorMatch match = donorMatchRepository.findById(matchId)
                 .orElseThrow(() -> new ResourceNotFoundException("Donor match not found: " + matchId));
 
         if (match.getResponseStatus() != MatchStatus.ACCEPTED) {
             throw new ValidationException("Cannot confirm no-show: match status is " + match.getResponseStatus() + ", but must be ACCEPTED.");
         }
+
+        match.setResponseStatus(MatchStatus.CONFIRMED_NO_SHOW);
+        match.setUpdatedAt(clock.instant());
+        DonorMatch savedMatch = donorMatchRepository.save(match);
 
         // Apply authoritative Karma penalty
         if (karmaService != null && karmaPolicy != null) {
@@ -778,6 +784,97 @@ public class DonorResponseService {
         );
 
         BloodRequest req = bloodRequestRepository.findById(match.getBloodRequestId()).orElse(null);
-        return mapToDonorDetailDto(match, req, null);
+        return mapToDonorDetailDto(savedMatch, req, null);
+    }
+
+    @Transactional
+    public DonorMatchDetailDto recordArrival(
+            UUID matchId, UUID staffUserId, String clientIp, String userAgent) {
+        authorizationService.verifyActiveUser(staffUserId);
+
+        DonorMatch match = donorMatchRepository.findById(matchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Donor match not found: " + matchId));
+
+        if (match.getResponseStatus() != MatchStatus.ACCEPTED) {
+            throw new ValidationException("Cannot record arrival: match status is " + match.getResponseStatus() + ", but must be ACCEPTED.");
+        }
+
+        match.setResponseStatus(MatchStatus.ARRIVED);
+        match.setUpdatedAt(clock.instant());
+        DonorMatch savedMatch = donorMatchRepository.save(match);
+
+        auditService.logAuthEvent(
+                "DONOR_ARRIVED",
+                staffUserId,
+                clientIp,
+                userAgent,
+                "{\"matchId\":\"" + match.getId() + "\",\"donorUserId\":\"" + match.getDonorUserId() + "\"}"
+        );
+
+        BloodRequest req = bloodRequestRepository.findById(match.getBloodRequestId()).orElse(null);
+        return mapToDonorDetailDto(savedMatch, req, null);
+    }
+
+    @Transactional
+    public DonorMatchDetailDto recordMedicalRejection(
+            UUID matchId, String reason, UUID staffUserId, String clientIp, String userAgent) {
+        authorizationService.verifyActiveUser(staffUserId);
+
+        DonorMatch match = donorMatchRepository.findById(matchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Donor match not found: " + matchId));
+
+        if (match.getResponseStatus() != MatchStatus.ACCEPTED && match.getResponseStatus() != MatchStatus.ARRIVED) {
+            throw new ValidationException("Cannot record medical rejection: match status is " + match.getResponseStatus());
+        }
+
+        match.setResponseStatus(MatchStatus.MEDICAL_REJECTION);
+        match.setUpdatedAt(clock.instant());
+        DonorMatch savedMatch = donorMatchRepository.save(match);
+
+        // Explicit rule: Medical rejection does NOT penalize karma!
+        auditService.logAuthEvent(
+                "DONOR_MEDICAL_REJECTION",
+                staffUserId,
+                clientIp,
+                userAgent,
+                "{\"matchId\":\"" + match.getId() + "\",\"donorUserId\":\"" + match.getDonorUserId() +
+                        "\",\"reason\":\"" + (reason != null ? reason.replace("\"", "\\\"") : "") + "\"}"
+        );
+
+        BloodRequest req = bloodRequestRepository.findById(match.getBloodRequestId()).orElse(null);
+        return mapToDonorDetailDto(savedMatch, req, null);
+    }
+
+    @Transactional
+    public DonorMatchDetailDto cancelCommitment(
+            UUID matchId, String reason, UUID currentUserId, String clientIp, String userAgent) {
+        authorizationService.verifyActiveUser(currentUserId);
+
+        DonorMatch match = donorMatchRepository.findById(matchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Donor match not found: " + matchId));
+
+        if (!match.getDonorUserId().equals(currentUserId)) {
+            throw new UnauthorizedSessionAccessException("Access denied to cancel commitment.");
+        }
+
+        if (match.getResponseStatus() != MatchStatus.ACCEPTED) {
+            throw new ValidationException("Cannot cancel commitment: match status is " + match.getResponseStatus() + ", but must be ACCEPTED.");
+        }
+
+        match.setResponseStatus(MatchStatus.CANCELLED_SAFE);
+        match.setUpdatedAt(clock.instant());
+        DonorMatch savedMatch = donorMatchRepository.save(match);
+
+        // Safe cancellation does NOT penalize karma
+        auditService.logAuthEvent(
+                "DONOR_COMMITMENT_CANCELLED_SAFE",
+                currentUserId,
+                clientIp,
+                userAgent,
+                "{\"matchId\":\"" + match.getId() + "\",\"reason\":\"" + (reason != null ? reason.replace("\"", "\\\"") : "") + "\"}"
+        );
+
+        BloodRequest req = bloodRequestRepository.findById(match.getBloodRequestId()).orElse(null);
+        return mapToDonorDetailDto(savedMatch, req, null);
     }
 }

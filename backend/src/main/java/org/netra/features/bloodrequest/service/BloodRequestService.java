@@ -512,26 +512,34 @@ public class BloodRequestService {
         bloodRequest.setVerificationNotes(verificationDto.getNotes());
         bloodRequest.setUpdatedAt(Instant.now());
 
+        if (verificationDto.getDecision() == BloodRequestVerificationStatus.VERIFIED) {
+            bloodRequest.setStatus(BloodRequestStatus.VERIFIED);
+        } else if (verificationDto.getDecision() == BloodRequestVerificationStatus.REJECTED) {
+            String notes = verificationDto.getNotes() != null ? verificationDto.getNotes().toLowerCase() : "";
+            if (notes.contains("fraud") || notes.contains("fake") || notes.contains("scam") || notes.contains("abusive") || notes.contains("bogus")) {
+                bloodRequest.setStatus(BloodRequestStatus.CONFIRMED_FAKE);
+            } else {
+                bloodRequest.setStatus(BloodRequestStatus.REJECTED);
+            }
+        }
+
         BloodRequest saved = bloodRequestRepository.save(bloodRequest);
 
         // Authoritative anti-fraud karma penalty: penalize only confirmed fraudulent/abusive submissions
-        if (verificationDto.getDecision() == BloodRequestVerificationStatus.REJECTED) {
-            String notes = verificationDto.getNotes() != null ? verificationDto.getNotes().toLowerCase() : "";
-            if (notes.contains("fraud") || notes.contains("fake") || notes.contains("scam") || notes.contains("abusive") || notes.contains("bogus")) {
-                if (karmaService != null && karmaPolicy != null) {
-                    try {
-                        karmaService.penalizeKarma(
-                                saved.getRequesterUserId(),
-                                KarmaEventType.FAKE_REQUEST_CONFIRMED,
-                                karmaPolicy.getFakeRequestPenalty(),
-                                "BLOOD_REQUEST",
-                                saved.getId().toString(),
-                                "Confirmed fraudulent blood request: " + verificationDto.getNotes(),
-                                currentUserId
-                        );
-                    } catch (Exception e) {
-                        log.warn("Failed to apply karma penalty for fraudulent request {}: {}", saved.getId(), e.getMessage());
-                    }
+        if (saved.getStatus() == BloodRequestStatus.CONFIRMED_FAKE) {
+            if (karmaService != null && karmaPolicy != null) {
+                try {
+                    karmaService.penalizeKarma(
+                            saved.getRequesterUserId(),
+                            KarmaEventType.FAKE_REQUEST_CONFIRMED,
+                            karmaPolicy.getFakeRequestPenalty(),
+                            "BLOOD_REQUEST",
+                            saved.getId().toString(),
+                            "Confirmed fraudulent blood request: " + verificationDto.getNotes(),
+                            currentUserId
+                    );
+                } catch (Exception e) {
+                    log.warn("Failed to apply karma penalty for fraudulent request {}: {}", saved.getId(), e.getMessage());
                 }
             }
         }
@@ -541,7 +549,7 @@ public class BloodRequestService {
                 currentUserId,
                 clientIp,
                 userAgent,
-                "{\"requestId\":\"" + saved.getId() + "\",\"decision\":\"" + verificationDto.getDecision() + "\"}"
+                "{\"requestId\":\"" + saved.getId() + "\",\"decision\":\"" + verificationDto.getDecision() + "\",\"status\":\"" + saved.getStatus() + "\"}"
         );
 
         org.netra.core.observability.StructuredLogger.logOperation(
@@ -549,6 +557,56 @@ public class BloodRequestService {
 
         boolean isOwner = saved.getRequesterUserId().equals(currentUserId);
         return mapToDetailDto(saved, isOwner, true, null);
+    }
+
+    @Transactional
+    public BloodRequestDetailDto confirmFakeRequest(UUID requestId, String reason, UUID currentUserId, String clientIp, String userAgent) {
+        BloodRequest bloodRequest = bloodRequestRepository.findByIdForUpdate(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Blood request not found with ID: " + requestId));
+
+        authorizationService.verifyCanVerifyRequest(currentUserId, bloodRequest);
+
+        if (bloodRequest.getStatus() == BloodRequestStatus.CONFIRMED_FAKE) {
+            throw new ValidationException("Blood request is already marked as CONFIRMED_FAKE.");
+        }
+
+        bloodRequest.setStatus(BloodRequestStatus.CONFIRMED_FAKE);
+        bloodRequest.setVerificationStatus(BloodRequestVerificationStatus.REJECTED);
+        bloodRequest.setVerifiedBy(currentUserId);
+        bloodRequest.setVerifiedAt(Instant.now());
+        bloodRequest.setVerificationNotes(reason != null && !reason.isBlank() ? reason : "Authoritatively confirmed fraudulent request.");
+        bloodRequest.setUpdatedAt(Instant.now());
+
+        BloodRequest saved = bloodRequestRepository.save(bloodRequest);
+
+        if (karmaService != null && karmaPolicy != null) {
+            try {
+                karmaService.penalizeKarma(
+                        saved.getRequesterUserId(),
+                        KarmaEventType.FAKE_REQUEST_CONFIRMED,
+                        karmaPolicy.getFakeRequestPenalty(),
+                        "BLOOD_REQUEST",
+                        saved.getId().toString(),
+                        "Confirmed fraudulent blood request: " + bloodRequest.getVerificationNotes(),
+                        currentUserId
+                );
+            } catch (Exception e) {
+                log.warn("Failed to apply karma penalty for fraudulent request {}: {}", saved.getId(), e.getMessage());
+            }
+        }
+
+        auditService.logAuthEvent(
+                "BLOOD_REQUEST_CONFIRMED_FAKE",
+                currentUserId,
+                clientIp,
+                userAgent,
+                "{\"requestId\":\"" + saved.getId() + "\",\"reason\":\"" + (reason != null ? reason.replace("\"", "\\\"") : "") + "\"}"
+        );
+
+        org.netra.core.observability.StructuredLogger.logOperation(
+                "BLOOD_REQUEST_CONFIRMED_FAKE", currentUserId, null, "BloodRequest", saved.getId(), "CONFIRM_FAKE", null, "SUCCESS");
+
+        return mapToDetailDto(saved, false, true, null);
     }
 
     private void validateCreation(CreateBloodRequestRequest request) {

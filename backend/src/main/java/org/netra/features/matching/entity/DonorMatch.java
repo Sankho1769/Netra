@@ -131,6 +131,58 @@ public class DonorMatch {
         this.updatedAt = now;
     }
 
+    /**
+     * Authoritatively marks donor commitment as CONFIRMED_NO_SHOW.
+     */
+    public void confirmNoShow(Instant now) {
+        if (!responseStatus.canTransitionTo(MatchStatus.CONFIRMED_NO_SHOW)) {
+            throw new ValidationException("Cannot confirm no-show for match in status: " + responseStatus);
+        }
+        this.responseStatus = MatchStatus.CONFIRMED_NO_SHOW;
+        this.updatedAt = now;
+    }
+
+    /**
+     * Marks donor as ARRIVED at hospital / collection center.
+     */
+    public void arrive(Instant now) {
+        if (!responseStatus.canTransitionTo(MatchStatus.ARRIVED)) {
+            throw new ValidationException("Cannot record arrival for match in status: " + responseStatus);
+        }
+        this.responseStatus = MatchStatus.ARRIVED;
+        this.updatedAt = now;
+    }
+
+    /**
+     * Records MEDICAL_REJECTION upon health screening at site.
+     */
+    public void medicalRejection(Instant now) {
+        if (!responseStatus.canTransitionTo(MatchStatus.MEDICAL_REJECTION)) {
+            throw new ValidationException("Cannot record medical rejection for match in status: " + responseStatus);
+        }
+        this.responseStatus = MatchStatus.MEDICAL_REJECTION;
+        this.updatedAt = now;
+    }
+
+    /**
+     * Cancels commitment safely without karma penalty.
+     */
+    public void cancelSafe(Instant now) {
+        if (!responseStatus.canTransitionTo(MatchStatus.CANCELLED_SAFE)) {
+            throw new ValidationException("Cannot safely cancel match in status: " + responseStatus);
+        }
+        this.responseStatus = MatchStatus.CANCELLED_SAFE;
+        this.updatedAt = now;
+    }
+
+    public void setResponseStatus(MatchStatus responseStatus) {
+        this.responseStatus = responseStatus;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     // --- Getters & Safe Domain Mutators ---
 
     public UUID getId() {

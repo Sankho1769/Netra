@@ -41,12 +41,20 @@ class DonorMatchLifecycleTest {
         assertFalse(MatchStatus.MATCHED.canTransitionTo(null));
 
         // From Terminal States:
-        for (MatchStatus terminal : new MatchStatus[]{MatchStatus.ACCEPTED, MatchStatus.DECLINED, MatchStatus.EXPIRED, MatchStatus.CANCELLED}) {
+        for (MatchStatus terminal : new MatchStatus[]{
+                MatchStatus.DECLINED, MatchStatus.EXPIRED, MatchStatus.CANCELLED,
+                MatchStatus.CONFIRMED_NO_SHOW, MatchStatus.MEDICAL_REJECTION, MatchStatus.CANCELLED_SAFE}) {
             assertTrue(terminal.isTerminal());
             for (MatchStatus target : MatchStatus.values()) {
                 assertFalse(terminal.canTransitionTo(target), terminal + " must not transition to " + target);
             }
         }
+
+        // Non-terminal committed states:
+        assertFalse(MatchStatus.ACCEPTED.isTerminal());
+        assertTrue(MatchStatus.ACCEPTED.canTransitionTo(MatchStatus.ARRIVED));
+        assertTrue(MatchStatus.ACCEPTED.canTransitionTo(MatchStatus.CONFIRMED_NO_SHOW));
+        assertTrue(MatchStatus.ACCEPTED.canTransitionTo(MatchStatus.CANCELLED_SAFE));
     }
 
     @Test
@@ -76,7 +84,7 @@ class DonorMatchLifecycleTest {
         assertEquals(MatchStatus.ACCEPTED, match.getResponseStatus());
         assertEquals(now, match.getRespondedAt());
         assertEquals(now, match.getUpdatedAt());
-        assertTrue(match.getResponseStatus().isTerminal());
+        assertFalse(match.getResponseStatus().isTerminal(), "ACCEPTED is an active committed state");
     }
 
     @Test
@@ -109,12 +117,30 @@ class DonorMatchLifecycleTest {
     void testTerminalMatchesImmutable() {
         Instant now = Instant.now();
         DonorMatch match = new DonorMatch(UUID.randomUUID(), UUID.randomUUID(), now.plus(1, ChronoUnit.HOURS));
-        match.accept(now);
+        match.decline(now);
 
         assertThrows(ValidationException.class, () -> match.accept(now));
         assertThrows(ValidationException.class, () -> match.decline(now));
         assertThrows(ValidationException.class, () -> match.cancel(now));
         assertThrows(ValidationException.class, () -> match.expire(now));
+    }
+
+    @Test
+    @DisplayName("Unit: ACCEPTED match can transition to ARRIVED and MEDICAL_REJECTION")
+    void testAcceptedTransitions() {
+        Instant now = Instant.now();
+        DonorMatch match = new DonorMatch(UUID.randomUUID(), UUID.randomUUID(), now.plus(1, ChronoUnit.HOURS));
+        match.accept(now);
+
+        assertThrows(ValidationException.class, () -> match.accept(now));
+        assertThrows(ValidationException.class, () -> match.decline(now));
+
+        match.arrive(now);
+        assertEquals(MatchStatus.ARRIVED, match.getResponseStatus());
+
+        match.medicalRejection(now);
+        assertEquals(MatchStatus.MEDICAL_REJECTION, match.getResponseStatus());
+        assertTrue(match.getResponseStatus().isTerminal());
     }
 
     @Test

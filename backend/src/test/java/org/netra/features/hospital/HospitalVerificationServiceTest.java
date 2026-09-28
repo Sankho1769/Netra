@@ -117,4 +117,100 @@ class HospitalVerificationServiceTest {
         assertFalse(result.isVerified());
         assertEquals("UNVERIFIED", result.getVerificationStatus());
     }
+
+    @Test
+    @DisplayName("verifyHospital: resolves multi-region hospital (Kolkata) via external provider and caches it")
+    void verifyHospital_ExternalProviderMultiRegion_Kolkata() {
+        org.netra.features.hospital.provider.HospitalPlacesProvider placesProvider =
+                mock(org.netra.features.hospital.provider.HospitalPlacesProvider.class);
+        HospitalVerificationService serviceWithProvider =
+                new HospitalVerificationService(verifiedHospitalRepository, bloodBankRepository, placesProvider);
+
+        when(verifiedHospitalRepository.findByNameIgnoreCaseAndCityIgnoreCase(anyString(), anyString())).thenReturn(Optional.empty());
+        when(verifiedHospitalRepository.findByNameIgnoreCase(anyString())).thenReturn(Optional.empty());
+        when(bloodBankRepository.findAll()).thenReturn(Collections.emptyList());
+
+        VerifiedHospitalDto providerDto = new VerifiedHospitalDto(
+                null, "SSKM Hospital", "244 AJC Bose Road", "Kolkata", "West Bengal",
+                "700020", "OSM-123456", true, "VERIFIED", null, 22.5398, 88.3426,
+                "EXTERNAL_PROVIDER", "HOSPITAL"
+        );
+
+        when(placesProvider.searchHealthcarePlaces("SSKM Hospital", "Kolkata"))
+                .thenReturn(List.of(providerDto));
+        when(verifiedHospitalRepository.save(any(VerifiedHospital.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        VerifyHospitalRequest request = new VerifyHospitalRequest(
+                "SSKM Hospital", "AJC Bose Road", "Kolkata", "West Bengal", null
+        );
+
+        HospitalVerificationResultDto result = serviceWithProvider.verifyHospital(request);
+
+        assertNotNull(result);
+        assertTrue(result.isVerified());
+        assertEquals("VERIFIED", result.getVerificationStatus());
+        assertEquals("SSKM Hospital", result.getHospitalName());
+        assertEquals("Kolkata", result.getCity());
+        assertEquals("EXTERNAL_PROVIDER", result.getSource());
+        verify(verifiedHospitalRepository).save(any(VerifiedHospital.class));
+    }
+
+    @Test
+    @DisplayName("verifyHospital: gracefully handles external provider failure and returns UNVERIFIED")
+    void verifyHospital_ProviderFailureGracefulFallback() {
+        org.netra.features.hospital.provider.HospitalPlacesProvider placesProvider =
+                mock(org.netra.features.hospital.provider.HospitalPlacesProvider.class);
+        HospitalVerificationService serviceWithProvider =
+                new HospitalVerificationService(verifiedHospitalRepository, bloodBankRepository, placesProvider);
+
+        when(verifiedHospitalRepository.findByNameIgnoreCaseAndCityIgnoreCase(anyString(), anyString())).thenReturn(Optional.empty());
+        when(verifiedHospitalRepository.findByNameIgnoreCase(anyString())).thenReturn(Optional.empty());
+        when(bloodBankRepository.findAll()).thenReturn(Collections.emptyList());
+        when(placesProvider.searchHealthcarePlaces(anyString(), anyString()))
+                .thenThrow(new RuntimeException("External service timeout"));
+
+        VerifyHospitalRequest request = new VerifyHospitalRequest(
+                "Unknown Rural Health Center", "Village Road", "Purulia", "West Bengal", null
+        );
+
+        HospitalVerificationResultDto result = serviceWithProvider.verifyHospital(request);
+
+        assertNotNull(result);
+        assertFalse(result.isVerified());
+        assertEquals("UNVERIFIED", result.getVerificationStatus());
+    }
+
+    @Test
+    @DisplayName("searchHospitals: combines internal registry and dynamic external provider results")
+    void searchHospitals_CombinesRegistryAndProvider() {
+        org.netra.features.hospital.provider.HospitalPlacesProvider placesProvider =
+                mock(org.netra.features.hospital.provider.HospitalPlacesProvider.class);
+        HospitalVerificationService serviceWithProvider =
+                new HospitalVerificationService(verifiedHospitalRepository, bloodBankRepository, placesProvider);
+
+        VerifiedHospital internalHosp = new VerifiedHospital(
+                "AIIMS New Delhi", "Ansari Nagar", "New Delhi", "Delhi", "110029",
+                28.5672, 77.2100, "PLACE-DEL-AIIMS", true, "VERIFIED", null,
+                "INTERNAL_REGISTRY", "HOSPITAL"
+        );
+        when(verifiedHospitalRepository.searchHospitals("AIIMS", null))
+                .thenReturn(List.of(internalHosp));
+        when(bloodBankRepository.findAll()).thenReturn(Collections.emptyList());
+
+        VerifiedHospitalDto extHosp = new VerifiedHospitalDto(
+                null, "AIIMS Kalyani", "NH-34 Connector", "Kalyani", "West Bengal",
+                "741245", "OSM-789012", true, "VERIFIED", null, 22.9750, 88.4344,
+                "EXTERNAL_PROVIDER", "HOSPITAL"
+        );
+        when(placesProvider.searchHealthcarePlaces("AIIMS", null))
+                .thenReturn(List.of(extHosp));
+
+        List<VerifiedHospitalDto> results = serviceWithProvider.searchHospitals("AIIMS", null);
+
+        assertNotNull(results);
+        assertEquals(2, results.size());
+        assertTrue(results.stream().anyMatch(h -> h.getCity().equals("New Delhi")));
+        assertTrue(results.stream().anyMatch(h -> h.getCity().equals("Kalyani")));
+    }
 }

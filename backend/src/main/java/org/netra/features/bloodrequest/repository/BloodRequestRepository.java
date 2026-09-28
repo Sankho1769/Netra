@@ -33,7 +33,7 @@ public interface BloodRequestRepository extends JpaRepository<BloodRequest, UUID
 
     Page<BloodRequest> findByRequesterUserIdAndStatus(UUID requesterUserId, BloodRequestStatus status, Pageable pageable);
 
-    @Query("SELECT r FROM BloodRequest r WHERE r.status = :status " +
+    @Query("SELECT r FROM BloodRequest r WHERE (r.status = :status OR (:status = org.netra.features.bloodrequest.entity.BloodRequestStatus.OPEN AND r.status = org.netra.features.bloodrequest.entity.BloodRequestStatus.VERIFIED)) " +
            "AND r.requiredBy > :now " +
            "AND (:bloodGroup IS NULL OR r.bloodGroup = :bloodGroup) " +
            "AND (:urgency IS NULL OR r.urgency = :urgency) " +
@@ -47,7 +47,7 @@ public interface BloodRequestRepository extends JpaRepository<BloodRequest, UUID
             Pageable pageable);
 
     @Query("SELECT r FROM BloodRequest r WHERE r.latitude BETWEEN :minLat AND :maxLat " +
-           "AND r.longitude BETWEEN :minLng AND :maxLng AND r.status = :status " +
+           "AND r.longitude BETWEEN :minLng AND :maxLng AND (r.status = :status OR (:status = org.netra.features.bloodrequest.entity.BloodRequestStatus.OPEN AND r.status = org.netra.features.bloodrequest.entity.BloodRequestStatus.VERIFIED)) " +
            "AND r.requiredBy > :now " +
            "AND (:bloodGroup IS NULL OR r.bloodGroup = :bloodGroup)")
     List<BloodRequest> findNearbyCandidates(
@@ -59,13 +59,13 @@ public interface BloodRequestRepository extends JpaRepository<BloodRequest, UUID
             @Param("now") Instant now,
             @Param("bloodGroup") BloodGroup bloodGroup);
 
-    @Query("SELECT r.id FROM BloodRequest r WHERE r.status = org.netra.features.bloodrequest.entity.BloodRequestStatus.OPEN AND r.requiredBy <= :now")
+    @Query("SELECT r.id FROM BloodRequest r WHERE (r.status = org.netra.features.bloodrequest.entity.BloodRequestStatus.OPEN OR r.status = org.netra.features.bloodrequest.entity.BloodRequestStatus.VERIFIED) AND r.requiredBy <= :now")
     List<UUID> findOverdueRequestIds(@Param("now") Instant now);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE BloodRequest r SET r.status = org.netra.features.bloodrequest.entity.BloodRequestStatus.EXPIRED, " +
            "r.updatedAt = :now, r.version = r.version + 1 " +
-           "WHERE r.status = org.netra.features.bloodrequest.entity.BloodRequestStatus.OPEN AND r.requiredBy <= :now")
+           "WHERE (r.status = org.netra.features.bloodrequest.entity.BloodRequestStatus.OPEN OR r.status = org.netra.features.bloodrequest.entity.BloodRequestStatus.VERIFIED) AND r.requiredBy <= :now")
     int expireDueRequests(@Param("now") Instant now);
 
     long countByStatus(BloodRequestStatus status);

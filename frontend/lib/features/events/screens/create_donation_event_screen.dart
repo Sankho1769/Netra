@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/location/location_service.dart';
 import '../../../core/responsive/responsive_breakpoints.dart';
 import '../../../core/responsive/responsive_scaffold.dart';
 import '../../../core/theme/netra_colors.dart';
@@ -6,6 +7,7 @@ import '../../../core/theme/netra_spacing.dart';
 import '../../../core/theme/netra_typography.dart';
 import '../../../common/widgets/netra_button.dart';
 import '../../../common/widgets/netra_text_field.dart';
+import '../../blood_request/widgets/hospital_search_field.dart';
 import '../state/donation_event_controller.dart';
 import 'donation_event_details_screen.dart';
 
@@ -37,12 +39,14 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _stateController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
-  final TextEditingController _latController =
-      TextEditingController(text: '19.0760');
-  final TextEditingController _lonController =
-      TextEditingController(text: '72.8777');
   final TextEditingController _capacityController =
       TextEditingController(text: '50');
+
+  // Coordinated venue location
+  double? _latitude;
+  double? _longitude;
+  bool _isLocating = false;
+  final LocationService _locationService = DefaultLocationService();
 
   // Date and time state
   DateTime _startAt = DateTime.now().add(const Duration(days: 7, hours: 9));
@@ -70,8 +74,6 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
     _cityController.dispose();
     _stateController.dispose();
     _postalCodeController.dispose();
-    _latController.dispose();
-    _lonController.dispose();
     _capacityController.dispose();
     if (widget.controller == null) {
       _controller.dispose();
@@ -95,6 +97,47 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
     if (time == null) return null;
 
     return DateTime(date.year, date.month, date.day, time.hour, time.minute);
+  }
+
+  Future<void> _detectLocation() async {
+    setState(() => _isLocating = true);
+    try {
+      final loc =
+          await _locationService.getCurrentLocation(approximateOnly: false);
+      if (loc != null && mounted) {
+        setState(() {
+          if (loc.city != null && _cityController.text.trim().isEmpty) {
+            _cityController.text = loc.city!;
+          }
+          if (loc.state != null && _stateController.text.trim().isEmpty) {
+            _stateController.text = loc.state!;
+          }
+          if (loc.postalCode != null &&
+              _postalCodeController.text.trim().isEmpty) {
+            _postalCodeController.text = loc.postalCode!;
+          }
+          if (loc.latitude != null) _latitude = loc.latitude;
+          if (loc.longitude != null) _longitude = loc.longitude;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Venue location coordinates detected successfully.'),
+            backgroundColor: Color(0xFF16A34A),
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Location permission denied or unavailable. Please select a verified venue.'),
+            backgroundColor: Color(0xFFD97706),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLocating = false);
+    }
   }
 
   Future<void> _handleCreate() async {
@@ -129,14 +172,9 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
       return;
     }
 
-    final lat = double.tryParse(_latController.text.trim());
-    final lon = double.tryParse(_lonController.text.trim());
-    if (lat == null || lat < -90 || lat > 90) {
-      _showError('Valid Latitude (-90 to 90) is required');
-      return;
-    }
-    if (lon == null || lon < -180 || lon > 180) {
-      _showError('Valid Longitude (-180 to 180) is required');
+    if (_latitude == null || _longitude == null) {
+      _showError(
+          'Please select a verified venue or tap "Detect Location" to establish venue coordinates');
       return;
     }
 
@@ -172,8 +210,8 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
       'city': _cityController.text.trim(),
       'state': _stateController.text.trim(),
       'postalCode': _postalCodeController.text.trim(),
-      'latitude': lat,
-      'longitude': lon,
+      'latitude': _latitude!,
+      'longitude': _longitude!,
       'startAt': _startAt.toUtc().toIso8601String(),
       'endAt': _endAt.toUtc().toIso8601String(),
       'registrationOpenAt': _regOpenAt.toUtc().toIso8601String(),
@@ -303,25 +341,61 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                           const SizedBox(height: 24),
 
                           // Venue Details
-                          Text(
-                            'Venue & Location',
-                            style: NetraTypography.titleMedium.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: NetraColors.primaryRed,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Venue & Location',
+                                style: NetraTypography.titleMedium.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: NetraColors.primaryRed,
+                                ),
+                              ),
+                              TextButton.icon(
+                                onPressed: _isLocating ? null : _detectLocation,
+                                icon: _isLocating
+                                    ? const SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2),
+                                      )
+                                    : const Icon(Icons.my_location_rounded,
+                                        size: 16),
+                                label: const Text('Detect Location',
+                                    style: TextStyle(fontSize: 12)),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 12),
 
-                          NetraTextField(
-                            label: 'Venue Name *',
-                            hint: 'e.g. Community Hall / College Auditorium',
+                          HospitalSearchField(
                             controller: _venueNameController,
+                            onHospitalSelected: (hospital) {
+                              setState(() {
+                                if (hospital != null) {
+                                  _venueNameController.text = hospital.name;
+                                  _addressController.text = hospital.address;
+                                  _cityController.text = hospital.city;
+                                  _stateController.text = hospital.state;
+                                  if (hospital.postalCode != null) {
+                                    _postalCodeController.text =
+                                        hospital.postalCode!;
+                                  }
+                                  _latitude = hospital.latitude;
+                                  _longitude = hospital.longitude;
+                                } else {
+                                  _latitude = null;
+                                  _longitude = null;
+                                }
+                              });
+                            },
                           ),
                           const SizedBox(height: 16),
 
                           NetraTextField(
                             label: 'Street Address *',
-                            hint: 'e.g. 102 Sector 4, MG Road',
+                            hint: 'e.g. 102 Sector 4, Hospital Road',
                             controller: _addressController,
                           ),
                           const SizedBox(height: 16),
@@ -332,7 +406,7 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                                 flex: 2,
                                 child: NetraTextField(
                                   label: 'City *',
-                                  hint: 'Mumbai',
+                                  hint: 'e.g. Kolkata, Delhi',
                                   controller: _cityController,
                                 ),
                               ),
@@ -341,7 +415,7 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                                 flex: 2,
                                 child: NetraTextField(
                                   label: 'State *',
-                                  hint: 'Maharashtra',
+                                  hint: 'e.g. West Bengal',
                                   controller: _stateController,
                                 ),
                               ),
@@ -350,37 +424,67 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                                 flex: 1,
                                 child: NetraTextField(
                                   label: 'PIN *',
-                                  hint: '400001',
+                                  hint: 'e.g. 700020',
                                   controller: _postalCodeController,
                                   keyboardType: TextInputType.number,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
 
-                          Row(
-                            children: [
-                              Expanded(
-                                child: NetraTextField(
-                                  label: 'Latitude *',
-                                  controller: _latController,
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                          decimal: true),
-                                ),
+                          // Verified Coordinates Status Badge (Zero manual typing)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: _latitude != null && _longitude != null
+                                  ? const Color(0xFFF0FDF4)
+                                  : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: _latitude != null && _longitude != null
+                                    ? const Color(0xFF86EFAC)
+                                    : const Color(0xFFCBD5E1),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: NetraTextField(
-                                  label: 'Longitude *',
-                                  controller: _lonController,
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                          decimal: true),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _latitude != null && _longitude != null
+                                      ? Icons.check_circle_outline
+                                      : Icons.info_outline,
+                                  size: 16,
+                                  color: _latitude != null && _longitude != null
+                                      ? const Color(0xFF16A34A)
+                                      : const Color(0xFF64748B),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _latitude != null && _longitude != null
+                                        ? 'Verified coordinates attached (${_latitude!.toStringAsFixed(3)}, ${_longitude!.toStringAsFixed(3)})'
+                                        : 'Search a verified venue above or tap "Detect Location" to attach GPS coordinates.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: _latitude != null &&
+                                              _longitude != null
+                                          ? const Color(0xFF16A34A)
+                                          : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ),
+                                if (_latitude != null && _longitude != null)
+                                  GestureDetector(
+                                    onTap: () => setState(() {
+                                      _latitude = null;
+                                      _longitude = null;
+                                    }),
+                                    child: const Icon(Icons.close,
+                                        size: 14, color: Color(0xFF64748B)),
+                                  ),
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 24),
 

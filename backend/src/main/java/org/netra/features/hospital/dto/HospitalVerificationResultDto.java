@@ -16,6 +16,8 @@ public class HospitalVerificationResultDto {
     private Double latitude; // Internal/Service resolution
     private Double longitude; // Internal/Service resolution
     private String notes;
+    private String source;
+    private String placeType;
 
     public HospitalVerificationResultDto() {
     }
@@ -32,6 +34,23 @@ public class HospitalVerificationResultDto {
             Double latitude,
             Double longitude,
             String notes) {
+        return verified(verifiedHospitalId, hospitalName, hospitalAddress, city, state, postalCode, placeId, hasBloodBank, latitude, longitude, notes, "INTERNAL_REGISTRY", "HOSPITAL");
+    }
+
+    public static HospitalVerificationResultDto verified(
+            UUID verifiedHospitalId,
+            String hospitalName,
+            String hospitalAddress,
+            String city,
+            String state,
+            String postalCode,
+            String placeId,
+            Boolean hasBloodBank,
+            Double latitude,
+            Double longitude,
+            String notes,
+            String source,
+            String placeType) {
         HospitalVerificationResultDto dto = new HospitalVerificationResultDto();
         dto.setVerificationStatus("VERIFIED");
         dto.setVerifiedHospitalId(verifiedHospitalId);
@@ -45,6 +64,8 @@ public class HospitalVerificationResultDto {
         dto.setLatitude(latitude);
         dto.setLongitude(longitude);
         dto.setNotes(notes != null ? notes : "Verified against authoritative healthcare registry.");
+        dto.setSource(source != null ? source : "INTERNAL_REGISTRY");
+        dto.setPlaceType(placeType != null ? placeType : "HOSPITAL");
         return dto;
     }
 
@@ -56,6 +77,8 @@ public class HospitalVerificationResultDto {
         dto.setCity(city);
         dto.setState(state);
         dto.setHasBloodBank(false);
+        dto.setSource("USER_SUBMISSION");
+        dto.setPlaceType("HOSPITAL");
         dto.setNotes(notes != null ? notes : "Hospital could not be verified in authoritative registry. Requires manual clinical verification.");
         return dto;
     }
@@ -170,5 +193,21 @@ public class HospitalVerificationResultDto {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public String getPlaceType() {
+        return placeType;
+    }
+
+    public void setPlaceType(String placeType) {
+        this.placeType = placeType;
     }
 }

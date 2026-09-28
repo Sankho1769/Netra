@@ -245,4 +245,49 @@ class BloodRequestVerificationSecurityTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("A valid verification decision")));
     }
+
+    @Test
+    @DisplayName("Fraud Lifecycle: Authoritative staff marks request as CONFIRMED_FAKE")
+    void testConfirmFakeRequest_AsBloodBank_Success() throws Exception {
+        BloodRequest request = createSampleBloodRequest(requester, BloodRequestStatus.OPEN);
+
+        mockMvc.perform(post("/api/v1/blood-requests/" + request.getId() + "/confirm-fake")
+                        .header("Authorization", "Bearer " + getAccessToken(bloodBankUser))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Fabricated hospital admission slip\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(request.getId().toString()))
+                .andExpect(jsonPath("$.status").value("CONFIRMED_FAKE"))
+                .andExpect(jsonPath("$.verificationStatus").value("REJECTED"));
+
+        BloodRequest updated = bloodRequestRepository.findById(request.getId()).orElseThrow();
+        assertEquals(BloodRequestStatus.CONFIRMED_FAKE, updated.getStatus());
+        assertEquals(BloodRequestVerificationStatus.REJECTED, updated.getVerificationStatus());
+        assertEquals(bloodBankUser.getId(), updated.getVerifiedBy());
+    }
+
+    @Test
+    @DisplayName("Fraud Lifecycle: Unauthorized normal user cannot confirm fake request (403 Forbidden)")
+    void testConfirmFakeRequest_AsUnauthorizedReceiver_Forbidden() throws Exception {
+        BloodRequest request = createSampleBloodRequest(requester, BloodRequestStatus.OPEN);
+
+        mockMvc.perform(post("/api/v1/blood-requests/" + request.getId() + "/confirm-fake")
+                        .header("Authorization", "Bearer " + getAccessToken(unauthorizedReceiver))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Normal user trying to penalize requester\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Fraud Lifecycle: Confirming already CONFIRMED_FAKE request returns 400 Bad Request")
+    void testConfirmFakeRequest_AlreadyConfirmedFake_BadRequest() throws Exception {
+        BloodRequest request = createSampleBloodRequest(requester, BloodRequestStatus.CONFIRMED_FAKE);
+
+        mockMvc.perform(post("/api/v1/blood-requests/" + request.getId() + "/confirm-fake")
+                        .header("Authorization", "Bearer " + getAccessToken(bloodBankUser))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Duplicate fake confirmation\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("already marked as CONFIRMED_FAKE")));
+    }
 }

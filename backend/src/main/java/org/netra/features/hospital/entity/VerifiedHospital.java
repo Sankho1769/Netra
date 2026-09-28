@@ -45,6 +45,12 @@ public class VerifiedHospital {
     @Column(name = "phone", length = 32)
     private String phone;
 
+    @Column(name = "source", nullable = false, length = 32)
+    private String source = "INTERNAL_REGISTRY";
+
+    @Column(name = "place_type", length = 64)
+    private String placeType = "HOSPITAL";
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
@@ -66,6 +72,23 @@ public class VerifiedHospital {
             Boolean hasBloodBank,
             String verificationStatus,
             String phone) {
+        this(name, address, city, state, postalCode, latitude, longitude, placeId, hasBloodBank, verificationStatus, phone, "INTERNAL_REGISTRY", "HOSPITAL");
+    }
+
+    public VerifiedHospital(
+            String name,
+            String address,
+            String city,
+            String state,
+            String postalCode,
+            Double latitude,
+            Double longitude,
+            String placeId,
+            Boolean hasBloodBank,
+            String verificationStatus,
+            String phone,
+            String source,
+            String placeType) {
         this.name = name;
         this.address = address;
         this.city = city;
@@ -77,6 +100,8 @@ public class VerifiedHospital {
         this.hasBloodBank = hasBloodBank != null ? hasBloodBank : false;
         this.verificationStatus = verificationStatus != null ? verificationStatus : "VERIFIED";
         this.phone = phone;
+        this.source = source != null ? source : "INTERNAL_REGISTRY";
+        this.placeType = placeType != null ? placeType : "HOSPITAL";
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
     }
@@ -175,6 +200,22 @@ public class VerifiedHospital {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public String getPlaceType() {
+        return placeType;
+    }
+
+    public void setPlaceType(String placeType) {
+        this.placeType = placeType;
     }
 
     public Instant getCreatedAt() {

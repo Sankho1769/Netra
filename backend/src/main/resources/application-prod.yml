@@ -60,6 +60,12 @@ netra:
         project-id: ${FCM_PROJECT_ID:${FIREBASE_PROJECT_ID:}}
         credentials-path: ${FCM_CREDENTIALS_PATH:${FIREBASE_CREDENTIALS_PATH:}}
 
+  places:
+    nominatim:
+      enabled: ${NETRA_NOMINATIM_ENABLED:true}
+      url: ${NETRA_NOMINATIM_URL:https://nominatim.openstreetmap.org/search}
+      timeout-ms: 3000
+
 management:
   endpoints:
     web:

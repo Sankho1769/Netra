@@ -15,6 +15,10 @@ public class VerifiedHospitalDto {
     private Boolean hasBloodBank;
     private String verificationStatus;
     private String phone;
+    private Double latitude;
+    private Double longitude;
+    private String source;
+    private String placeType;
 
     public VerifiedHospitalDto() {
     }
@@ -30,6 +34,24 @@ public class VerifiedHospitalDto {
             Boolean hasBloodBank,
             String verificationStatus,
             String phone) {
+        this(id, name, address, city, state, postalCode, placeId, hasBloodBank, verificationStatus, phone, null, null, "INTERNAL_REGISTRY", "HOSPITAL");
+    }
+
+    public VerifiedHospitalDto(
+            UUID id,
+            String name,
+            String address,
+            String city,
+            String state,
+            String postalCode,
+            String placeId,
+            Boolean hasBloodBank,
+            String verificationStatus,
+            String phone,
+            Double latitude,
+            Double longitude,
+            String source,
+            String placeType) {
         this.id = id;
         this.name = name;
         this.address = address;
@@ -40,6 +62,10 @@ public class VerifiedHospitalDto {
         this.hasBloodBank = hasBloodBank;
         this.verificationStatus = verificationStatus;
         this.phone = phone;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.source = source != null ? source : "INTERNAL_REGISTRY";
+        this.placeType = placeType != null ? placeType : "HOSPITAL";
     }
 
     public static VerifiedHospitalDto fromEntity(VerifiedHospital entity) {
@@ -54,7 +80,11 @@ public class VerifiedHospitalDto {
                 entity.getPlaceId(),
                 entity.getHasBloodBank(),
                 entity.getVerificationStatus(),
-                entity.getPhone()
+                entity.getPhone(),
+                entity.getLatitude(),
+                entity.getLongitude(),
+                entity.getSource(),
+                entity.getPlaceType()
         );
     }
 
@@ -136,5 +166,37 @@ public class VerifiedHospitalDto {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public String getPlaceType() {
+        return placeType;
+    }
+
+    public void setPlaceType(String placeType) {
+        this.placeType = placeType;
     }
 }

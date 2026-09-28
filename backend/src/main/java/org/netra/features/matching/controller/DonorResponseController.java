@@ -83,7 +83,7 @@ public class DonorResponseController {
     }
 
     @PostMapping("/{matchId}/confirm-no-show")
-    @PreAuthorize("hasAnyRole('ROLE_STAFF', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('BLOODBANK', 'ADMIN')")
     public ResponseEntity<DonorMatchDetailDto> confirmNoShow(
             @PathVariable("matchId") UUID matchId,
             @jakarta.validation.Valid @RequestBody org.netra.features.matching.dto.ConfirmNoShowRequest confirmRequest,
@@ -96,6 +96,58 @@ public class DonorResponseController {
 
         DonorMatchDetailDto updated = donorResponseService.confirmDonorNoShow(
                 matchId, confirmRequest.getReason(), currentUserId, clientIp, userAgent);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/{matchId}/record-arrival")
+    @PreAuthorize("hasAnyRole('BLOODBANK', 'ADMIN')")
+    public ResponseEntity<DonorMatchDetailDto> recordArrival(
+            @PathVariable("matchId") UUID matchId,
+            HttpServletRequest request) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new UnauthorizedSessionAccessException("User is not authenticated."));
+
+        String clientIp = clientIpResolver.resolveClientIp(request);
+        String userAgent = request.getHeader("User-Agent");
+
+        DonorMatchDetailDto updated = donorResponseService.recordArrival(
+                matchId, currentUserId, clientIp, userAgent);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/{matchId}/record-medical-rejection")
+    @PreAuthorize("hasAnyRole('BLOODBANK', 'ADMIN')")
+    public ResponseEntity<DonorMatchDetailDto> recordMedicalRejection(
+            @PathVariable("matchId") UUID matchId,
+            @RequestBody(required = false) java.util.Map<String, String> body,
+            HttpServletRequest request) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new UnauthorizedSessionAccessException("User is not authenticated."));
+
+        String reason = (body != null && body.containsKey("reason")) ? body.get("reason") : "Medically ineligible at clinical review.";
+        String clientIp = clientIpResolver.resolveClientIp(request);
+        String userAgent = request.getHeader("User-Agent");
+
+        DonorMatchDetailDto updated = donorResponseService.recordMedicalRejection(
+                matchId, reason, currentUserId, clientIp, userAgent);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/{matchId}/cancel-commitment")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<DonorMatchDetailDto> cancelCommitment(
+            @PathVariable("matchId") UUID matchId,
+            @RequestBody(required = false) java.util.Map<String, String> body,
+            HttpServletRequest request) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new UnauthorizedSessionAccessException("User is not authenticated."));
+
+        String reason = (body != null && body.containsKey("reason")) ? body.get("reason") : "Cancelled commitment prior to appointment window.";
+        String clientIp = clientIpResolver.resolveClientIp(request);
+        String userAgent = request.getHeader("User-Agent");
+
+        DonorMatchDetailDto updated = donorResponseService.cancelCommitment(
+                matchId, reason, currentUserId, clientIp, userAgent);
         return ResponseEntity.ok(updated);
     }
 }

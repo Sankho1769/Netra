@@ -666,4 +666,95 @@ class DonorResponseIntegrationTest {
         assertEquals(1, result.size());
         assertEquals(donorUser.getId(), result.get(0).getUserId());
     }
+
+    @Test
+    @DisplayName("Lifecycle: Authoritative staff confirms donor no-show and transitions status to CONFIRMED_NO_SHOW")
+    void testConfirmDonorNoShow_AuthoritativeStaff_TransitionsStatus() throws Exception {
+        BloodRequest req = createBloodRequest(BloodGroup.A_POSITIVE, BloodRequestStatus.OPEN, Instant.now().plus(24, ChronoUnit.HOURS));
+        DonorMatch match = new DonorMatch(req.getId(), donorUser.getId(), Instant.now().plus(12, ChronoUnit.HOURS));
+        match.setResponseStatus(MatchStatus.ACCEPTED);
+        match = donorMatchRepository.save(match);
+
+        User staff = createTestUser("staff.bb", UserRole.ROLE_BLOODBANK, UserStatus.ACTIVE);
+        String staffToken = jwtTokenProvider.generateAccessToken(staff.getId(), List.of("ROLE_BLOODBANK"));
+
+        mockMvc.perform(post("/api/v1/donor/matches/" + match.getId() + "/confirm-no-show")
+                        .header("Authorization", "Bearer " + staffToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Donor did not appear at blood center\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.matchId").value(match.getId().toString()))
+                .andExpect(jsonPath("$.responseStatus").value("CONFIRMED_NO_SHOW"));
+
+        DonorMatch updated = donorMatchRepository.findById(match.getId()).orElseThrow();
+        assertEquals(MatchStatus.CONFIRMED_NO_SHOW, updated.getResponseStatus());
+
+        // Attempting to confirm no-show again fails with 400 Bad Request (not ACCEPTED)
+        mockMvc.perform(post("/api/v1/donor/matches/" + match.getId() + "/confirm-no-show")
+                        .header("Authorization", "Bearer " + staffToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Duplicate confirmation attempt\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Lifecycle: Staff records donor arrival at collection center")
+    void testRecordArrival_AuthoritativeStaff() throws Exception {
+        BloodRequest req = createBloodRequest(BloodGroup.A_POSITIVE, BloodRequestStatus.OPEN, Instant.now().plus(24, ChronoUnit.HOURS));
+        DonorMatch match = new DonorMatch(req.getId(), donorUser.getId(), Instant.now().plus(12, ChronoUnit.HOURS));
+        match.setResponseStatus(MatchStatus.ACCEPTED);
+        match = donorMatchRepository.save(match);
+
+        User staff = createTestUser("staff.arrival", UserRole.ROLE_BLOODBANK, UserStatus.ACTIVE);
+        String staffToken = jwtTokenProvider.generateAccessToken(staff.getId(), List.of("ROLE_BLOODBANK"));
+
+        mockMvc.perform(post("/api/v1/donor/matches/" + match.getId() + "/record-arrival")
+                        .header("Authorization", "Bearer " + staffToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.responseStatus").value("ARRIVED"));
+
+        DonorMatch updated = donorMatchRepository.findById(match.getId()).orElseThrow();
+        assertEquals(MatchStatus.ARRIVED, updated.getResponseStatus());
+    }
+
+    @Test
+    @DisplayName("Lifecycle: Staff records medical rejection at clinical review (no karma penalty)")
+    void testRecordMedicalRejection_NoKarmaDeduction() throws Exception {
+        BloodRequest req = createBloodRequest(BloodGroup.A_POSITIVE, BloodRequestStatus.OPEN, Instant.now().plus(24, ChronoUnit.HOURS));
+        DonorMatch match = new DonorMatch(req.getId(), donorUser.getId(), Instant.now().plus(12, ChronoUnit.HOURS));
+        match.setResponseStatus(MatchStatus.ARRIVED);
+        match = donorMatchRepository.save(match);
+
+        User staff = createTestUser("staff.med", UserRole.ROLE_BLOODBANK, UserStatus.ACTIVE);
+        String staffToken = jwtTokenProvider.generateAccessToken(staff.getId(), List.of("ROLE_BLOODBANK"));
+
+        mockMvc.perform(post("/api/v1/donor/matches/" + match.getId() + "/record-medical-rejection")
+                        .header("Authorization", "Bearer " + staffToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Low hemoglobin on site check\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.responseStatus").value("MEDICAL_REJECTION"));
+
+        DonorMatch updated = donorMatchRepository.findById(match.getId()).orElseThrow();
+        assertEquals(MatchStatus.MEDICAL_REJECTION, updated.getResponseStatus());
+    }
+
+    @Test
+    @DisplayName("Lifecycle: Donor cancels commitment safely prior to appointment window")
+    void testCancelCommitment_SafeCancel_NoKarmaDeduction() throws Exception {
+        BloodRequest req = createBloodRequest(BloodGroup.A_POSITIVE, BloodRequestStatus.OPEN, Instant.now().plus(24, ChronoUnit.HOURS));
+        DonorMatch match = new DonorMatch(req.getId(), donorUser.getId(), Instant.now().plus(12, ChronoUnit.HOURS));
+        match.setResponseStatus(MatchStatus.ACCEPTED);
+        match = donorMatchRepository.save(match);
+
+        mockMvc.perform(post("/api/v1/donor/matches/" + match.getId() + "/cancel-commitment")
+                        .header("Authorization", "Bearer " + donorToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Transportation failure\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.responseStatus").value("CANCELLED_SAFE"));
+
+        DonorMatch updated = donorMatchRepository.findById(match.getId()).orElseThrow();
+        assertEquals(MatchStatus.CANCELLED_SAFE, updated.getResponseStatus());
+    }
 }

@@ -29,17 +29,37 @@ public class HospitalVerificationService {
 
     private final VerifiedHospitalRepository verifiedHospitalRepository;
     private final BloodBankRepository bloodBankRepository;
+    private final org.netra.features.hospital.provider.HospitalPlacesProvider hospitalPlacesProvider;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public HospitalVerificationService(
+            VerifiedHospitalRepository verifiedHospitalRepository,
+            BloodBankRepository bloodBankRepository,
+            org.springframework.beans.factory.ObjectProvider<org.netra.features.hospital.provider.HospitalPlacesProvider> placesProvider) {
+        this.verifiedHospitalRepository = verifiedHospitalRepository;
+        this.bloodBankRepository = bloodBankRepository;
+        this.hospitalPlacesProvider = placesProvider != null ? placesProvider.getIfAvailable() : null;
+    }
 
     public HospitalVerificationService(
             VerifiedHospitalRepository verifiedHospitalRepository,
             BloodBankRepository bloodBankRepository) {
+        this(verifiedHospitalRepository, bloodBankRepository, (org.netra.features.hospital.provider.HospitalPlacesProvider) null);
+    }
+
+    public HospitalVerificationService(
+            VerifiedHospitalRepository verifiedHospitalRepository,
+            BloodBankRepository bloodBankRepository,
+            org.netra.features.hospital.provider.HospitalPlacesProvider hospitalPlacesProvider) {
         this.verifiedHospitalRepository = verifiedHospitalRepository;
         this.bloodBankRepository = bloodBankRepository;
+        this.hospitalPlacesProvider = hospitalPlacesProvider;
     }
 
     /**
      * Resolves and verifies an entered hospital/place against authoritative healthcare records.
      */
+    @Transactional
     public HospitalVerificationResultDto verifyHospital(VerifyHospitalRequest request) {
         if (request == null || request.getHospitalName() == null || request.getHospitalName().isBlank()) {
             return HospitalVerificationResultDto.unverified("", "", "", "", "Hospital name cannot be blank.");
@@ -98,13 +118,51 @@ public class HospitalVerificationService {
                             true,
                             bank.getLatitude(),
                             bank.getLongitude(),
-                            "Verified against registered authorized blood center."
+                            "Verified against registered authorized blood center.",
+                            "INTERNAL_REGISTRY",
+                            "BLOOD_BANK"
                     );
                 }
             }
         }
 
-        // 6. Fallback: Unverified place
+        // 6. External trusted places provider lookup (dynamic multi-region: Kolkata, Delhi, Bangalore, etc.)
+        if (hospitalPlacesProvider != null) {
+            try {
+                List<VerifiedHospitalDto> providerResults = hospitalPlacesProvider.searchHealthcarePlaces(rawName, rawCity);
+                for (VerifiedHospitalDto p : providerResults) {
+                    if (p.getName().equalsIgnoreCase(rawName) ||
+                        (rawName.length() >= 5 && p.getName().toLowerCase().contains(rawName.toLowerCase()))) {
+                        // Persist / cache into verified_hospitals
+                        VerifiedHospital cached = new VerifiedHospital(
+                                p.getName(),
+                                p.getAddress(),
+                                p.getCity(),
+                                p.getState(),
+                                p.getPostalCode(),
+                                p.getLatitude() != null ? p.getLatitude() : 0.0,
+                                p.getLongitude() != null ? p.getLongitude() : 0.0,
+                                p.getPlaceId(),
+                                p.getHasBloodBank(),
+                                "VERIFIED",
+                                p.getPhone(),
+                                "EXTERNAL_PROVIDER",
+                                p.getPlaceType()
+                        );
+                        try {
+                            cached = verifiedHospitalRepository.save(cached);
+                        } catch (Exception e) {
+                            log.debug("Caching provider place already present: {}", e.getMessage());
+                        }
+                        return mapToVerifiedResult(cached, "Verified via authoritative external healthcare places provider.");
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Error resolving place from external provider: {}", e.getMessage());
+            }
+        }
+
+        // 7. Fallback: Unverified place
         log.info("Hospital '{}' in '{}' not found in verified registry. Returning UNVERIFIED.", rawName, rawCity);
         return HospitalVerificationResultDto.unverified(
                 rawName,
@@ -156,10 +214,29 @@ public class HospitalVerificationService {
                                 "BB-" + b.getId().toString(),
                                 true,
                                 "VERIFIED",
-                                b.getPhone()
+                                b.getPhone(),
+                                b.getLatitude(),
+                                b.getLongitude(),
+                                "INTERNAL_REGISTRY",
+                                "BLOOD_BANK"
                         ));
                     }
                 }
+            }
+        }
+
+        // 3. Search dynamic external provider (multi-region support)
+        if (hospitalPlacesProvider != null) {
+            try {
+                List<VerifiedHospitalDto> extResults = hospitalPlacesProvider.searchHealthcarePlaces(sanitizedQuery, sanitizedCity);
+                for (VerifiedHospitalDto ext : extResults) {
+                    String key = (ext.getName() + "|" + ext.getCity()).toLowerCase();
+                    if (!results.containsKey(key)) {
+                        results.put(key, ext);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("External places provider search encountered error: {}", e.getMessage());
             }
         }
 
@@ -178,7 +255,9 @@ public class HospitalVerificationService {
                 vh.getHasBloodBank(),
                 vh.getLatitude(),
                 vh.getLongitude(),
-                notes
+                notes,
+                vh.getSource(),
+                vh.getPlaceType()
         );
     }
 }
