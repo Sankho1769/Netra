@@ -146,7 +146,16 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/users/**").authenticated()
                 .requestMatchers("/api/v1/profile/**").authenticated()
                 .requestMatchers("/api/v1/donor/**").authenticated()
-                .requestMatchers("/api/v1/donations/**").authenticated()
+                // Hospital & Place Verification (Public Search and Verification)
+                .requestMatchers(HttpMethod.GET, "/api/v1/hospitals/search").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/hospitals/verify").permitAll()
+
+                // Community Metrics (Public Discovery)
+                .requestMatchers(HttpMethod.GET, "/api/v1/metrics/community-impact").permitAll()
+
+                // Karma System Endpoints
+                .requestMatchers("/api/v1/karma/**").authenticated()
+
                 // Actuator Health and Monitoring Endpoints
                 .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                 .requestMatchers("/actuator/**").hasRole("ADMIN")

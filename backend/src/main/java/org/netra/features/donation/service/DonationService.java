@@ -61,8 +61,22 @@ public class DonationService {
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private org.netra.core.observability.NetraMetrics netraMetrics;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.netra.features.karma.service.KarmaService karmaService;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.netra.features.karma.policy.KarmaPolicy karmaPolicy;
+
     public void setNetraMetrics(org.netra.core.observability.NetraMetrics netraMetrics) {
         this.netraMetrics = netraMetrics;
+    }
+
+    public void setKarmaService(org.netra.features.karma.service.KarmaService karmaService) {
+        this.karmaService = karmaService;
+    }
+
+    public void setKarmaPolicy(org.netra.features.karma.policy.KarmaPolicy karmaPolicy) {
+        this.karmaPolicy = karmaPolicy;
     }
 
     public DonationService(
@@ -180,6 +194,9 @@ public class DonationService {
             markRegistrationCompleted(saved.getDonationEventId(), saved.getDonorUserId(), now);
         }
 
+        // Award authoritative Karma to donor
+        awardDonationKarma(saved, verifierUserId);
+
         auditService.logAuthEvent(
                 "DONATION_RECORDED_VERIFIED",
                 verifierUserId,
@@ -226,6 +243,9 @@ public class DonationService {
         if (saved.getSourceType() == DonationSourceType.DONATION_EVENT) {
             markRegistrationCompleted(saved.getDonationEventId(), saved.getDonorUserId(), now);
         }
+
+        // Award authoritative Karma to donor
+        awardDonationKarma(saved, verifierUserId);
 
         auditService.logAuthEvent(
                 "DONATION_VERIFIED",
@@ -517,5 +537,48 @@ public class DonationService {
         }
 
         return DonationDetailDto.fromEntity(d, donorName, refTitle, refLocation);
+    }
+
+    private void awardDonationKarma(Donation saved, UUID verifierUserId) {
+        if (karmaService == null || karmaPolicy == null) {
+            return;
+        }
+        try {
+            // 1. Authoritative reward for verified donation
+            karmaService.awardKarma(
+                    saved.getDonorUserId(),
+                    org.netra.features.karma.entity.KarmaEventType.VERIFIED_DONATION_COMPLETED,
+                    karmaPolicy.getVerifiedDonationPoints(),
+                    "DONATION",
+                    saved.getId().toString(),
+                    "Verified blood donation completed",
+                    verifierUserId
+            );
+
+            // 2. Commitment fulfillment or event participation rewards
+            if (saved.getSourceType() == DonationSourceType.BLOOD_REQUEST && saved.getBloodRequestId() != null) {
+                karmaService.awardKarma(
+                        saved.getDonorUserId(),
+                        org.netra.features.karma.entity.KarmaEventType.DONOR_COMMITMENT_COMPLETED,
+                        karmaPolicy.getDonorCommitmentCompletedPoints(),
+                        "BLOOD_REQUEST",
+                        saved.getBloodRequestId().toString(),
+                        "Donor commitment completed for blood request",
+                        verifierUserId
+                );
+            } else if (saved.getSourceType() == DonationSourceType.DONATION_EVENT && saved.getDonationEventId() != null) {
+                karmaService.awardKarma(
+                        saved.getDonorUserId(),
+                        org.netra.features.karma.entity.KarmaEventType.EVENT_PARTICIPATION_COMPLETED,
+                        karmaPolicy.getEventParticipationPoints(),
+                        "DONATION_EVENT",
+                        saved.getDonationEventId().toString(),
+                        "Blood donation drive event participation",
+                        verifierUserId
+                );
+            }
+        } catch (Exception e) {
+            log.warn("Failed to award karma for verified donation {}: {}", saved.getId(), e.getMessage());
+        }
     }
 }

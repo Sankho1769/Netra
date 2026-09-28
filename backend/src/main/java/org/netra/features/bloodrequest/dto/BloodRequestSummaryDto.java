@@ -22,6 +22,7 @@ public class BloodRequestSummaryDto {
     private Instant createdAt;
     private org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus verificationStatus =
             org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus.UNVERIFIED;
+    private String hospitalVerificationStatus = "UNVERIFIED";
 
     public BloodRequestSummaryDto() {
     }
@@ -147,5 +148,13 @@ public class BloodRequestSummaryDto {
 
     public void setVerificationStatus(org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus verificationStatus) {
         this.verificationStatus = verificationStatus != null ? verificationStatus : org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus.UNVERIFIED;
+    }
+
+    public String getHospitalVerificationStatus() {
+        return hospitalVerificationStatus;
+    }
+
+    public void setHospitalVerificationStatus(String hospitalVerificationStatus) {
+        this.hospitalVerificationStatus = hospitalVerificationStatus;
     }
 }

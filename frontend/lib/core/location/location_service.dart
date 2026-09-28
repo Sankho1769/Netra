@@ -64,39 +64,8 @@ class DefaultLocationService implements LocationService {
 
   @override
   Future<List<ApproximateLocation>> searchLocations(String query) async {
-    if (query.trim().isEmpty) return [];
-
-    // Localized sample locations matching query
-    final sampleLocations = [
-      const ApproximateLocation(
-        city: "Mumbai",
-        district: "Parel",
-        state: "Maharashtra",
-        postalCode: "400012",
-        coordinates: Coordinates(latitude: 19.00, longitude: 72.83),
-      ),
-      const ApproximateLocation(
-        city: "Mumbai",
-        district: "Bandra",
-        state: "Maharashtra",
-        postalCode: "400050",
-        coordinates: Coordinates(latitude: 19.05, longitude: 72.84),
-      ),
-      const ApproximateLocation(
-        city: "Pune",
-        district: "Shivajinagar",
-        state: "Maharashtra",
-        postalCode: "411005",
-        coordinates: Coordinates(latitude: 18.53, longitude: 73.85),
-      ),
-    ];
-
-    final q = query.toLowerCase();
-    return sampleLocations
-        .where((loc) =>
-            (loc.city?.toLowerCase().contains(q) ?? false) ||
-            (loc.district?.toLowerCase().contains(q) ?? false) ||
-            (loc.postalCode?.contains(q) ?? false))
-        .toList();
+    // NETRA adheres strictly to zero dummy data policy.
+    // Dynamic location search without an external geocoding provider returns empty.
+    return [];
   }
 }

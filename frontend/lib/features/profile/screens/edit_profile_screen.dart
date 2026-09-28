@@ -177,7 +177,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         // Phone Number
                         NetraTextField(
                           label: "Mobile Number *",
-                          hint: "+91 98765 43210",
+                          hint: "e.g. +91 90000 00000",
                           controller: _phoneController,
                           keyboardType: TextInputType.phone,
                           helperText:

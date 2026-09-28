@@ -67,4 +67,6 @@ public interface BloodRequestRepository extends JpaRepository<BloodRequest, UUID
            "r.updatedAt = :now, r.version = r.version + 1 " +
            "WHERE r.status = org.netra.features.bloodrequest.entity.BloodRequestStatus.OPEN AND r.requiredBy <= :now")
     int expireDueRequests(@Param("now") Instant now);
+
+    long countByStatus(BloodRequestStatus status);
 }

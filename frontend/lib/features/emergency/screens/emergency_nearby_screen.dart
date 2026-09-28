@@ -6,8 +6,10 @@ import '../../../core/theme/netra_colors.dart';
 import '../../../core/theme/netra_spacing.dart';
 import '../../../core/theme/netra_typography.dart';
 import '../../blood_request/models/blood_request.dart';
+import '../../blood_request/models/verified_hospital_model.dart';
 import '../../blood_request/screens/blood_request_details_screen.dart';
 import '../../blood_request/widgets/blood_request_card.dart';
+import '../../blood_request/widgets/hospital_search_field.dart';
 import '../../bloodbank/models/blood_bank.dart';
 import '../../bloodbank/screens/bloodbank_details_screen.dart';
 import '../../bloodbank/widgets/bloodbank_card.dart';
@@ -35,20 +37,17 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
   late final EmergencyApiService _apiService;
   late final LocationService _locationService;
 
-  // Real device coordinates; strictly NO hardcoded fallback coordinates
+  // Real device coordinates or verified healthcare center coordinates
   double? _latitude;
   double? _longitude;
+  String? _locationLabel;
   double _radiusKm = 15.0;
   String? _selectedBloodGroup;
 
   bool _isDetectingLocation = false;
   bool _locationUnavailable = false;
   String? _locationErrorMessage;
-  bool _showManualCoordinates = false;
-
-  final TextEditingController _manualLatController = TextEditingController();
-  final TextEditingController _manualLngController = TextEditingController();
-  String? _manualInputError;
+  bool _showFacilitySearch = false;
 
   bool _isLoadingBanks = false;
   bool _isLoadingRequests = false;
@@ -89,8 +88,6 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
   @override
   void dispose() {
     _tabController.dispose();
-    _manualLatController.dispose();
-    _manualLngController.dispose();
     super.dispose();
   }
 
@@ -108,13 +105,10 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
         setState(() {
           _latitude = loc.latitude;
           _longitude = loc.longitude;
-          if (_latitude != null)
-            _manualLatController.text = _latitude!.toStringAsFixed(4);
-          if (_longitude != null)
-            _manualLngController.text = _longitude!.toStringAsFixed(4);
+          _locationLabel = loc.city != null ? "${loc.city} (GPS)" : "Device GPS";
           _isDetectingLocation = false;
           _locationUnavailable = false;
-          _showManualCoordinates = false;
+          _showFacilitySearch = false;
         });
         _loadNearbyBloodBanks();
         _loadNearbyBloodRequests();
@@ -126,45 +120,29 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
       setState(() {
         _latitude = null;
         _longitude = null;
+        _locationLabel = null;
         _isDetectingLocation = false;
         _locationUnavailable = true;
         _locationErrorMessage =
-            "Location permission was denied or device GPS is unavailable. NETRA never uses arbitrary fallback coordinates. Please enable device location or enter coordinates manually.";
+            "Location permission was denied or device GPS is unavailable. NETRA never assumes arbitrary fallback coordinates. Please enable device location or select a verified healthcare center.";
       });
     }
   }
 
-  void _applyManualCoordinates() {
-    final latText = _manualLatController.text.trim();
-    final lngText = _manualLngController.text.trim();
-
-    final lat = double.tryParse(latText);
-    final lng = double.tryParse(lngText);
-
-    if (lat == null || lat < -90.0 || lat > 90.0) {
+  void _onHospitalSelected(VerifiedHospitalModel? hospital) {
+    if (hospital != null &&
+        hospital.latitude != null &&
+        hospital.longitude != null) {
       setState(() {
-        _manualInputError = "Enter a valid latitude between -90.0 and 90.0.";
+        _latitude = hospital.latitude;
+        _longitude = hospital.longitude;
+        _locationLabel = hospital.name;
+        _locationUnavailable = false;
+        _showFacilitySearch = false;
       });
-      return;
+      _loadNearbyBloodBanks();
+      _loadNearbyBloodRequests();
     }
-
-    if (lng == null || lng < -180.0 || lng > 180.0) {
-      setState(() {
-        _manualInputError = "Enter a valid longitude between -180.0 and 180.0.";
-      });
-      return;
-    }
-
-    setState(() {
-      _manualInputError = null;
-      _latitude = lat;
-      _longitude = lng;
-      _locationUnavailable = false;
-      _showManualCoordinates = false;
-    });
-
-    _loadNearbyBloodBanks();
-    _loadNearbyBloodRequests();
   }
 
   Future<void> _loadNearbyBloodBanks() async {
@@ -375,16 +353,16 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
                 ),
                 onPressed: () {
                   setState(() {
-                    _showManualCoordinates = !_showManualCoordinates;
+                    _showFacilitySearch = !_showFacilitySearch;
                   });
                 },
-                icon: const Icon(Icons.edit_location_alt_outlined, size: 20),
-                label: Text(_showManualCoordinates
-                    ? "Hide Manual Coordinates"
-                    : "Enter Coordinates Manually"),
+                icon: const Icon(Icons.local_hospital_outlined, size: 20),
+                label: Text(_showFacilitySearch
+                    ? "Hide Healthcare Search"
+                    : "Select Healthcare Center / Hospital"),
               ),
             ),
-            if (_showManualCoordinates) ...[
+            if (_showFacilitySearch) ...[
               NetraSpacing.gapH20,
               Container(
                 padding: NetraSpacing.cardPaddingStandard,
@@ -397,49 +375,19 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Manual Coordinates Input",
+                      "Search Verified Healthcare Center",
                       style: NetraTypography.titleSmall
                           .copyWith(fontWeight: FontWeight.bold),
                     ),
-                    NetraSpacing.gapH12,
-                    NetraTextField(
-                      controller: _manualLatController,
-                      label: "Latitude",
-                      hint: "e.g. 19.0760",
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                    NetraSpacing.gapH4,
+                    Text(
+                      "Select a registered hospital or blood center to center discovery around its verified location.",
+                      style: NetraTypography.bodySmall
+                          .copyWith(color: NetraColors.textSecondary),
                     ),
                     NetraSpacing.gapH12,
-                    NetraTextField(
-                      controller: _manualLngController,
-                      label: "Longitude",
-                      hint: "e.g. 72.8777",
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                    ),
-                    if (_manualInputError != null) ...[
-                      NetraSpacing.gapH8,
-                      Text(
-                        _manualInputError!,
-                        style: const TextStyle(color: Colors.red, fontSize: 12),
-                      ),
-                    ],
-                    NetraSpacing.gapH16,
-                    SizedBox(
-                      width: double.infinity,
-                      height: 44,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: NetraColors.textPrimary,
-                          foregroundColor: NetraColors.surfaceWhite,
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(NetraSpacing.radiusMd),
-                          ),
-                        ),
-                        onPressed: _applyManualCoordinates,
-                        child: const Text("Apply Coordinates & Search"),
-                      ),
+                    HospitalSearchField(
+                      onHospitalSelected: _onHospitalSelected,
                     ),
                   ],
                 ),
@@ -467,7 +415,9 @@ class _EmergencyNearbyScreenState extends State<EmergencyNearbyScreen>
               NetraSpacing.gapW4,
               Expanded(
                 child: Text(
-                  "Current: ${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)}",
+                  _locationLabel != null
+                      ? "Location: $_locationLabel"
+                      : "Location: ${_latitude!.toStringAsFixed(3)}, ${_longitude!.toStringAsFixed(3)}",
                   style: NetraTypography.bodySmall.copyWith(
                     fontWeight: FontWeight.w600,
                     color: NetraColors.textPrimary,

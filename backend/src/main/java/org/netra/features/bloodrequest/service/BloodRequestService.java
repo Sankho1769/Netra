@@ -22,6 +22,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.netra.features.hospital.dto.HospitalVerificationResultDto;
+import org.netra.features.hospital.dto.VerifyHospitalRequest;
+import org.netra.features.hospital.service.HospitalVerificationService;
+import org.netra.features.karma.entity.KarmaEventType;
+import org.netra.features.karma.policy.KarmaPolicy;
+import org.netra.features.karma.service.KarmaService;
+
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -39,6 +46,27 @@ public class BloodRequestService {
     private final AuditService auditService;
     private final org.netra.features.matching.service.DonorMatchLifecycleService donorMatchLifecycleService;
     private final org.netra.core.observability.NetraMetrics netraMetrics;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private HospitalVerificationService hospitalVerificationService;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private KarmaService karmaService;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private KarmaPolicy karmaPolicy;
+
+    public void setHospitalVerificationService(HospitalVerificationService hospitalVerificationService) {
+        this.hospitalVerificationService = hospitalVerificationService;
+    }
+
+    public void setKarmaService(KarmaService karmaService) {
+        this.karmaService = karmaService;
+    }
+
+    public void setKarmaPolicy(KarmaPolicy karmaPolicy) {
+        this.karmaPolicy = karmaPolicy;
+    }
 
     public BloodRequestService(
             BloodRequestRepository bloodRequestRepository,
@@ -113,6 +141,38 @@ public class BloodRequestService {
         if (request.getDescription() != null && !request.getDescription().isBlank()) {
             bloodRequest.setDescription(request.getDescription().trim());
         }
+
+        UUID verifiedHospitalId = null;
+        String hospitalStatus = "UNVERIFIED";
+
+        if (hospitalVerificationService != null && request.getHospitalName() != null && !request.getHospitalName().isBlank()) {
+            VerifyHospitalRequest vReq = new VerifyHospitalRequest(
+                    request.getHospitalName(),
+                    request.getHospitalAddress(),
+                    request.getCity(),
+                    request.getState(),
+                    request.getPlaceId()
+            );
+            HospitalVerificationResultDto vResult = hospitalVerificationService.verifyHospital(vReq);
+            if (vResult != null) {
+                if ("REJECTED".equalsIgnoreCase(vResult.getVerificationStatus())) {
+                    throw new ValidationException("Hospital verification rejected: " + vResult.getMessage());
+                }
+                if (vResult.isVerified()) {
+                    hospitalStatus = "VERIFIED";
+                    verifiedHospitalId = vResult.getVerifiedHospitalId();
+                    if (vResult.getLatitude() != null && vResult.getLongitude() != null) {
+                        request.setLatitude(vResult.getLatitude());
+                        request.setLongitude(vResult.getLongitude());
+                        bloodRequest.setLatitude(vResult.getLatitude());
+                        bloodRequest.setLongitude(vResult.getLongitude());
+                    }
+                }
+            }
+        }
+
+        bloodRequest.setVerifiedHospitalId(verifiedHospitalId);
+        bloodRequest.setHospitalVerificationStatus(hospitalStatus);
 
         Instant now = Instant.now();
         bloodRequest.setCreatedAt(now);
@@ -454,6 +514,28 @@ public class BloodRequestService {
 
         BloodRequest saved = bloodRequestRepository.save(bloodRequest);
 
+        // Authoritative anti-fraud karma penalty: penalize only confirmed fraudulent/abusive submissions
+        if (verificationDto.getDecision() == BloodRequestVerificationStatus.REJECTED) {
+            String notes = verificationDto.getNotes() != null ? verificationDto.getNotes().toLowerCase() : "";
+            if (notes.contains("fraud") || notes.contains("fake") || notes.contains("scam") || notes.contains("abusive") || notes.contains("bogus")) {
+                if (karmaService != null && karmaPolicy != null) {
+                    try {
+                        karmaService.penalizeKarma(
+                                saved.getRequesterUserId(),
+                                KarmaEventType.FAKE_REQUEST_CONFIRMED,
+                                karmaPolicy.getFakeRequestPenalty(),
+                                "BLOOD_REQUEST",
+                                saved.getId().toString(),
+                                "Confirmed fraudulent blood request: " + verificationDto.getNotes(),
+                                currentUserId
+                        );
+                    } catch (Exception e) {
+                        log.warn("Failed to apply karma penalty for fraudulent request {}: {}", saved.getId(), e.getMessage());
+                    }
+                }
+            }
+        }
+
         auditService.logAuthEvent(
                 "BLOOD_REQUEST_VERIFIED",
                 currentUserId,
@@ -491,6 +573,25 @@ public class BloodRequestService {
         if (request.getPostalCode() == null || request.getPostalCode().isBlank()) {
             throw new ValidationException("Postal code is required.");
         }
+
+        // If coordinates were omitted, attempt authoritative resolution from HospitalVerificationService
+        if (request.getLatitude() == null || request.getLongitude() == null) {
+            if (hospitalVerificationService != null && request.getHospitalName() != null && !request.getHospitalName().isBlank()) {
+                VerifyHospitalRequest vReq = new VerifyHospitalRequest(
+                        request.getHospitalName(),
+                        request.getHospitalAddress(),
+                        request.getCity(),
+                        request.getState(),
+                        request.getPlaceId()
+                );
+                HospitalVerificationResultDto vResult = hospitalVerificationService.verifyHospital(vReq);
+                if (vResult != null && vResult.isVerified() && vResult.getLatitude() != null && vResult.getLongitude() != null) {
+                    request.setLatitude(vResult.getLatitude());
+                    request.setLongitude(vResult.getLongitude());
+                }
+            }
+        }
+
         if (request.getLatitude() == null || request.getLatitude() < -90.0 || request.getLatitude() > 90.0) {
             throw new ValidationException("Latitude must be between -90.0 and 90.0 degrees.");
         }
@@ -510,7 +611,7 @@ public class BloodRequestService {
     }
 
     private BloodRequestSummaryDto mapToSummaryDto(BloodRequest request, Double distanceKm) {
-        return new BloodRequestSummaryDto(
+        BloodRequestSummaryDto summary = new BloodRequestSummaryDto(
                 request.getId(),
                 request.getBloodGroup(),
                 request.getUnitsRequired(),
@@ -524,6 +625,8 @@ public class BloodRequestService {
                 request.getCreatedAt(),
                 request.getVerificationStatus()
         );
+        summary.setHospitalVerificationStatus(request.getHospitalVerificationStatus());
+        return summary;
     }
 
     private BloodRequestPublicDetailDto mapToPublicDetailDto(BloodRequest request, Double distanceKm) {
@@ -534,6 +637,7 @@ public class BloodRequestService {
         dto.setUrgency(request.getUrgency());
         dto.setStatus(request.getStatus());
         dto.setVerificationStatus(request.getVerificationStatus());
+        dto.setHospitalVerificationStatus(request.getHospitalVerificationStatus());
         dto.setHospitalName(request.getHospitalName());
         dto.setHospitalAddress(request.getHospitalAddress());
         dto.setCity(request.getCity());
@@ -555,6 +659,7 @@ public class BloodRequestService {
         dto.setUrgency(request.getUrgency());
         dto.setStatus(request.getStatus());
         dto.setVerificationStatus(request.getVerificationStatus());
+        dto.setHospitalVerificationStatus(request.getHospitalVerificationStatus());
         dto.setHospitalName(request.getHospitalName());
         dto.setHospitalAddress(request.getHospitalAddress());
         dto.setCity(request.getCity());

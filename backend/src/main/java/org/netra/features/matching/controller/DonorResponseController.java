@@ -81,4 +81,21 @@ public class DonorResponseController {
         DonorMatchDetailDto updated = donorResponseService.declineMatch(matchId, currentUserId, clientIp, userAgent);
         return ResponseEntity.ok(updated);
     }
+
+    @PostMapping("/{matchId}/confirm-no-show")
+    @PreAuthorize("hasAnyRole('ROLE_STAFF', 'ROLE_ADMIN')")
+    public ResponseEntity<DonorMatchDetailDto> confirmNoShow(
+            @PathVariable("matchId") UUID matchId,
+            @jakarta.validation.Valid @RequestBody org.netra.features.matching.dto.ConfirmNoShowRequest confirmRequest,
+            HttpServletRequest request) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new UnauthorizedSessionAccessException("User is not authenticated."));
+
+        String clientIp = clientIpResolver.resolveClientIp(request);
+        String userAgent = request.getHeader("User-Agent");
+
+        DonorMatchDetailDto updated = donorResponseService.confirmDonorNoShow(
+                matchId, confirmRequest.getReason(), currentUserId, clientIp, userAgent);
+        return ResponseEntity.ok(updated);
+    }
 }

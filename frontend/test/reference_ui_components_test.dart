@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netra_app/common/widgets/netra_bottom_nav_bar.dart';
 import 'package:netra_app/common/widgets/blood_action_sheet.dart';
+import 'package:netra_app/features/about/models/community_impact_model.dart';
 import 'package:netra_app/features/about/screens/about_screen.dart';
+import 'package:netra_app/features/about/services/community_metrics_api_service.dart';
 
 void main() {
   group('NetraBottomNavBar Component Tests', () {
@@ -79,19 +81,31 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
           home: Scaffold(
-            body: AboutScreen(isEmbedded: true),
+            body: AboutScreen(
+              isEmbedded: true,
+              metricsApiService: FakeCommunityMetricsApiService(
+                const CommunityImpactModel(
+                  totalVerifiedDonations: 4250,
+                  totalUnitsCollected: 5000,
+                  activeDonorsCount: 3200,
+                  fulfilledRequestsCount: 4100,
+                  hasData: true,
+                ),
+              ),
+            ),
           ),
         ),
       );
       await tester.pumpAndSettle();
 
-      // Verify header & goal banner
+      // Verify header & dynamic community impact banner
       expect(find.text('Guidelines & Blood Facts'), findsOneWidget);
-      expect(find.text('5,000 Units'), findsOneWidget);
-      expect(find.text('4,250'), findsOneWidget);
-      expect(find.text('85% Achieved'), findsOneWidget);
+      expect(find.text('COMMUNITY VERIFIED IMPACT'), findsOneWidget);
+      expect(find.text('4250 Donations'), findsOneWidget);
+      expect(find.text('5000'), findsOneWidget);
+      expect(find.text('UNITS COLLECTED'), findsOneWidget);
 
       // Verify Must Do & Must Avoid cards
       expect(find.text('What You MUST Do'), findsOneWidget);
@@ -120,5 +134,47 @@ void main() {
       // Verify NBTC standards section
       expect(find.text('NBTC National Donor Criteria'), findsOneWidget);
     });
+
+    testWidgets('renders empty state notice when no verified community metrics exist',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: AboutScreen(
+              isEmbedded: true,
+              metricsApiService: FakeCommunityMetricsApiService(
+                const CommunityImpactModel(
+                  totalVerifiedDonations: 0,
+                  totalUnitsCollected: 0,
+                  activeDonorsCount: 0,
+                  fulfilledRequestsCount: 0,
+                  hasData: false,
+                  notice:
+                      'Community impact data will appear here once verified donations are recorded.',
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('COMMUNITY IMPACT'), findsOneWidget);
+      expect(
+        find.text(
+            'Community impact data will appear here once verified donations are recorded.'),
+        findsOneWidget,
+      );
+    });
   });
+}
+
+class FakeCommunityMetricsApiService extends Fake
+    implements CommunityMetricsApiService {
+  final CommunityImpactModel model;
+
+  FakeCommunityMetricsApiService(this.model);
+
+  @override
+  Future<CommunityImpactModel> getCommunityImpact() async => model;
 }

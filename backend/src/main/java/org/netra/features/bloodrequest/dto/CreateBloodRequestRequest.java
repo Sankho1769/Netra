@@ -38,12 +38,13 @@ public class CreateBloodRequestRequest {
     @Size(max = 20, message = "Postal code must not exceed 20 characters.")
     private String postalCode;
 
-    @NotNull(message = "Latitude is required.")
+    @Size(max = 128, message = "Place ID must not exceed 128 characters.")
+    private String placeId;
+
     @DecimalMin(value = "-90.0", message = "Latitude must be between -90.0 and 90.0.")
     @DecimalMax(value = "90.0", message = "Latitude must be between -90.0 and 90.0.")
     private Double latitude;
 
-    @NotNull(message = "Longitude is required.")
     @DecimalMin(value = "-180.0", message = "Longitude must be between -180.0 and 180.0.")
     @DecimalMax(value = "180.0", message = "Longitude must be between -180.0 and 180.0.")
     private Double longitude;
@@ -119,6 +120,14 @@ public class CreateBloodRequestRequest {
 
     public void setPostalCode(String postalCode) {
         this.postalCode = postalCode;
+    }
+
+    public String getPlaceId() {
+        return placeId;
+    }
+
+    public void setPlaceId(String placeId) {
+        this.placeId = placeId;
     }
 
     public Double getLatitude() {

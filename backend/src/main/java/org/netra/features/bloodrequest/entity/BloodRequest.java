@@ -97,6 +97,12 @@ public class BloodRequest {
     @Column(name = "verification_notes", length = 500)
     private String verificationNotes;
 
+    @Column(name = "verified_hospital_id")
+    private UUID verifiedHospitalId;
+
+    @Column(name = "hospital_verification_status", length = 32)
+    private String hospitalVerificationStatus = "UNVERIFIED";
+
     @Version
     @Column(name = "version", nullable = false)
     private Long version = 0L;
@@ -330,5 +336,21 @@ public class BloodRequest {
 
     public void setVerificationNotes(String verificationNotes) {
         this.verificationNotes = verificationNotes;
+    }
+
+    public UUID getVerifiedHospitalId() {
+        return verifiedHospitalId;
+    }
+
+    public void setVerifiedHospitalId(UUID verifiedHospitalId) {
+        this.verifiedHospitalId = verifiedHospitalId;
+    }
+
+    public String getHospitalVerificationStatus() {
+        return hospitalVerificationStatus;
+    }
+
+    public void setHospitalVerificationStatus(String hospitalVerificationStatus) {
+        this.hospitalVerificationStatus = hospitalVerificationStatus;
     }
 }

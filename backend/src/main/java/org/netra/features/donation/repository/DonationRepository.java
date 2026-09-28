@@ -40,4 +40,6 @@ public interface DonationRepository extends JpaRepository<Donation, UUID> {
     Optional<LocalDate> findLatestVerifiedDonationDate(@Param("donorUserId") UUID donorUserId);
 
     long countByDonorUserIdAndVerificationStatus(UUID donorUserId, DonationVerificationStatus status);
+
+    long countByVerificationStatus(DonationVerificationStatus status);
 }

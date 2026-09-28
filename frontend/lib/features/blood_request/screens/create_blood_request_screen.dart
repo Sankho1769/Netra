@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/netra_colors.dart';
+import '../../../core/theme/netra_typography.dart';
 import '../models/blood_request.dart';
 import '../state/blood_request_controller.dart';
+import '../widgets/hospital_search_field.dart';
 
 class CreateBloodRequestScreen extends StatefulWidget {
   final BloodRequestController? controller;
@@ -26,11 +29,12 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _stateController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
-  final TextEditingController _latitudeController =
-      TextEditingController(text: '18.9401');
-  final TextEditingController _longitudeController =
-      TextEditingController(text: '72.8347');
   final TextEditingController _descriptionController = TextEditingController();
+
+  double? _latitude;
+  double? _longitude;
+  String? _placeId;
+  String? _hospitalVerificationStatus;
 
   DateTime _requiredBy = DateTime.now().add(const Duration(hours: 24));
 
@@ -58,8 +62,6 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
     _cityController.dispose();
     _stateController.dispose();
     _postalCodeController.dispose();
-    _latitudeController.dispose();
-    _longitudeController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
@@ -109,27 +111,6 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
   Future<void> _submitRequest() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final lat = double.tryParse(_latitudeController.text.trim());
-    final lng = double.tryParse(_longitudeController.text.trim());
-
-    if (lat == null || lat < -90.0 || lat > 90.0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Latitude must be between -90 and 90.'),
-            backgroundColor: Colors.red),
-      );
-      return;
-    }
-
-    if (lng == null || lng < -180.0 || lng > 180.0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Longitude must be between -180 and 180.'),
-            backgroundColor: Colors.red),
-      );
-      return;
-    }
-
     final payload = <String, dynamic>{
       'bloodGroup': _selectedBloodGroup,
       'unitsRequired': _unitsRequired,
@@ -139,8 +120,9 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
       'city': _cityController.text.trim(),
       'state': _stateController.text.trim(),
       'postalCode': _postalCodeController.text.trim(),
-      'latitude': lat,
-      'longitude': lng,
+      if (_latitude != null) 'latitude': _latitude,
+      if (_longitude != null) 'longitude': _longitude,
+      if (_placeId != null) 'placeId': _placeId,
       'requiredBy': _requiredBy.toUtc().toIso8601String(),
       if (_descriptionController.text.trim().isNotEmpty)
         'description': _descriptionController.text.trim(),
@@ -303,17 +285,33 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Hospital Name & Address
-              TextFormField(
+              // Hospital Name & Address with verified autocomplete
+              HospitalSearchField(
                 controller: _hospitalNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Hospital Name *',
-                  hintText: 'e.g. Apollo Memorial Hospital',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (val) => val == null || val.trim().isEmpty
-                    ? 'Hospital name is required'
-                    : null,
+                initialStatus: _hospitalVerificationStatus,
+                onHospitalSelected: (hospital) {
+                  setState(() {
+                    if (hospital != null) {
+                      _hospitalNameController.text = hospital.name;
+                      _hospitalAddressController.text = hospital.address;
+                      _cityController.text = hospital.city;
+                      _stateController.text = hospital.state;
+                      if (hospital.postalCode != null) {
+                        _postalCodeController.text = hospital.postalCode!;
+                      }
+                      _placeId = hospital.placeId;
+                      _latitude = hospital.latitude;
+                      _longitude = hospital.longitude;
+                      _hospitalVerificationStatus =
+                          hospital.verificationStatus;
+                    } else {
+                      _placeId = null;
+                      _latitude = null;
+                      _longitude = null;
+                      _hospitalVerificationStatus = null;
+                    }
+                  });
+                },
               ),
               const SizedBox(height: 14),
               TextFormField(
@@ -377,33 +375,44 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
               ),
               const SizedBox(height: 14),
 
-              // Coordinates (GPS)
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _latitudeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Latitude (-90 to 90)',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+              // Location Privacy & Server-Side Verification Badge
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _placeId != null
+                          ? Icons.verified_user_rounded
+                          : Icons.location_on_outlined,
+                      size: 20,
+                      color: _placeId != null
+                          ? const Color(0xFF16A34A)
+                          : NetraColors.textSecondary,
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _longitudeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Longitude (-180 to 180)',
-                        border: OutlineInputBorder(),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _placeId != null
+                            ? "Verified clinical institution selected. Authoritative coordinates will be attached securely."
+                            : "Hospital location coordinates are resolved and verified server-side without manual decimal input.",
+                        style: NetraTypography.bodySmall.copyWith(
+                          color: _placeId != null
+                              ? const Color(0xFF15803D)
+                              : NetraColors.textSecondary,
+                          fontWeight: _placeId != null
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                        ),
                       ),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
 

@@ -12,6 +12,7 @@ import '../../donor/screens/donor_profile_screen.dart';
 import '../../donor/screens/edit_donor_profile_screen.dart';
 import '../../donor/state/donor_controller.dart';
 import '../models/user_profile.dart';
+import '../state/karma_controller.dart';
 import '../state/profile_controller.dart';
 import 'edit_profile_screen.dart';
 
@@ -25,6 +26,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final ProfileController _profileController = ProfileController();
   final DonorController _donorController = DonorController();
+  final KarmaController _karmaController = KarmaController();
   final SecureTokenStorage _tokenStorage = PlatformSecureTokenStorage();
   bool _isLoading = true;
 
@@ -33,6 +35,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _profileController.addListener(_onStateChanged);
     _donorController.addListener(_onStateChanged);
+    _karmaController.addListener(_onStateChanged);
     _loadData();
   }
 
@@ -40,8 +43,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void dispose() {
     _profileController.removeListener(_onStateChanged);
     _donorController.removeListener(_onStateChanged);
+    _karmaController.removeListener(_onStateChanged);
     _profileController.dispose();
     _donorController.dispose();
+    _karmaController.dispose();
     super.dispose();
   }
 
@@ -56,6 +61,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await Future.wait([
         _profileController.loadProfile(token),
         _donorController.loadDonorProfile(token),
+        _karmaController.loadKarma(token),
       ]);
     }
     if (mounted) {
@@ -105,11 +111,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildHeaderCard(context, userProfile),
               NetraSpacing.gapH20,
 
-              // 2. Personal Information Card
+              // 2. Authoritative Karma Card
+              _buildKarmaCard(context),
+              NetraSpacing.gapH20,
+
+              // 3. Personal Information Card
               _buildPersonalInfoCard(context, userProfile),
               NetraSpacing.gapH20,
 
-              // 3. Donor Profile Card
+              // 4. Donor Profile Card
               _buildDonorCard(context, donorProfile),
               NetraSpacing.gapH20,
 
@@ -185,6 +195,188 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKarmaCard(BuildContext context) {
+    final summary = _karmaController.summary;
+    final balance = summary?.balance ?? 0;
+    final tier = summary?.tier ?? 'Community Member';
+    final transactions = _karmaController.transactions;
+
+    return Card(
+      elevation: 0,
+      color: NetraColors.surfaceWhite,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
+        side: const BorderSide(color: NetraColors.borderGray),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(NetraSpacing.xl),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.workspace_premium_rounded,
+                        color: Color(0xFFD97706),
+                        size: 20,
+                      ),
+                    ),
+                    NetraSpacing.gapW12,
+                    Text(
+                      "Authoritative Karma",
+                      style: NetraTypography.titleLarge,
+                    ),
+                  ],
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
+                  ),
+                  child: Text(
+                    tier,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFB45309),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            NetraSpacing.gapH16,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  "$balance",
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    color: NetraColors.textPrimary,
+                  ),
+                ),
+                NetraSpacing.gapW8,
+                Text(
+                  "Karma Points",
+                  style: NetraTypography.bodyMedium.copyWith(
+                    color: NetraColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            NetraSpacing.gapH8,
+            Text(
+              "Authoritative ledger balance rewarded for completed donations, verified request fulfillment, and blood drives.",
+              style: NetraTypography.bodySmall.copyWith(
+                color: NetraColors.textSecondary,
+              ),
+            ),
+            NetraSpacing.gapH16,
+            const Divider(),
+            NetraSpacing.gapH12,
+            Text(
+              "Recent Activity Ledger",
+              style: NetraTypography.titleSmall.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            NetraSpacing.gapH8,
+            if (transactions.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Text(
+                  "No Karma activity recorded yet. Earn Karma points by completing verified donations (+50), fulfilling emergency blood requests (+30), and attending blood drives (+40).",
+                  style: NetraTypography.bodySmall.copyWith(
+                    color: NetraColors.textSecondary,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              )
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: transactions.length > 5 ? 5 : transactions.length,
+                separatorBuilder: (_, __) => const Divider(height: 12),
+                itemBuilder: (context, index) {
+                  final tx = transactions[index];
+                  final isPos = tx.isPositive;
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tx.reason ?? tx.eventType,
+                              style: NetraTypography.bodySmall.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              "${tx.createdAt.day.toString().padLeft(2, '0')}/${tx.createdAt.month.toString().padLeft(2, '0')}/${tx.createdAt.year}",
+                              style: NetraTypography.labelSmall.copyWith(
+                                color: NetraColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isPos
+                              ? const Color(0xFFDCFCE7)
+                              : const Color(0xFFFEE2E2),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          "${isPos ? '+' : ''}${tx.points}",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: isPos
+                                ? const Color(0xFF16A34A)
+                                : const Color(0xFFDC2626),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
           ],
         ),
       ),

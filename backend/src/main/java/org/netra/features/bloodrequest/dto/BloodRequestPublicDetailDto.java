@@ -28,6 +28,7 @@ public class BloodRequestPublicDetailDto {
     private Boolean canManage = false;
     private org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus verificationStatus =
             org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus.UNVERIFIED;
+    private String hospitalVerificationStatus = "UNVERIFIED";
 
     public BloodRequestPublicDetailDto() {
     }
@@ -158,5 +159,13 @@ public class BloodRequestPublicDetailDto {
 
     public void setVerificationStatus(org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus verificationStatus) {
         this.verificationStatus = verificationStatus != null ? verificationStatus : org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus.UNVERIFIED;
+    }
+
+    public String getHospitalVerificationStatus() {
+        return hospitalVerificationStatus;
+    }
+
+    public void setHospitalVerificationStatus(String hospitalVerificationStatus) {
+        this.hospitalVerificationStatus = hospitalVerificationStatus;
     }
 }

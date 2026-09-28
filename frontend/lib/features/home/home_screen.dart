@@ -14,11 +14,16 @@ import '../blood_request/screens/blood_request_list_screen.dart';
 import '../emergency/screens/emergency_mode_screen.dart';
 import '../auth/state/auth_scope.dart';
 import '../auth/screens/login_screen.dart';
+import '../events/models/donation_event.dart';
+import '../events/screens/donation_event_details_screen.dart';
+import '../events/services/donation_event_api_service.dart';
 import '../profile/screens/profile_screen.dart';
 import '../notification/widgets/notification_bell_icon.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final DonationEventApiService? eventApiService;
+
+  const HomeScreen({super.key, this.eventApiService});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -26,6 +31,37 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedTab = 0;
+  late final DonationEventApiService _eventApiService;
+  DonationEventSummary? _featuredEvent;
+  bool _isLoadingFeaturedEvent = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _eventApiService = widget.eventApiService ?? DonationEventApiService();
+    _loadFeaturedEvent();
+  }
+
+  Future<void> _loadFeaturedEvent() async {
+    try {
+      final events = await _eventApiService.discoverEvents(
+        upcomingOnly: true,
+        size: 1,
+      );
+      if (mounted) {
+        setState(() {
+          _featuredEvent = events.isNotEmpty ? events.first : null;
+          _isLoadingFeaturedEvent = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isLoadingFeaturedEvent = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -381,109 +417,246 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           NetraSpacing.gapH24,
 
-          // Featured Community Drive Card (reproducing reference event.html)
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: NetraColors.surfaceWhite,
-              borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
-              border: Border.all(color: const Color(0xFFF1F5F9)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFDC2626), Color(0xFFDB2777)],
-                        ),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        "FEATURED DRIVE",
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                    ),
-                    const Row(
-                      children: [
-                        Icon(Icons.calendar_today_rounded,
-                            size: 14, color: NetraColors.primaryRed),
-                        SizedBox(width: 4),
-                        Text(
-                          "04 Jun 2026",
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: NetraColors.primaryRed,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                NetraSpacing.gapH12,
-                const Text(
-                  "Bhawanipur Campus Blood Drive",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: NetraColors.textPrimary,
-                  ),
-                ),
-                NetraSpacing.gapH4,
-                const Row(
-                  children: [
-                    Icon(Icons.location_on_outlined,
-                        size: 14, color: NetraColors.textSecondary),
-                    SizedBox(width: 4),
-                    Text(
-                      "Bhawanipur Global Campus | 10:00 AM onwards",
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: NetraColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-                NetraSpacing.gapH12,
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: NetraColors.primaryRed,
-                    side: const BorderSide(color: NetraColors.primaryRed),
-                    minimumSize: const Size(double.infinity, 38),
-                    shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(NetraSpacing.radiusSm),
-                    ),
-                  ),
-                  onPressed: () => setState(() => _selectedTab = 1),
-                  icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-                  label: const Text(
-                    "View All Camps & Register",
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
+          // Dynamic Featured Community Drive Card
+          _buildFeaturedDriveCard(),
+          NetraSpacing.gapH24,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeaturedDriveCard() {
+    if (_isLoadingFeaturedEvent) {
+      return Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: NetraColors.surfaceWhite,
+          borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
+          border: Border.all(color: const Color(0xFFF1F5F9)),
+        ),
+        child: const Center(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: NetraColors.primaryRed,
+              ),
             ),
           ),
-          NetraSpacing.gapH24,
+        ),
+      );
+    }
+
+    if (_featuredEvent == null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: NetraColors.surfaceWhite,
+          borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
+          border: Border.all(color: const Color(0xFFF1F5F9)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: NetraColors.backgroundGray,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: NetraColors.borderSubtle),
+                  ),
+                  child: const Text(
+                    "COMMUNITY DRIVES",
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                      color: NetraColors.textSecondary,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            NetraSpacing.gapH12,
+            Text(
+              "No Upcoming Drives Scheduled",
+              style: NetraTypography.titleSmall.copyWith(
+                fontWeight: FontWeight.w800,
+                color: NetraColors.textPrimary,
+              ),
+            ),
+            NetraSpacing.gapH4,
+            Text(
+              "Verified community blood donation drives and institutional camps will appear here when scheduled.",
+              style: NetraTypography.bodySmall.copyWith(
+                color: NetraColors.textSecondary,
+              ),
+            ),
+            NetraSpacing.gapH12,
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: NetraColors.textPrimary,
+                side: const BorderSide(color: NetraColors.borderSubtle),
+                minimumSize: const Size(double.infinity, 38),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
+                ),
+              ),
+              onPressed: () => setState(() => _selectedTab = 1),
+              icon: const Icon(Icons.calendar_today_outlined, size: 16),
+              label: const Text(
+                "Explore Events Directory",
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final event = _featuredEvent!;
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
+    final dateStr =
+        "${event.startAt.day.toString().padLeft(2, '0')} ${months[event.startAt.month - 1]} ${event.startAt.year}";
+    final venueStr = event.address.isNotEmpty
+        ? "${event.venueName}, ${event.address}"
+        : "${event.venueName}, ${event.city}";
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: NetraColors.surfaceWhite,
+        borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFDC2626), Color(0xFFDB2777)],
+                  ),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  "FEATURED DRIVE",
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  const Icon(Icons.calendar_today_rounded,
+                      size: 14, color: NetraColors.primaryRed),
+                  const SizedBox(width: 4),
+                  Text(
+                    dateStr,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: NetraColors.primaryRed,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          NetraSpacing.gapH12,
+          Text(
+            event.title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: NetraColors.textPrimary,
+            ),
+          ),
+          NetraSpacing.gapH4,
+          Row(
+            children: [
+              const Icon(Icons.location_on_outlined,
+                  size: 14, color: NetraColors.textSecondary),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  venueStr,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: NetraColors.textSecondary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          NetraSpacing.gapH12,
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: NetraColors.primaryRed,
+              side: const BorderSide(color: NetraColors.primaryRed),
+              minimumSize: const Size(double.infinity, 38),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
+              ),
+            ),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) =>
+                      DonationEventDetailsScreen(eventId: event.id),
+                ),
+              );
+            },
+            icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+            label: const Text(
+              "View Event & Register",
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+          ),
         ],
       ),
     );

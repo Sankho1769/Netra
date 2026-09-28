@@ -78,8 +78,22 @@ public class DonorResponseService {
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private org.netra.core.observability.NetraMetrics netraMetrics;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.netra.features.karma.service.KarmaService karmaService;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.netra.features.karma.policy.KarmaPolicy karmaPolicy;
+
     public void setNetraMetrics(org.netra.core.observability.NetraMetrics netraMetrics) {
         this.netraMetrics = netraMetrics;
+    }
+
+    public void setKarmaService(org.netra.features.karma.service.KarmaService karmaService) {
+        this.karmaService = karmaService;
+    }
+
+    public void setKarmaPolicy(org.netra.features.karma.policy.KarmaPolicy karmaPolicy) {
+        this.karmaPolicy = karmaPolicy;
     }
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -725,5 +739,45 @@ public class DonorResponseService {
         String lower = msg.toLowerCase();
         return lower.contains("uq_donor_matches_request_donor") ||
                 (lower.contains("unique") && lower.contains("blood_request_id") && lower.contains("donor_user_id"));
+    }
+
+    @Transactional
+    public DonorMatchDetailDto confirmDonorNoShow(
+            UUID matchId, String reason, UUID staffUserId, String clientIp, String userAgent) {
+        DonorMatch match = donorMatchRepository.findById(matchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Donor match not found: " + matchId));
+
+        if (match.getResponseStatus() != MatchStatus.ACCEPTED) {
+            throw new ValidationException("Cannot confirm no-show: match status is " + match.getResponseStatus() + ", but must be ACCEPTED.");
+        }
+
+        // Apply authoritative Karma penalty
+        if (karmaService != null && karmaPolicy != null) {
+            try {
+                karmaService.penalizeKarma(
+                        match.getDonorUserId(),
+                        org.netra.features.karma.entity.KarmaEventType.DONOR_NO_SHOW_CONFIRMED,
+                        karmaPolicy.getDonorNoShowPenalty(),
+                        "DONOR_MATCH",
+                        match.getId().toString(),
+                        "Authoritative donor no-show confirmed: " + reason,
+                        staffUserId
+                );
+            } catch (Exception e) {
+                log.warn("Failed to apply karma penalty for donor no-show on match {}: {}", matchId, e.getMessage());
+            }
+        }
+
+        auditService.logAuthEvent(
+                "DONOR_NO_SHOW_CONFIRMED",
+                staffUserId,
+                clientIp,
+                userAgent,
+                "{\"matchId\":\"" + match.getId() + "\",\"donorUserId\":\"" + match.getDonorUserId() +
+                        "\",\"reason\":\"" + (reason != null ? reason.replace("\"", "\\\"") : "") + "\"}"
+        );
+
+        BloodRequest req = bloodRequestRepository.findById(match.getBloodRequestId()).orElse(null);
+        return mapToDonorDetailDto(match, req, null);
     }
 }

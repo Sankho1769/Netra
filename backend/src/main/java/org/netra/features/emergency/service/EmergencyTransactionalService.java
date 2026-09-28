@@ -124,6 +124,7 @@ public class EmergencyTransactionalService {
         domainRequest.setCity(request.getCity());
         domainRequest.setState(request.getState());
         domainRequest.setPostalCode(request.getPostalCode());
+        domainRequest.setPlaceId(request.getPlaceId());
         domainRequest.setLatitude(request.getLatitude());
         domainRequest.setLongitude(request.getLongitude());
         domainRequest.setRequiredBy(request.getRequiredBy());

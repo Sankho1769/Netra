@@ -4,18 +4,54 @@ import '../../../core/theme/netra_colors.dart';
 import '../../../core/theme/netra_spacing.dart';
 import '../../../core/theme/netra_typography.dart';
 import '../../eligibility/screens/eligibility_intro_screen.dart';
+import '../models/community_impact_model.dart';
+import '../services/community_metrics_api_service.dart';
 
 class AboutScreen extends StatefulWidget {
   final bool isEmbedded;
+  final CommunityMetricsApiService? metricsApiService;
 
-  const AboutScreen({super.key, this.isEmbedded = false});
+  const AboutScreen({
+    super.key,
+    this.isEmbedded = false,
+    this.metricsApiService,
+  });
 
   @override
   State<AboutScreen> createState() => _AboutScreenState();
 }
 
 class _AboutScreenState extends State<AboutScreen> {
+  late final CommunityMetricsApiService _metricsApiService;
   String _selectedBloodGroup = 'O+';
+  CommunityImpactModel? _communityImpact;
+  bool _isLoadingImpact = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _metricsApiService =
+        widget.metricsApiService ?? CommunityMetricsApiService();
+    _loadCommunityImpact();
+  }
+
+  Future<void> _loadCommunityImpact() async {
+    try {
+      final impact = await _metricsApiService.getCommunityImpact();
+      if (mounted) {
+        setState(() {
+          _communityImpact = impact;
+          _isLoadingImpact = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isLoadingImpact = false;
+        });
+      }
+    }
+  }
 
   static const Map<String, Map<String, dynamic>> _compatibilityData = {
     'O-': {
@@ -129,6 +165,91 @@ class _AboutScreenState extends State<AboutScreen> {
   }
 
   Widget _buildGoalBanner() {
+    if (_isLoadingImpact) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: NetraColors.surfaceWhite,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFF1F5F9)),
+        ),
+        child: const Center(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: NetraColors.primaryRed,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final hasData = _communityImpact != null &&
+        _communityImpact!.hasData &&
+        _communityImpact!.totalUnitsCollected > 0;
+
+    if (!hasData) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: NetraColors.surfaceWhite,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFF1F5F9)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.volunteer_activism_outlined,
+                  size: 20,
+                  color: NetraColors.primaryRed,
+                ),
+                NetraSpacing.gapW8,
+                Text(
+                  "COMMUNITY IMPACT",
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.grey.shade600,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+              ],
+            ),
+            NetraSpacing.gapH12,
+            Text(
+              _communityImpact?.notice ??
+                  "Community impact data will appear here once verified donations are recorded.",
+              style: NetraTypography.bodyMedium.copyWith(
+                color: NetraColors.textSecondary,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final collected = _communityImpact!.totalUnitsCollected;
+    final donations = _communityImpact!.totalVerifiedDonations;
+    final donors = _communityImpact!.activeDonorsCount;
+    final fulfilled = _communityImpact!.fulfilledRequestsCount;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -154,7 +275,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "COMMUNITY MONTHLY GOAL",
+                    "COMMUNITY VERIFIED IMPACT",
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
@@ -163,10 +284,10 @@ class _AboutScreenState extends State<AboutScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    "5,000 Units",
-                    style: TextStyle(
-                      fontSize: 22,
+                  Text(
+                    "$donations Donations",
+                    style: const TextStyle(
+                      fontSize: 20,
                       fontWeight: FontWeight.w900,
                       color: NetraColors.textPrimary,
                     ),
@@ -176,16 +297,16 @@ class _AboutScreenState extends State<AboutScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text(
-                    "4,250",
-                    style: TextStyle(
+                  Text(
+                    "$collected",
+                    style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w900,
                       color: NetraColors.primaryRed,
                     ),
                   ),
                   Text(
-                    "COLLECTED",
+                    "UNITS COLLECTED",
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
@@ -198,32 +319,21 @@ class _AboutScreenState extends State<AboutScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: 0.85,
-              minHeight: 10,
-              backgroundColor: const Color(0xFFF1F5F9),
-              valueColor: const AlwaysStoppedAnimation<Color>(NetraColors.primaryRed),
-            ),
-          ),
-          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "85% Achieved",
+                "$donors Active Donors",
                 style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                   color: Colors.grey.shade600,
-                  fontStyle: FontStyle.italic,
                 ),
               ),
-              const Text(
-                "750 Units Left",
-                style: TextStyle(
-                  fontSize: 11,
+              Text(
+                "$fulfilled Requests Fulfilled",
+                style: const TextStyle(
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: NetraColors.primaryRed,
                 ),

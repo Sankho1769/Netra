@@ -6,6 +6,8 @@ import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/netra_colors.dart';
 import '../../../core/theme/netra_spacing.dart';
 import '../../../core/theme/netra_typography.dart';
+import '../../blood_request/models/verified_hospital_model.dart';
+import '../../blood_request/widgets/hospital_search_field.dart';
 import '../services/emergency_api_service.dart';
 import 'emergency_request_created_screen.dart';
 
@@ -41,9 +43,12 @@ class _EmergencyCreateRequestScreenState
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _stateController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
-  final TextEditingController _latitudeController = TextEditingController();
-  final TextEditingController _longitudeController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+
+  double? _latitude;
+  double? _longitude;
+  String? _placeId;
+  String? _hospitalVerificationStatus;
 
   bool _isSubmitting = false;
   bool _isDetectingLocation = false;
@@ -82,8 +87,6 @@ class _EmergencyCreateRequestScreenState
     _cityController.addListener(_onInputChanged);
     _stateController.addListener(_onInputChanged);
     _postalCodeController.addListener(_onInputChanged);
-    _latitudeController.addListener(_onInputChanged);
-    _longitudeController.addListener(_onInputChanged);
     _descriptionController.addListener(_onInputChanged);
   }
 
@@ -100,8 +103,6 @@ class _EmergencyCreateRequestScreenState
     _cityController.removeListener(_onInputChanged);
     _stateController.removeListener(_onInputChanged);
     _postalCodeController.removeListener(_onInputChanged);
-    _latitudeController.removeListener(_onInputChanged);
-    _longitudeController.removeListener(_onInputChanged);
     _descriptionController.removeListener(_onInputChanged);
 
     _hospitalNameController.dispose();
@@ -109,8 +110,6 @@ class _EmergencyCreateRequestScreenState
     _cityController.dispose();
     _stateController.dispose();
     _postalCodeController.dispose();
-    _latitudeController.dispose();
-    _longitudeController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
@@ -127,12 +126,11 @@ class _EmergencyCreateRequestScreenState
         setState(() {
           if (loc.city != null) _cityController.text = loc.city!;
           if (loc.state != null) _stateController.text = loc.state!;
-          if (loc.postalCode != null)
+          if (loc.postalCode != null) {
             _postalCodeController.text = loc.postalCode!;
-          if (loc.latitude != null)
-            _latitudeController.text = loc.latitude!.toStringAsFixed(4);
-          if (loc.longitude != null)
-            _longitudeController.text = loc.longitude!.toStringAsFixed(4);
+          }
+          if (loc.latitude != null) _latitude = loc.latitude;
+          if (loc.longitude != null) _longitude = loc.longitude;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -181,31 +179,6 @@ class _EmergencyCreateRequestScreenState
 
     if (!_formKey.currentState!.validate()) return;
 
-    final lat = double.tryParse(_latitudeController.text.trim());
-    final lng = double.tryParse(_longitudeController.text.trim());
-
-    if (lat == null || lat < -90.0 || lat > 90.0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content:
-              Text('Please provide a valid latitude between -90.0 and 90.0.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    if (lng == null || lng < -180.0 || lng > 180.0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              'Please provide a valid longitude between -180.0 and 180.0.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
     final deadline = _calculateDeadline();
     final now = DateTime.now();
     if (!deadline.isAfter(now)) {
@@ -241,8 +214,9 @@ class _EmergencyCreateRequestScreenState
       'city': _cityController.text.trim(),
       'state': _stateController.text.trim(),
       'postalCode': _postalCodeController.text.trim(),
-      'latitude': lat,
-      'longitude': lng,
+      if (_latitude != null) 'latitude': _latitude,
+      if (_longitude != null) 'longitude': _longitude,
+      if (_placeId != null) 'placeId': _placeId,
       'requiredBy': deadline.toUtc().toIso8601String(),
     };
 
@@ -490,16 +464,31 @@ class _EmergencyCreateRequestScreenState
                 ],
               ),
               NetraSpacing.gapH8,
-              NetraTextField(
+              HospitalSearchField(
                 controller: _hospitalNameController,
-                label: "Hospital / Medical Center Name",
-                hint: "e.g. KEM Hospital, Lilavati Hospital",
-                prefixIcon: const Icon(Icons.local_hospital_outlined),
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) {
-                    return "Hospital name is required.";
-                  }
-                  return null;
+                onHospitalSelected: (VerifiedHospitalModel? hospital) {
+                  setState(() {
+                    if (hospital != null) {
+                      _hospitalNameController.text = hospital.name;
+                      _hospitalAddressController.text = hospital.address;
+                      _cityController.text = hospital.city;
+                      _stateController.text = hospital.state;
+                      if (hospital.postalCode != null) {
+                        _postalCodeController.text = hospital.postalCode!;
+                      }
+                      _placeId = hospital.placeId;
+                      _latitude = hospital.latitude;
+                      _longitude = hospital.longitude;
+                      _hospitalVerificationStatus =
+                          hospital.verificationStatus;
+                    } else {
+                      _placeId = null;
+                      _latitude = null;
+                      _longitude = null;
+                      _hospitalVerificationStatus = null;
+                    }
+                    _currentSubmissionIdempotencyKey = null;
+                  });
                 },
               ),
               NetraSpacing.gapH12,
@@ -540,42 +529,59 @@ class _EmergencyCreateRequestScreenState
                 ],
               ),
               NetraSpacing.gapH12,
-              Row(
-                children: [
-                  Expanded(
-                    child: NetraTextField(
-                      controller: _postalCodeController,
-                      label: "Postal Code",
-                      validator: (val) => (val == null || val.trim().isEmpty)
-                          ? "PIN required"
-                          : null,
+              NetraTextField(
+                controller: _postalCodeController,
+                label: "Postal Code",
+                hint: "e.g. 400012",
+                validator: (val) => (val == null || val.trim().isEmpty)
+                    ? "PIN required"
+                    : null,
+              ),
+              NetraSpacing.gapH12,
+
+              // Location Privacy & Server-Side Verification Badge
+              Container(
+                width: double.infinity,
+                padding: NetraSpacing.cardPaddingStandard,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      (_placeId != null ||
+                              _hospitalVerificationStatus == 'VERIFIED')
+                          ? Icons.verified_user_rounded
+                          : Icons.location_on_outlined,
+                      size: 20,
+                      color: (_placeId != null ||
+                              _hospitalVerificationStatus == 'VERIFIED')
+                          ? const Color(0xFF16A34A)
+                          : NetraColors.textSecondary,
                     ),
-                  ),
-                  NetraSpacing.gapW12,
-                  Expanded(
-                    child: NetraTextField(
-                      controller: _latitudeController,
-                      label: "Latitude",
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      validator: (val) => (val == null || val.trim().isEmpty)
-                          ? "Latitude required"
-                          : null,
+                    NetraSpacing.gapW12,
+                    Expanded(
+                      child: Text(
+                        (_placeId != null ||
+                                _hospitalVerificationStatus == 'VERIFIED')
+                            ? "Verified clinical institution selected. Authoritative coordinates will be attached securely."
+                            : "Hospital location coordinates are resolved and verified server-side without manual decimal input.",
+                        style: NetraTypography.bodySmall.copyWith(
+                          color: (_placeId != null ||
+                                  _hospitalVerificationStatus == 'VERIFIED')
+                              ? const Color(0xFF15803D)
+                              : NetraColors.textSecondary,
+                          fontWeight: (_placeId != null ||
+                                  _hospitalVerificationStatus == 'VERIFIED')
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                        ),
+                      ),
                     ),
-                  ),
-                  NetraSpacing.gapW12,
-                  Expanded(
-                    child: NetraTextField(
-                      controller: _longitudeController,
-                      label: "Longitude",
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      validator: (val) => (val == null || val.trim().isEmpty)
-                          ? "Longitude required"
-                          : null,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               NetraSpacing.gapH20,
 

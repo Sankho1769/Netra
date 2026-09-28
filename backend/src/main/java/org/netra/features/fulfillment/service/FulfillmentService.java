@@ -55,8 +55,22 @@ public class FulfillmentService {
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private org.netra.core.observability.NetraMetrics netraMetrics;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.netra.features.karma.service.KarmaService karmaService;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.netra.features.karma.policy.KarmaPolicy karmaPolicy;
+
     public void setNetraMetrics(org.netra.core.observability.NetraMetrics netraMetrics) {
         this.netraMetrics = netraMetrics;
+    }
+
+    public void setKarmaService(org.netra.features.karma.service.KarmaService karmaService) {
+        this.karmaService = karmaService;
+    }
+
+    public void setKarmaPolicy(org.netra.features.karma.policy.KarmaPolicy karmaPolicy) {
+        this.karmaPolicy = karmaPolicy;
     }
 
     public FulfillmentService(
@@ -279,6 +293,23 @@ public class FulfillmentService {
 
         bloodRequestRepository.save(bloodRequest);
         Fulfillment saved = fulfillmentRepository.save(fulfillment);
+
+        // Award authoritative Karma to requester when their request is fully fulfilled
+        if (requestCompleted && karmaService != null && karmaPolicy != null) {
+            try {
+                karmaService.awardKarma(
+                        bloodRequest.getRequesterUserId(),
+                        org.netra.features.karma.entity.KarmaEventType.BLOOD_REQUEST_FULFILLED,
+                        karmaPolicy.getBloodRequestFulfilledPoints(),
+                        "BLOOD_REQUEST",
+                        bloodRequest.getId().toString(),
+                        "Blood request fully fulfilled",
+                        currentUserId
+                );
+            } catch (Exception e) {
+                log.warn("Failed to award karma for fulfilled blood request {}: {}", bloodRequest.getId(), e.getMessage());
+            }
+        }
 
         auditService.logAuthEvent(
                 "FULFILLMENT_COMPLETED",
