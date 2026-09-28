@@ -650,10 +650,13 @@ public class BloodRequestService {
             }
         }
 
-        if (request.getLatitude() == null || request.getLatitude() < -90.0 || request.getLatitude() > 90.0) {
+        if (request.getLatitude() == null || request.getLongitude() == null) {
+            throw new ValidationException("Location coordinates could not be established. Please detect location or select a verified hospital.");
+        }
+        if (request.getLatitude() < -90.0 || request.getLatitude() > 90.0) {
             throw new ValidationException("Latitude must be between -90.0 and 90.0 degrees.");
         }
-        if (request.getLongitude() == null || request.getLongitude() < -180.0 || request.getLongitude() > 180.0) {
+        if (request.getLongitude() < -180.0 || request.getLongitude() > 180.0) {
             throw new ValidationException("Longitude must be between -180.0 and 180.0 degrees.");
         }
         if (request.getRequiredBy() == null || !request.getRequiredBy().isAfter(Instant.now())) {

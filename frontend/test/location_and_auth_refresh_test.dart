@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
-import 'package:netra_app/core/location/location_models.dart';
 import 'package:netra_app/core/location/location_service.dart';
 import 'package:netra_app/core/location/permission_service.dart';
 import 'package:netra_app/core/network/api_client.dart';
@@ -47,6 +46,12 @@ class FixedPermissionService implements PermissionService {
 
   @override
   Future<bool> isLocationServiceEnabled() async => enabled;
+
+  @override
+  Future<bool> openAppSettings() async => true;
+
+  @override
+  Future<bool> openLocationSettings() async => true;
 }
 
 class InMemoryTokenStorage implements SecureTokenStorage {
@@ -134,6 +139,65 @@ void main() {
       expect(location!.latitude, equals(28.61));
       expect(location.longitude, equals(77.21));
       expect(location.isApproximate, isTrue);
+    });
+
+    test('getDetailedLocation returns serviceDisabled when disabled', () async {
+      final service = DefaultLocationService(
+        permissionService: FixedPermissionService(
+          status: LocationPermissionStatus.granted,
+          enabled: false,
+        ),
+      );
+
+      final result = await service.getDetailedLocation();
+      expect(result.isSuccess, isFalse);
+      expect(result.isServiceDisabled, isTrue);
+      expect(result.failureReason, equals(LocationFailureReason.serviceDisabled));
+    });
+
+    test('getDetailedLocation returns permissionDenied when denied', () async {
+      final service = DefaultLocationService(
+        permissionService: FixedPermissionService(
+          status: LocationPermissionStatus.denied,
+          enabled: true,
+        ),
+      );
+
+      final result = await service.getDetailedLocation();
+      expect(result.isSuccess, isFalse);
+      expect(result.isPermissionDenied, isTrue);
+      expect(result.failureReason, equals(LocationFailureReason.permissionDenied));
+    });
+
+    test('getDetailedLocation returns permissionPermanentlyDenied when permanently denied', () async {
+      final service = DefaultLocationService(
+        permissionService: FixedPermissionService(
+          status: LocationPermissionStatus.permanentlyDenied,
+          enabled: true,
+        ),
+      );
+
+      final result = await service.getDetailedLocation();
+      expect(result.isSuccess, isFalse);
+      expect(result.isPermissionPermanentlyDenied, isTrue);
+      expect(result.failureReason, equals(LocationFailureReason.permissionPermanentlyDenied));
+    });
+
+    test('getDetailedLocation returns success with exact coordinates when approximateOnly is false', () async {
+      final service = DefaultLocationService(
+        permissionService: FixedPermissionService(
+          status: LocationPermissionStatus.granted,
+          enabled: true,
+        ),
+        deviceCoordinateProvider: () async =>
+            const Coordinates(latitude: 22.539824, longitude: 88.342617),
+      );
+
+      final result = await service.getDetailedLocation(approximateOnly: false);
+      expect(result.isSuccess, isTrue);
+      expect(result.location, isNotNull);
+      expect(result.location!.latitude, equals(22.539824));
+      expect(result.location!.longitude, equals(88.342617));
     });
   });
 

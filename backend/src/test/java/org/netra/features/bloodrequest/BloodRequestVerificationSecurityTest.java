@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.netra.core.security.JwtTokenProvider;
+import org.netra.features.bloodrequest.dto.CreateBloodRequestRequest;
 import org.netra.features.bloodrequest.dto.VerifyBloodRequestDto;
 import org.netra.features.bloodrequest.entity.BloodRequest;
 import org.netra.features.bloodrequest.entity.BloodRequestStatus;
@@ -16,6 +17,8 @@ import org.netra.features.user.entity.User;
 import org.netra.features.user.entity.UserRole;
 import org.netra.features.user.entity.UserStatus;
 import org.netra.features.user.repository.UserRepository;
+import org.netra.features.hospital.entity.VerifiedHospital;
+import org.netra.features.hospital.repository.VerifiedHospitalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -51,6 +54,9 @@ class BloodRequestVerificationSecurityTest {
     private UserRepository userRepository;
 
     @Autowired
+    private VerifiedHospitalRepository verifiedHospitalRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -65,6 +71,22 @@ class BloodRequestVerificationSecurityTest {
     @BeforeEach
     void setUp() {
         bloodRequestRepository.deleteAll();
+
+        if (verifiedHospitalRepository.findByNameIgnoreCase("SSKM Hospital").isEmpty()) {
+            verifiedHospitalRepository.save(new VerifiedHospital(
+                    "SSKM Hospital",
+                    "244 AJC Bose Road",
+                    "Kolkata",
+                    "West Bengal",
+                    "700020",
+                    22.5398,
+                    88.3426,
+                    "place-sskm",
+                    true,
+                    "VERIFIED",
+                    "+913322231589"
+            ));
+        }
 
         requester = createTestUser("requester", UserRole.ROLE_RECEIVER);
         bloodBankUser = createTestUser("bloodbank", UserRole.ROLE_BLOODBANK);
@@ -289,5 +311,54 @@ class BloodRequestVerificationSecurityTest {
                         .content("{\"reason\":\"Duplicate fake confirmation\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("already marked as CONFIRMED_FAKE")));
+    }
+
+    @Test
+    @DisplayName("Location: Creating request without coordinates succeeds when verified hospital provides coordinates")
+    void testCreateRequest_WithoutCoordinates_VerifiedHospital_Succeeds() throws Exception {
+        CreateBloodRequestRequest req = new CreateBloodRequestRequest();
+        req.setBloodGroup(BloodGroup.O_POSITIVE);
+        req.setUnitsRequired(2);
+        req.setUrgency(BloodRequestUrgency.NORMAL);
+        req.setHospitalName("SSKM Hospital");
+        req.setHospitalAddress("244 AJC Bose Road");
+        req.setCity("Kolkata");
+        req.setState("West Bengal");
+        req.setPostalCode("700020");
+        req.setRequiredBy(Instant.now().plus(24, java.time.temporal.ChronoUnit.HOURS));
+        // coordinates omitted - no user-typed coordinates!
+
+        mockMvc.perform(post("/api/v1/blood-requests")
+                        .header("Authorization", "Bearer " + getAccessToken(requester))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNotEmpty())
+                .andExpect(jsonPath("$.hospitalName").value("SSKM Hospital"))
+                .andExpect(jsonPath("$.latitude").value(22.5398))
+                .andExpect(jsonPath("$.longitude").value(88.3426));
+    }
+
+    @Test
+    @DisplayName("Location: Creating request without coordinates and unknown hospital fails with clear actionable message")
+    void testCreateRequest_WithoutCoordinates_UnknownHospital_ClearMessage() throws Exception {
+        CreateBloodRequestRequest req = new CreateBloodRequestRequest();
+        req.setBloodGroup(BloodGroup.O_POSITIVE);
+        req.setUnitsRequired(2);
+        req.setUrgency(BloodRequestUrgency.NORMAL);
+        req.setHospitalName("Unregistered Private Clinic");
+        req.setHospitalAddress("Random Street 101");
+        req.setCity("NowhereCity");
+        req.setState("UnknownState");
+        req.setPostalCode("999999");
+        req.setRequiredBy(Instant.now().plus(24, java.time.temporal.ChronoUnit.HOURS));
+        // coordinates omitted
+
+        mockMvc.perform(post("/api/v1/blood-requests")
+                        .header("Authorization", "Bearer " + getAccessToken(requester))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Location coordinates could not be established. Please detect location or select a verified hospital."));
     }
 }

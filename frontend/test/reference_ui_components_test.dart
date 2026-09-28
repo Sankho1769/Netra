@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:netra_app/common/widgets/netra_bottom_nav_bar.dart';
 import 'package:netra_app/common/widgets/blood_action_sheet.dart';
 import 'package:netra_app/features/about/models/community_impact_model.dart';
+import 'package:netra_app/features/about/models/community_timeseries_model.dart';
 import 'package:netra_app/features/about/screens/about_screen.dart';
 import 'package:netra_app/features/about/services/community_metrics_api_service.dart';
 
@@ -172,9 +173,28 @@ void main() {
 class FakeCommunityMetricsApiService extends Fake
     implements CommunityMetricsApiService {
   final CommunityImpactModel model;
+  final CommunityTimeSeriesModel? timeSeries;
 
-  FakeCommunityMetricsApiService(this.model);
+  FakeCommunityMetricsApiService(this.model, [this.timeSeries]);
 
   @override
   Future<CommunityImpactModel> getCommunityImpact() async => model;
+
+  @override
+  Future<CommunityTimeSeriesModel> getCommunityTimeSeries({int days = 30}) async =>
+      timeSeries ??
+      CommunityTimeSeriesModel(
+        days: days,
+        dataPoints: const [],
+        totalRequestsReceived: 0,
+        totalRequestsFulfilled: 0,
+        totalDonations: 0,
+        totalUnitsCollected: 0,
+        totalEmergencyRequests: 0,
+        totalEmergencyFulfilled: 0,
+        activeDonors: 0,
+        verifiedCenters: 0,
+        hasData: false,
+        emptyStateMessage: 'No verified activity recorded.',
+      );
 }

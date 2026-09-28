@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/netra_colors.dart';
 import '../../core/theme/netra_spacing.dart';
@@ -34,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late final DonationEventApiService _eventApiService;
   DonationEventSummary? _featuredEvent;
   bool _isLoadingFeaturedEvent = true;
+  DateTime? _lastBackPressTime;
 
   @override
   void initState() {
@@ -63,79 +65,108 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _handlePopInvoked(bool didPop) {
+    if (didPop) return;
+
+    if (_selectedTab != 0) {
+      setState(() => _selectedTab = 0);
+      return;
+    }
+
+    final now = DateTime.now();
+    if (_lastBackPressTime == null ||
+        now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+      _lastBackPressTime = now;
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Press back again to exit NETRA'),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      SystemNavigator.pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ResponsiveScaffold(
-      selectedIndex: _selectedTab,
-      onDestinationSelected: (idx) {
-        if (idx == 2) {
-          BloodActionSheet.show(context);
-        } else {
-          setState(() => _selectedTab = idx);
-        }
-      },
-      destinations: const [
-        ResponsiveNavigationDestination(
-          icon: Icons.home_outlined,
-          selectedIcon: Icons.home_rounded,
-          label: "Home",
-          tooltip: "Home Dashboard",
-        ),
-        ResponsiveNavigationDestination(
-          icon: Icons.calendar_today_outlined,
-          selectedIcon: Icons.calendar_today_rounded,
-          label: "Events",
-          tooltip: "Donation Camps & Events",
-        ),
-        ResponsiveNavigationDestination(
-          icon: Icons.water_drop_outlined,
-          selectedIcon: Icons.water_drop_rounded,
-          label: "Donate",
-          tooltip: "Quick Action Hub",
-        ),
-        ResponsiveNavigationDestination(
-          icon: Icons.article_outlined,
-          selectedIcon: Icons.article_rounded,
-          label: "About",
-          tooltip: "Donor Guidelines & Facts",
-        ),
-        ResponsiveNavigationDestination(
-          icon: Icons.person_outline_rounded,
-          selectedIcon: Icons.person_rounded,
-          label: "Profile",
-          tooltip: "Donor Profile",
-        ),
-      ],
-      customBottomBar: NetraBottomNavBar(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) => _handlePopInvoked(didPop),
+      child: ResponsiveScaffold(
         selectedIndex: _selectedTab,
-        onItemSelected: (idx) => setState(() => _selectedTab = idx),
-        onCenterActionTap: () => BloodActionSheet.show(context),
-      ),
-      appBar: NetraAppBar(
-        title: "NETRA",
-        leading: Padding(
-          padding: const EdgeInsets.only(left: NetraSpacing.md),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
-                child: Image.asset(
-                  'assets/branding/netra_logo.png',
-                  width: 32,
-                  height: 32,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ],
+        onDestinationSelected: (idx) {
+          if (idx == 2) {
+            BloodActionSheet.show(context);
+          } else {
+            setState(() => _selectedTab = idx);
+          }
+        },
+        destinations: const [
+          ResponsiveNavigationDestination(
+            icon: Icons.home_outlined,
+            selectedIcon: Icons.home_rounded,
+            label: "Home",
+            tooltip: "Home Dashboard",
           ),
-        ),
-        actions: const [
-          NotificationBellIcon(),
+          ResponsiveNavigationDestination(
+            icon: Icons.calendar_today_outlined,
+            selectedIcon: Icons.calendar_today_rounded,
+            label: "Events",
+            tooltip: "Donation Camps & Events",
+          ),
+          ResponsiveNavigationDestination(
+            icon: Icons.water_drop_outlined,
+            selectedIcon: Icons.water_drop_rounded,
+            label: "Donate",
+            tooltip: "Quick Action Hub",
+          ),
+          ResponsiveNavigationDestination(
+            icon: Icons.article_outlined,
+            selectedIcon: Icons.article_rounded,
+            label: "About",
+            tooltip: "Donor Guidelines & Facts",
+          ),
+          ResponsiveNavigationDestination(
+            icon: Icons.person_outline_rounded,
+            selectedIcon: Icons.person_rounded,
+            label: "Profile",
+            tooltip: "Donor Profile",
+          ),
         ],
-        showBackButton: false,
+        customBottomBar: NetraBottomNavBar(
+          selectedIndex: _selectedTab,
+          onItemSelected: (idx) => setState(() => _selectedTab = idx),
+          onCenterActionTap: () => BloodActionSheet.show(context),
+        ),
+        appBar: NetraAppBar(
+          title: "NETRA",
+          leading: Padding(
+            padding: const EdgeInsets.only(left: NetraSpacing.md),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
+                  child: Image.asset(
+                    'assets/branding/netra_logo.png',
+                    width: 32,
+                    height: 32,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: const [
+            NotificationBellIcon(),
+          ],
+          showBackButton: false,
+        ),
+        body: _buildCurrentTab(context),
       ),
-      body: _buildCurrentTab(context),
     );
   }
 
@@ -866,8 +897,9 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () async {
                 await authController?.logout();
                 if (context.mounted) {
-                  Navigator.of(context).pushReplacement(
+                  Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    (route) => false,
                   );
                 }
               },
@@ -900,8 +932,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (confirm == true && context.mounted) {
                     await authController?.logoutAll();
                     if (context.mounted) {
-                      Navigator.of(context).pushReplacement(
+                      Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        (route) => false,
                       );
                     }
                   }

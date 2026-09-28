@@ -25,4 +25,6 @@ public interface VerifiedHospitalRepository extends JpaRepository<VerifiedHospit
            " LOWER(h.city) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
            "(:city IS NULL OR LOWER(h.city) = LOWER(:city))")
     List<VerifiedHospital> searchHospitals(@Param("query") String query, @Param("city") String city);
+
+    long countByVerificationStatus(String verificationStatus);
 }

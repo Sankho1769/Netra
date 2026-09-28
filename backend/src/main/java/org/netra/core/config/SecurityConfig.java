@@ -151,7 +151,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/hospitals/verify").permitAll()
 
                 // Community Metrics (Public Discovery)
-                .requestMatchers(HttpMethod.GET, "/api/v1/metrics/community-impact").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/metrics/**").permitAll()
 
                 // Karma System Endpoints
                 .requestMatchers("/api/v1/karma/**").authenticated()

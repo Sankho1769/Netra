@@ -120,9 +120,10 @@ class _EmergencyCreateRequestScreenState
     });
 
     try {
-      final loc =
-          await _locationService.getCurrentLocation(approximateOnly: false);
-      if (loc != null && mounted) {
+      final result =
+          await _locationService.getDetailedLocation(approximateOnly: false);
+      if (result.isSuccess && result.location != null && mounted) {
+        final loc = result.location!;
         setState(() {
           if (loc.city != null) _cityController.text = loc.city!;
           if (loc.state != null) _stateController.text = loc.state!;
@@ -140,13 +141,59 @@ class _EmergencyCreateRequestScreenState
           ),
         );
       } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-                'Location permission denied or unavailable. Please enter details manually.'),
-            backgroundColor: Color(0xFFD97706),
-          ),
-        );
+        if (result.isPermissionPermanentlyDenied) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                  'Location permission permanently denied. Please grant permission in App Settings.'),
+              backgroundColor: const Color(0xFFDC2626),
+              action: SnackBarAction(
+                label: 'Settings',
+                textColor: Colors.white,
+                onPressed: () => _locationService.openAppSettings(),
+              ),
+            ),
+          );
+        } else if (result.isServiceDisabled) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                  'Device location is turned off. Please enable GPS in device settings.'),
+              backgroundColor: const Color(0xFFD97706),
+              action: SnackBarAction(
+                label: 'Turn On',
+                textColor: Colors.white,
+                onPressed: () => _locationService.openLocationSettings(),
+              ),
+            ),
+          );
+        } else if (result.isPermissionDenied) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                  'Location permission was denied. Tap Retry to request again.'),
+              backgroundColor: const Color(0xFFD97706),
+              action: SnackBarAction(
+                label: 'Retry',
+                textColor: Colors.white,
+                onPressed: _detectLocation,
+              ),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.errorMessage ??
+                  'Could not auto-detect location. Please enter details manually or select a hospital.'),
+              backgroundColor: const Color(0xFFD97706),
+              action: SnackBarAction(
+                label: 'Retry',
+                textColor: Colors.white,
+                onPressed: _detectLocation,
+              ),
+            ),
+          );
+        }
       }
     } catch (_) {
       if (mounted) {

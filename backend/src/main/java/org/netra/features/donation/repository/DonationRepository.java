@@ -42,4 +42,7 @@ public interface DonationRepository extends JpaRepository<Donation, UUID> {
     long countByDonorUserIdAndVerificationStatus(UUID donorUserId, DonationVerificationStatus status);
 
     long countByVerificationStatus(DonationVerificationStatus status);
+
+    List<Donation> findByDonationDateGreaterThanEqualAndVerificationStatus(
+            LocalDate date, DonationVerificationStatus status);
 }

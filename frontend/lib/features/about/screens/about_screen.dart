@@ -5,6 +5,7 @@ import '../../../core/theme/netra_spacing.dart';
 import '../../../core/theme/netra_typography.dart';
 import '../../eligibility/screens/eligibility_intro_screen.dart';
 import '../models/community_impact_model.dart';
+import '../models/community_timeseries_model.dart';
 import '../services/community_metrics_api_service.dart';
 
 class AboutScreen extends StatefulWidget {
@@ -26,28 +27,66 @@ class _AboutScreenState extends State<AboutScreen> {
   String _selectedBloodGroup = 'O+';
   CommunityImpactModel? _communityImpact;
   bool _isLoadingImpact = true;
+  CommunityTimeSeriesModel? _timeSeries;
+  bool _isLoadingTimeSeries = true;
+  int _selectedDays = 30;
 
   @override
   void initState() {
     super.initState();
     _metricsApiService =
         widget.metricsApiService ?? CommunityMetricsApiService();
-    _loadCommunityImpact();
+    _loadMetrics();
   }
 
-  Future<void> _loadCommunityImpact() async {
+  Future<void> _loadMetrics({bool isRefresh = false}) async {
+    if (!isRefresh) {
+      setState(() {
+        _isLoadingImpact = true;
+        _isLoadingTimeSeries = true;
+      });
+    }
     try {
-      final impact = await _metricsApiService.getCommunityImpact();
+      final futures = await Future.wait([
+        _metricsApiService.getCommunityImpact(),
+        _metricsApiService.getCommunityTimeSeries(days: _selectedDays),
+      ]);
       if (mounted) {
         setState(() {
-          _communityImpact = impact;
+          _communityImpact = futures[0] as CommunityImpactModel;
+          _timeSeries = futures[1] as CommunityTimeSeriesModel;
           _isLoadingImpact = false;
+          _isLoadingTimeSeries = false;
         });
       }
     } catch (_) {
       if (mounted) {
         setState(() {
           _isLoadingImpact = false;
+          _isLoadingTimeSeries = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _changeDays(int days) async {
+    if (_selectedDays == days) return;
+    setState(() {
+      _selectedDays = days;
+      _isLoadingTimeSeries = true;
+    });
+    try {
+      final ts = await _metricsApiService.getCommunityTimeSeries(days: days);
+      if (mounted) {
+        setState(() {
+          _timeSeries = ts;
+          _isLoadingTimeSeries = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isLoadingTimeSeries = false;
         });
       }
     }
@@ -106,45 +145,53 @@ class _AboutScreenState extends State<AboutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final content = ResponsiveContainer.standard(
-      scrollable: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Screen Title
-          Text(
-            "Guidelines & Blood Facts",
-            style: NetraTypography.headlineMedium,
-          ),
-          NetraSpacing.gapH4,
-          Text(
-            "Essential clinical advice, donation readiness, and compatibility data.",
-            style: NetraTypography.bodyMedium.copyWith(
-              color: NetraColors.textSecondary,
+    final content = RefreshIndicator(
+      onRefresh: () => _loadMetrics(isRefresh: true),
+      color: NetraColors.primaryRed,
+      child: ResponsiveContainer.standard(
+        scrollable: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Screen Title
+            Text(
+              "Guidelines & Blood Facts",
+              style: NetraTypography.headlineMedium,
             ),
-          ),
-          NetraSpacing.gapH20,
+            NetraSpacing.gapH4,
+            Text(
+              "Essential clinical advice, donation readiness, and compatibility data.",
+              style: NetraTypography.bodyMedium.copyWith(
+                color: NetraColors.textSecondary,
+              ),
+            ),
+            NetraSpacing.gapH20,
 
-          // Monthly Goal Banner (reproducing blood.html)
-          _buildGoalBanner(),
-          NetraSpacing.gapH24,
+            // Monthly Goal Banner (reproducing blood.html)
+            _buildGoalBanner(),
+            NetraSpacing.gapH24,
 
-          // Guidelines: What you MUST do
-          _buildDoCard(),
-          NetraSpacing.gapH16,
+            // Community Activity Trends & Time-Series
+            _buildTimeSeriesSection(),
+            NetraSpacing.gapH24,
 
-          // Guidelines: What you MUST AVOID
-          _buildAvoidCard(),
-          NetraSpacing.gapH24,
+            // Guidelines: What you MUST do
+            _buildDoCard(),
+            NetraSpacing.gapH16,
 
-          // Blood Compatibility Matrix
-          _buildCompatibilitySection(),
-          NetraSpacing.gapH24,
+            // Guidelines: What you MUST AVOID
+            _buildAvoidCard(),
+            NetraSpacing.gapH24,
 
-          // NBTC Eligibility Standards
-          _buildStandardsCard(),
-          NetraSpacing.gapH24,
-        ],
+            // Blood Compatibility Matrix
+            _buildCompatibilitySection(),
+            NetraSpacing.gapH24,
+
+            // NBTC Eligibility Standards
+            _buildStandardsCard(),
+            NetraSpacing.gapH24,
+          ],
+        ),
       ),
     );
 
@@ -339,6 +386,239 @@ class _AboutScreenState extends State<AboutScreen> {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeSeriesSection() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: NetraColors.surfaceWhite,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.trending_up_rounded,
+                    size: 20,
+                    color: NetraColors.primaryRed,
+                  ),
+                  NetraSpacing.gapW8,
+                  Text(
+                    "ACTIVITY TRENDS",
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.grey.shade600,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [7, 30, 90].map((d) {
+                  final isSel = _selectedDays == d;
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: InkWell(
+                      onTap: () => _changeDays(d),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isSel
+                              ? NetraColors.primaryRed
+                              : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          "${d}D",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight:
+                                isSel ? FontWeight.w700 : FontWeight.w500,
+                            color: isSel
+                                ? Colors.white
+                                : NetraColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+          NetraSpacing.gapH16,
+          if (_isLoadingTimeSeries)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: NetraColors.primaryRed,
+                  ),
+                ),
+              ),
+            )
+          else if (_timeSeries == null || !_timeSeries!.hasData)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "No verified community activity in the last $_selectedDays days.",
+                  style: NetraTypography.bodyMedium.copyWith(
+                    color: NetraColors.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+                NetraSpacing.gapH8,
+                Text(
+                  _timeSeries?.emptyStateMessage ??
+                      "Verified blood requests, donations, and fulfillments will appear here once recorded.",
+                  style: NetraTypography.bodySmall.copyWith(
+                    color: NetraColors.textMuted,
+                  ),
+                ),
+              ],
+            )
+          else ...[
+            // Stats Row for the period
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMetricTile(
+                    title: "Requests",
+                    value: "${_timeSeries!.totalRequestsReceived}",
+                    subtitle: "${_timeSeries!.totalRequestsFulfilled} fulfilled",
+                    color: const Color(0xFF2563EB),
+                  ),
+                ),
+                NetraSpacing.gapW12,
+                Expanded(
+                  child: _buildMetricTile(
+                    title: "Donations",
+                    value: "${_timeSeries!.totalDonations}",
+                    subtitle: "${_timeSeries!.totalUnitsCollected} units",
+                    color: NetraColors.primaryRed,
+                  ),
+                ),
+                NetraSpacing.gapW12,
+                Expanded(
+                  child: _buildMetricTile(
+                    title: "Emergency",
+                    value: "${_timeSeries!.totalEmergencyRequests}",
+                    subtitle:
+                        "${_timeSeries!.totalEmergencyFulfilled} fulfilled",
+                    color: const Color(0xFFD97706),
+                  ),
+                ),
+              ],
+            ),
+            if (_timeSeries!.dataPoints.any((p) =>
+                p.bloodRequestsReceived > 0 ||
+                p.donationsRecorded > 0 ||
+                p.emergencyRequests > 0)) ...[
+              NetraSpacing.gapH16,
+              Text(
+                "Recent Daily Distribution",
+                style: NetraTypography.labelMedium.copyWith(
+                  color: NetraColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              NetraSpacing.gapH8,
+              ..._timeSeries!.dataPoints
+                  .where((p) =>
+                      p.bloodRequestsReceived > 0 ||
+                      p.donationsRecorded > 0 ||
+                      p.emergencyRequests > 0)
+                  .take(5)
+                  .map((p) => Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(p.date,
+                                style: NetraTypography.bodySmall.copyWith(
+                                    fontWeight: FontWeight.w600)),
+                            Text(
+                              "Req: ${p.bloodRequestsReceived} | Don: ${p.donationsRecorded} (${p.unitsCollected}u)",
+                              style: NetraTypography.bodySmall.copyWith(
+                                color: NetraColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricTile({
+    required String title,
+    required String value,
+    required String subtitle,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 9,
+              color: Colors.grey.shade600,
+            ),
           ),
         ],
       ),

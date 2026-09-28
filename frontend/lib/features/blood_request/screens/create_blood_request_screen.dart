@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/location/location_service.dart';
 import '../../../core/theme/netra_colors.dart';
 import '../../../core/theme/netra_typography.dart';
 import '../models/blood_request.dart';
@@ -17,6 +18,7 @@ class CreateBloodRequestScreen extends StatefulWidget {
 
 class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
   late final BloodRequestController _controller;
+  final LocationService _locationService = DefaultLocationService();
   final _formKey = GlobalKey<FormState>();
 
   String _selectedBloodGroup = 'O+';
@@ -35,6 +37,7 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
   double? _longitude;
   String? _placeId;
   String? _hospitalVerificationStatus;
+  bool _isDetectingLocation = false;
 
   DateTime _requiredBy = DateTime.now().add(const Duration(hours: 24));
 
@@ -64,6 +67,94 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
     _postalCodeController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  Future<void> _detectLocation() async {
+    setState(() => _isDetectingLocation = true);
+    try {
+      final result =
+          await _locationService.getDetailedLocation(approximateOnly: false);
+      if (result.isSuccess && result.location != null && mounted) {
+        final loc = result.location!;
+        setState(() {
+          if (loc.city != null && _cityController.text.trim().isEmpty) {
+            _cityController.text = loc.city!;
+          }
+          if (loc.state != null && _stateController.text.trim().isEmpty) {
+            _stateController.text = loc.state!;
+          }
+          if (loc.postalCode != null &&
+              _postalCodeController.text.trim().isEmpty) {
+            _postalCodeController.text = loc.postalCode!;
+          }
+          if (loc.latitude != null) _latitude = loc.latitude;
+          if (loc.longitude != null) _longitude = loc.longitude;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Location coordinates detected successfully.'),
+            backgroundColor: Color(0xFF16A34A),
+          ),
+        );
+      } else if (mounted) {
+        if (result.isPermissionPermanentlyDenied) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                  'Location permission permanently denied. Please grant permission in App Settings.'),
+              backgroundColor: const Color(0xFFDC2626),
+              action: SnackBarAction(
+                label: 'Settings',
+                textColor: Colors.white,
+                onPressed: () => _locationService.openAppSettings(),
+              ),
+            ),
+          );
+        } else if (result.isServiceDisabled) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                  'Device location is turned off. Please enable GPS in device settings.'),
+              backgroundColor: const Color(0xFFD97706),
+              action: SnackBarAction(
+                label: 'Turn On',
+                textColor: Colors.white,
+                onPressed: () => _locationService.openLocationSettings(),
+              ),
+            ),
+          );
+        } else if (result.isPermissionDenied) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                  'Location permission was denied. Tap Retry to request again.'),
+              backgroundColor: const Color(0xFFD97706),
+              action: SnackBarAction(
+                label: 'Retry',
+                textColor: Colors.white,
+                onPressed: _detectLocation,
+              ),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.errorMessage ??
+                  'Location unavailable. Please select a verified hospital.'),
+              backgroundColor: const Color(0xFFD97706),
+              action: SnackBarAction(
+                label: 'Retry',
+                textColor: Colors.white,
+                onPressed: _detectLocation,
+              ),
+            ),
+          );
+        }
+      }
+    } finally {
+      if (mounted) setState(() => _isDetectingLocation = false);
+    }
   }
 
   Future<void> _pickDeadline() async {
@@ -285,6 +376,32 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
               ),
               const SizedBox(height: 16),
 
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Hospital & Clinical Facility',
+                    style: NetraTypography.titleMedium
+                        .copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  TextButton.icon(
+                    onPressed: _isDetectingLocation ? null : _detectLocation,
+                    icon: _isDetectingLocation
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.my_location_rounded, size: 16),
+                    label: Text(
+                      _isDetectingLocation ? 'Detecting...' : 'Detect GPS',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
               // Hospital Name & Address with verified autocomplete
               HospitalSearchField(
                 controller: _hospitalNameController,
@@ -387,11 +504,11 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                 child: Row(
                   children: [
                     Icon(
-                      _placeId != null
+                      _placeId != null || _latitude != null
                           ? Icons.verified_user_rounded
                           : Icons.location_on_outlined,
                       size: 20,
-                      color: _placeId != null
+                      color: _placeId != null || _latitude != null
                           ? const Color(0xFF16A34A)
                           : NetraColors.textSecondary,
                     ),
@@ -400,12 +517,14 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                       child: Text(
                         _placeId != null
                             ? "Verified clinical institution selected. Authoritative coordinates will be attached securely."
-                            : "Hospital location coordinates are resolved and verified server-side without manual decimal input.",
+                            : (_latitude != null
+                                ? "Location coordinates detected ($_latitude, $_longitude). Server will correlate nearby donors."
+                                : "Hospital location coordinates are resolved server-side. Select a verified hospital or tap Detect GPS."),
                         style: NetraTypography.bodySmall.copyWith(
-                          color: _placeId != null
+                          color: _placeId != null || _latitude != null
                               ? const Color(0xFF15803D)
                               : NetraColors.textSecondary,
-                          fontWeight: _placeId != null
+                          fontWeight: _placeId != null || _latitude != null
                               ? FontWeight.w600
                               : FontWeight.normal,
                         ),

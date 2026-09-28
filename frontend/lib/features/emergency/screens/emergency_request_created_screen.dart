@@ -20,11 +20,19 @@ class EmergencyRequestCreatedScreen extends StatelessWidget {
     final dateFormat = DateFormat('MMM d, y • h:mm a');
     final formattedDeadline = dateFormat.format(request.requiredBy.toLocal());
 
-    return ResponsiveScaffold(
-      appBar: NetraAppBar(
-        title: "Request Submitted",
-        showBackButton: false,
-      ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      },
+      child: ResponsiveScaffold(
+        appBar: NetraAppBar(
+          title: "Request Submitted",
+          showBackButton: true,
+          onBackPressed: () =>
+              Navigator.of(context).popUntil((route) => route.isFirst),
+        ),
       body: ResponsiveContainer.standard(
         scrollable: true,
         child: Column(
@@ -247,6 +255,7 @@ class EmergencyRequestCreatedScreen extends StatelessWidget {
             NetraSpacing.gapH24,
           ],
         ),
+      ),
       ),
     );
   }

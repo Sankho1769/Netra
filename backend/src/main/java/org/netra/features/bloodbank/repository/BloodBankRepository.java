@@ -35,6 +35,8 @@ public interface BloodBankRepository extends JpaRepository<BloodBank, UUID> {
 
     List<BloodBank> findByVerificationStatus(BloodBankVerificationStatus status);
 
+    long countByVerificationStatus(BloodBankVerificationStatus status);
+
     @Query("SELECT b FROM BloodBank b WHERE b.latitude BETWEEN :minLat AND :maxLat AND b.longitude BETWEEN :minLng AND :maxLng AND b.verificationStatus = :status")
     List<BloodBank> findNearbyCandidates(
             @Param("minLat") double minLat,

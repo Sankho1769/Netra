@@ -69,4 +69,8 @@ public interface BloodRequestRepository extends JpaRepository<BloodRequest, UUID
     int expireDueRequests(@Param("now") Instant now);
 
     long countByStatus(BloodRequestStatus status);
+
+    List<BloodRequest> findByCreatedAtGreaterThanEqual(Instant start);
+
+    List<BloodRequest> findByFulfilledAtGreaterThanEqual(Instant start);
 }

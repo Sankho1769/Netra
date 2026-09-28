@@ -76,3 +76,29 @@ class ApproximateLocation {
         if (coordinates != null) 'coordinates': coordinates!.toJson(),
       };
 }
+
+enum LocationFailureReason {
+  serviceDisabled,
+  permissionDenied,
+  permissionPermanentlyDenied,
+  timeout,
+  unavailable,
+}
+
+class LocationResult {
+  final ApproximateLocation? location;
+  final LocationFailureReason? failureReason;
+  final String? errorMessage;
+
+  const LocationResult.success(ApproximateLocation this.location)
+      : failureReason = null,
+        errorMessage = null;
+
+  const LocationResult.failure(LocationFailureReason this.failureReason, [this.errorMessage])
+      : location = null;
+
+  bool get isSuccess => location != null;
+  bool get isPermissionDenied => failureReason == LocationFailureReason.permissionDenied;
+  bool get isPermissionPermanentlyDenied => failureReason == LocationFailureReason.permissionPermanentlyDenied;
+  bool get isServiceDisabled => failureReason == LocationFailureReason.serviceDisabled;
+}
