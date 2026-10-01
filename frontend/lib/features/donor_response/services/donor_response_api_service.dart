@@ -165,4 +165,94 @@ class DonorResponseApiService {
       throw ValidationException(_sanitizeErrorMessage(e));
     }
   }
+
+  /// Authoritative donor action: Raise hand / offer help for an open blood request.
+  Future<DonorMatchDetail> raiseHand(String requestId) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await _client.post(
+        '/blood-requests/$requestId/raise-hand',
+        headers: headers,
+      );
+
+      if (response is Map<String, dynamic>) {
+        return DonorMatchDetail.fromJson(response);
+      }
+      throw const ValidationException('Unexpected response format upon raising hand.');
+    } catch (e) {
+      if (e is NetworkException) rethrow;
+      throw ValidationException(_sanitizeErrorMessage(e));
+    }
+  }
+
+  /// Requester action: Accept an incoming donor helper offer.
+  Future<RequesterDonorMatch> acceptHelper(String requestId, String matchId) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await _client.post(
+        '/blood-requests/$requestId/matches/$matchId/accept',
+        headers: headers,
+      );
+
+      if (response is Map<String, dynamic>) {
+        return RequesterDonorMatch.fromJson(response);
+      }
+      throw const ValidationException('Unexpected response format upon accepting helper.');
+    } catch (e) {
+      if (e is NetworkException) rethrow;
+      throw ValidationException(_sanitizeErrorMessage(e));
+    }
+  }
+
+  /// Requester action: Decline an incoming donor helper offer.
+  Future<RequesterDonorMatch> declineHelper(String requestId, String matchId) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await _client.post(
+        '/blood-requests/$requestId/matches/$matchId/decline',
+        headers: headers,
+      );
+
+      if (response is Map<String, dynamic>) {
+        return RequesterDonorMatch.fromJson(response);
+      }
+      throw const ValidationException('Unexpected response format upon declining helper.');
+    } catch (e) {
+      if (e is NetworkException) rethrow;
+      throw ValidationException(_sanitizeErrorMessage(e));
+    }
+  }
+
+  /// Authorized action: Fetch mutual coordination contact details once match is accepted.
+  Future<MatchContactInfo> getMatchContact(String matchId) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await _client.get(
+        '/donor/matches/$matchId/contact',
+        headers: headers,
+      );
+
+      if (response is Map<String, dynamic>) {
+        return MatchContactInfo.fromJson(response);
+      }
+      throw const ValidationException('Unexpected response format upon fetching contact info.');
+    } catch (e) {
+      if (e is NetworkException) rethrow;
+      throw ValidationException(_sanitizeErrorMessage(e));
+    }
+  }
+
+  /// Withdraws or cancels an active match commitment/offer on behalf of the authenticated donor.
+  Future<void> cancelCommitment(String matchId, {String? reason}) async {
+    try {
+      final headers = await _authHeaders();
+      await _client.delete(
+        '/donor/matches/$matchId',
+        headers: headers,
+      );
+    } catch (e) {
+      if (e is NetworkException) rethrow;
+      throw ValidationException(_sanitizeErrorMessage(e));
+    }
+  }
 }

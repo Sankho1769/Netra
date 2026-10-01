@@ -29,6 +29,8 @@ public class BloodRequestPublicDetailDto {
     private org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus verificationStatus =
             org.netra.features.bloodrequest.entity.BloodRequestVerificationStatus.UNVERIFIED;
     private String hospitalVerificationStatus = "UNVERIFIED";
+    private Integer unitsFulfilled = 0;
+    private Integer helperCount = 0;
 
     public BloodRequestPublicDetailDto() {
     }
@@ -167,5 +169,21 @@ public class BloodRequestPublicDetailDto {
 
     public void setHospitalVerificationStatus(String hospitalVerificationStatus) {
         this.hospitalVerificationStatus = hospitalVerificationStatus;
+    }
+
+    public Integer getUnitsFulfilled() {
+        return unitsFulfilled;
+    }
+
+    public void setUnitsFulfilled(Integer unitsFulfilled) {
+        this.unitsFulfilled = unitsFulfilled != null ? unitsFulfilled : 0;
+    }
+
+    public Integer getHelperCount() {
+        return helperCount;
+    }
+
+    public void setHelperCount(Integer helperCount) {
+        this.helperCount = helperCount != null ? helperCount : 0;
     }
 }

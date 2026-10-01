@@ -9,6 +9,7 @@ import '../widgets/donation_event_card.dart';
 import 'donation_event_details_screen.dart';
 import 'my_event_registrations_screen.dart';
 import 'create_donation_event_screen.dart';
+import '../../auth/state/auth_scope.dart';
 
 class DonationEventListScreen extends StatefulWidget {
   final DonationEventController? controller;
@@ -47,6 +48,50 @@ class _DonationEventListScreenState extends State<DonationEventListScreen> {
 
   void _onCitySubmitted(String value) {
     _controller.setCity(value.trim().isEmpty ? null : value.trim());
+  }
+
+  void _onHostCampPressed() {
+    final user = AuthScope.maybeOf(context)?.currentUser;
+    if (user == null || (!user.isAdmin && !user.isBloodBank)) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.shield_outlined, color: Color(0xFFDC2626)),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text('Clinical Organization Policy',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          content: const Text(
+            'Under National Blood Transfusion Council (NBTC) safety regulations, donation camps must be organized by licensed blood banks or certified administrative authorities.\n\n'
+            'If you represent an accredited blood center, please log in with your Blood Bank account.\n\n'
+            'Donors can discover and register for any upcoming camp across all verified centers.',
+            style: TextStyle(fontSize: 13, height: 1.4),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Close'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Browse Camps', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CreateDonationEventScreen()),
+    );
   }
 
   @override
@@ -94,14 +139,7 @@ class _DonationEventListScreenState extends State<DonationEventListScreen> {
                         IconButton(
                           icon: const Icon(Icons.add_circle_outline, size: 20),
                           tooltip: 'Host a Camp',
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) =>
-                                      const CreateDonationEventScreen()),
-                            );
-                          },
+                          onPressed: _onHostCampPressed,
                         ),
                       ],
                     ),
@@ -184,13 +222,7 @@ class _DonationEventListScreenState extends State<DonationEventListScreen> {
             IconButton(
               icon: const Icon(Icons.add_circle_outline),
               tooltip: 'Host a Camp',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const CreateDonationEventScreen()),
-                );
-              },
+              onPressed: _onHostCampPressed,
             ),
           ],
           body: bodyContent,

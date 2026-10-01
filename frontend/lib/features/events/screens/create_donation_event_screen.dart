@@ -8,6 +8,7 @@ import '../../../core/theme/netra_typography.dart';
 import '../../../common/widgets/netra_button.dart';
 import '../../../common/widgets/netra_text_field.dart';
 import '../../blood_request/widgets/hospital_search_field.dart';
+import '../../auth/state/auth_scope.dart';
 import '../state/donation_event_controller.dart';
 import 'donation_event_details_screen.dart';
 
@@ -190,6 +191,12 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
   Future<void> _handleCreate() async {
     _controller.clearMessages();
 
+    final user = AuthScope.maybeOf(context)?.currentUser;
+    if (user != null && !user.isAdmin && !user.isBloodBank) {
+      _showError('Permission Denied (403): Only authorized Blood Bank or Administrator accounts can host donation camps.');
+      return;
+    }
+
     if (_bloodBankIdController.text.trim().isEmpty) {
       _showError('Blood Bank ID is required');
       return;
@@ -299,9 +306,16 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
   }
 
   void _showError(String message) {
+    String displayMsg = message;
+    if (message.contains('403') ||
+        message.toLowerCase().contains('forbidden') ||
+        message.toLowerCase().contains('access denied')) {
+      displayMsg =
+          'Permission Denied (403): Only licensed blood banks and administrators are authorized to publish donation camps under NBTC guidelines.';
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(displayMsg),
         backgroundColor: NetraColors.errorRed,
       ),
     );
@@ -359,6 +373,38 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                             ),
                           ),
                           const Divider(height: 32),
+                          if (AuthScope.maybeOf(context)?.currentUser != null &&
+                              !(AuthScope.maybeOf(context)!.currentUser!.isAdmin ||
+                                  AuthScope.maybeOf(context)!.currentUser!.isBloodBank)) ...[
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 20),
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF2F2),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: const Color(0xFFFCA5A5)),
+                              ),
+                              child: const Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(Icons.shield_outlined,
+                                      color: Color(0xFFDC2626), size: 22),
+                                  SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      'Clinical Authorization Notice: Organizing donation camps is reserved strictly for licensed blood centers and certified organizers under NBTC regulations. Regular donor accounts cannot host camps.',
+                                      style: TextStyle(
+                                        color: Color(0xFF991B1B),
+                                        fontSize: 13,
+                                        height: 1.4,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
 
                           // Blood Bank ID
                           NetraTextField(

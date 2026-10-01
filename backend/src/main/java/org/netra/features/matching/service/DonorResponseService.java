@@ -19,6 +19,7 @@ import org.netra.features.eligibility.repository.EligibilitySessionRepository;
 import org.netra.features.eligibility.service.DonationEligibilityPolicy;
 import org.netra.features.matching.dto.CreateDonorMatchRequest;
 import org.netra.features.matching.dto.DonorMatchDetailDto;
+import org.netra.features.matching.dto.MatchContactDto;
 import org.netra.features.matching.dto.RequesterDonorMatchDto;
 import org.netra.features.matching.entity.DonorMatch;
 import org.netra.features.matching.entity.MatchStatus;
@@ -857,11 +858,15 @@ public class DonorResponseService {
             throw new UnauthorizedSessionAccessException("Access denied to cancel commitment.");
         }
 
-        if (match.getResponseStatus() != MatchStatus.ACCEPTED) {
-            throw new ValidationException("Cannot cancel commitment: match status is " + match.getResponseStatus() + ", but must be ACCEPTED.");
+        if (match.getResponseStatus() != MatchStatus.ACCEPTED && match.getResponseStatus() != MatchStatus.MATCHED) {
+            throw new ValidationException("Cannot cancel commitment: match status is " + match.getResponseStatus() + ", but must be MATCHED or ACCEPTED.");
         }
 
-        match.setResponseStatus(MatchStatus.CANCELLED_SAFE);
+        if (match.getResponseStatus() == MatchStatus.MATCHED) {
+            match.setResponseStatus(MatchStatus.CANCELLED);
+        } else {
+            match.setResponseStatus(MatchStatus.CANCELLED_SAFE);
+        }
         match.setUpdatedAt(clock.instant());
         DonorMatch savedMatch = donorMatchRepository.save(match);
 
@@ -876,5 +881,398 @@ public class DonorResponseService {
 
         BloodRequest req = bloodRequestRepository.findById(match.getBloodRequestId()).orElse(null);
         return mapToDonorDetailDto(savedMatch, req, null);
+    }
+
+    /**
+     * Authoritative donor self-nomination ("Raise Hand" / "Offer Help") for an open blood request.
+     * Revalidates request status, deadlines, donor eligibility, and blood group compatibility.
+     */
+    @Transactional
+    public DonorMatchDetailDto raiseHand(
+            UUID requestId,
+            UUID currentUserId,
+            String clientIp,
+            String userAgent) {
+
+        authorizationService.verifyActiveUser(currentUserId);
+        Instant now = clock.instant();
+
+        // 1. Authoritative Blood Request verification with pessimistic write lock
+        BloodRequest bloodRequest = bloodRequestRepository.findByIdForUpdate(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Blood request not found with id: " + requestId));
+
+        if (bloodRequest.getStatus() != BloodRequestStatus.OPEN) {
+            throw new ValidationException("Cannot offer help for blood request with status: " + bloodRequest.getStatus());
+        }
+
+        if (bloodRequest.getRequiredBy() == null || !bloodRequest.getRequiredBy().isAfter(now)) {
+            throw new ValidationException("Cannot offer help for overdue blood request.");
+        }
+
+        if (bloodRequest.getUnitsFulfilled() >= bloodRequest.getUnitsRequired()) {
+            throw new ValidationException("This blood request is already fully fulfilled.");
+        }
+
+        if (bloodRequest.getRequesterUserId().equals(currentUserId)) {
+            throw new ValidationException("Requesters cannot offer help on their own blood request.");
+        }
+
+        // Active pending matches abuse limit check per BloodRequest
+        int activeMatches = donorMatchRepository.countByBloodRequestIdAndResponseStatus(requestId, MatchStatus.MATCHED);
+        if (activeMatches >= maxActiveMatchesPerRequest) {
+            throw new ValidationException("Maximum number of active pending offers (" + maxActiveMatchesPerRequest +
+                    ") reached for this blood request. Please check back later.");
+        }
+
+        // 2. Fetch and Authoritatively Revalidate Donor Profile
+        DonorProfile donorProfile = donorProfileRepository.findByUserId(currentUserId)
+                .orElseThrow(() -> new ValidationException("Donor profile not found. Please complete your donor profile before offering help."));
+
+        User donorUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ValidationException("Donor user not found: " + currentUserId));
+
+        if (donorUser.getStatus() != UserStatus.ACTIVE) {
+            throw new ValidationException("Donor user account is not active.");
+        }
+
+        if (donorProfile.getDonorStatus() != DonorStatus.ACTIVE) {
+            throw new ValidationException("Donor profile is not active.");
+        }
+
+        if (donorProfile.getAvailabilityStatus() != DonorAvailabilityStatus.AVAILABLE) {
+            throw new ValidationException("Donor is currently marked as unavailable for donation.");
+        }
+
+        if (donorProfile.getBloodGroupVerificationStatus() != BloodGroupVerificationStatus.VERIFIED) {
+            throw new ValidationException("Only verified blood-group donors can offer help directly.");
+        }
+
+        // ABO/Rh Compatibility Recheck
+        if (!compatibilityMatrix.isCompatible(donorProfile.getBloodGroup(), bloodRequest.getBloodGroup())) {
+            throw new ValidationException("Donor blood group " + donorProfile.getBloodGroup() +
+                    " is incompatible with requested blood group " + bloodRequest.getBloodGroup());
+        }
+
+        // Mandatory Donation Interval check
+        LocalDate today = LocalDate.ofInstant(now, clock.getZone());
+        if (donorProfile.getLastDonationDate() != null) {
+            if (!donationEligibilityPolicy.isIntervalEligible(donorProfile.getBiologicalSex(), donorProfile.getLastDonationDate(), today)) {
+                int requiredDays = donationEligibilityPolicy.getRequiredIntervalDays(donorProfile.getBiologicalSex());
+                throw new ValidationException("Donor has donated too recently. Minimum interval is " + requiredDays + " days.");
+            }
+        }
+
+        // Eligibility screening session check
+        List<EligibilitySession> sessions = eligibilitySessionRepository
+                .findByUserIdInAndStatusOrderByCompletedAtDesc(List.of(currentUserId), SessionStatus.COMPLETED);
+        if (!sessions.isEmpty()) {
+            EligibilitySession latest = sessions.get(0);
+            if (latest.getResult() == ResultType.MEDICAL_REVIEW_REQUIRED) {
+                throw new ValidationException("Donor requires medical review prior to donation.");
+            }
+            if (latest.getResult() == ResultType.TEMPORARY_DEFERRAL) {
+                if (latest.getEstimatedEligibleDate() == null || latest.getEstimatedEligibleDate().isAfter(today)) {
+                    throw new ValidationException("Donor has an active temporary deferral" +
+                            (latest.getEstimatedEligibleDate() != null ? " until " + latest.getEstimatedEligibleDate() : "."));
+                }
+            }
+        }
+
+        // 3. Duplicate Match Check
+        Optional<DonorMatch> existing = donorMatchRepository.findByBloodRequestIdAndDonorUserId(requestId, currentUserId);
+        if (existing.isPresent()) {
+            DonorMatch em = existing.get();
+            if (em.getResponseStatus() == MatchStatus.MATCHED) {
+                throw new DuplicateResourceException("You have already raised your hand for this blood request.");
+            }
+            if (em.getResponseStatus() == MatchStatus.ACCEPTED || em.getResponseStatus() == MatchStatus.ARRIVED) {
+                throw new ValidationException("You are already an accepted helper for this blood request.");
+            }
+            throw new DuplicateResourceException("A match record already exists for this blood request and donor.");
+        }
+
+        // 4. Calculate Expiration: min(now + TTL, request.requiredBy)
+        Instant calculatedExpiry = now.plus(matchResponseTtl);
+        Instant finalExpiry = calculatedExpiry.isBefore(bloodRequest.getRequiredBy()) ? calculatedExpiry : bloodRequest.getRequiredBy();
+
+        // 5. Persist Match in MATCHED state
+        DonorMatch match = new DonorMatch(requestId, currentUserId, now, finalExpiry);
+
+        DonorMatch savedMatch;
+        try {
+            savedMatch = donorMatchRepository.saveAndFlush(match);
+        } catch (DataIntegrityViolationException ex) {
+            if (isUniqueMatchConstraintViolation(ex)) {
+                throw new DuplicateResourceException("You have already offered help for this blood request.");
+            }
+            throw ex;
+        }
+
+        // 6. Security Audit Event
+        auditService.logAuthEvent(
+                "DONOR_HAND_RAISED",
+                currentUserId,
+                clientIp,
+                userAgent,
+                String.format("{\"matchId\":\"%s\",\"bloodRequestId\":\"%s\"}", savedMatch.getId(), requestId)
+        );
+
+        if (eventPublisher != null) {
+            eventPublisher.publishEvent(new MatchCreatedEvent(
+                    savedMatch.getId(),
+                    requestId,
+                    currentUserId,
+                    bloodRequest.getRequesterUserId()
+            ));
+        }
+
+        if (netraMetrics != null) {
+            netraMetrics.incrementDonorMatchesCreated(1);
+        }
+        org.netra.core.observability.StructuredLogger.logOperation(
+                "DONOR_HAND_RAISED", currentUserId, null, "DonorMatch", savedMatch.getId(), "RAISE_HAND", null, "SUCCESS");
+
+        Double distanceKm = null;
+        if (bloodRequest.getLatitude() != null && bloodRequest.getLongitude() != null &&
+                donorProfile.getLatitude() != null && donorProfile.getLongitude() != null) {
+            distanceKm = Math.round(BloodBankService.calculateHaversineDistanceKm(
+                    bloodRequest.getLatitude(), bloodRequest.getLongitude(),
+                    donorProfile.getLatitude(), donorProfile.getLongitude()
+            ) * 10.0) / 10.0;
+        }
+
+        return mapToDonorDetailDto(savedMatch, bloodRequest, distanceKm);
+    }
+
+    /**
+     * Authoritative acceptance of an incoming donor helper offer by the blood request owner.
+     */
+    @Transactional
+    public RequesterDonorMatchDto acceptMatchByRequester(
+            UUID requestId,
+            UUID matchId,
+            UUID currentUserId,
+            String clientIp,
+            String userAgent) {
+
+        authorizationService.verifyActiveUser(currentUserId);
+        Instant now = clock.instant();
+
+        BloodRequest bloodRequest = bloodRequestRepository.findByIdForUpdate(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Blood request not found with id: " + requestId));
+
+        authorizationService.verifyCanManageRequest(currentUserId, bloodRequest);
+
+        if (bloodRequest.getStatus() != BloodRequestStatus.OPEN) {
+            throw new ValidationException("Cannot accept helper for blood request with status: " + bloodRequest.getStatus());
+        }
+
+        if (bloodRequest.getUnitsFulfilled() >= bloodRequest.getUnitsRequired()) {
+            throw new ValidationException("This blood request is already fully fulfilled.");
+        }
+
+        DonorMatch match = donorMatchRepository.findById(matchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Donor match not found with id: " + matchId));
+
+        if (!match.getBloodRequestId().equals(requestId)) {
+            throw new ValidationException("Donor match does not belong to the specified blood request.");
+        }
+
+        if (match.getResponseStatus() == MatchStatus.ACCEPTED) {
+            throw new ValidationException("This donor offer has already been accepted.");
+        }
+
+        if (match.getResponseStatus() != MatchStatus.MATCHED) {
+            throw new ValidationException("Cannot accept donor offer with status: " + match.getResponseStatus());
+        }
+
+        if (match.isExpired(now)) {
+            throw new ValidationException("Cannot accept an expired donor offer.");
+        }
+
+        match.accept(now);
+        DonorMatch savedMatch = donorMatchRepository.saveAndFlush(match);
+
+        auditService.logAuthEvent(
+                "DONOR_OFFER_ACCEPTED_BY_REQUESTER",
+                currentUserId,
+                clientIp,
+                userAgent,
+                String.format("{\"matchId\":\"%s\",\"bloodRequestId\":\"%s\",\"donorUserId\":\"%s\"}",
+                        matchId, requestId, match.getDonorUserId())
+        );
+
+        if (eventPublisher != null) {
+            eventPublisher.publishEvent(new MatchAcceptedEvent(
+                    matchId,
+                    requestId,
+                    match.getDonorUserId(),
+                    currentUserId
+            ));
+        }
+
+        if (netraMetrics != null) {
+            netraMetrics.incrementDonorMatchResponse("ACCEPTED");
+        }
+
+        User donorUser = userRepository.findById(match.getDonorUserId()).orElse(null);
+        DonorProfile donorProfile = donorProfileRepository.findByUserId(match.getDonorUserId()).orElse(null);
+        String maskedName = donorUser != null ? DonorMatchingService.maskDisplayName(donorUser.getFullName()) : "Anonymous Donor";
+
+        Double distanceKm = null;
+        if (bloodRequest.getLatitude() != null && bloodRequest.getLongitude() != null &&
+                donorProfile != null && donorProfile.getLatitude() != null && donorProfile.getLongitude() != null) {
+            distanceKm = Math.round(BloodBankService.calculateHaversineDistanceKm(
+                    bloodRequest.getLatitude(), bloodRequest.getLongitude(),
+                    donorProfile.getLatitude(), donorProfile.getLongitude()
+            ) * 10.0) / 10.0;
+        }
+
+        return new RequesterDonorMatchDto(
+                savedMatch.getId(),
+                requestId,
+                maskedName,
+                donorProfile != null ? donorProfile.getBloodGroup() : null,
+                donorProfile != null ? donorProfile.getBloodGroupVerificationStatus() : null,
+                donorProfile != null ? donorProfile.getAvailabilityStatus() : null,
+                distanceKm,
+                savedMatch.getResponseStatus(),
+                savedMatch.getCreatedAt(),
+                savedMatch.getUpdatedAt(),
+                savedMatch.getRespondedAt(),
+                savedMatch.getExpiresAt()
+        );
+    }
+
+    /**
+     * Authoritative decline of an incoming donor helper offer by the blood request owner.
+     */
+    @Transactional
+    public RequesterDonorMatchDto declineMatchByRequester(
+            UUID requestId,
+            UUID matchId,
+            UUID currentUserId,
+            String clientIp,
+            String userAgent) {
+
+        authorizationService.verifyActiveUser(currentUserId);
+        Instant now = clock.instant();
+
+        BloodRequest bloodRequest = bloodRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Blood request not found with id: " + requestId));
+
+        authorizationService.verifyCanManageRequest(currentUserId, bloodRequest);
+
+        DonorMatch match = donorMatchRepository.findById(matchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Donor match not found with id: " + matchId));
+
+        if (!match.getBloodRequestId().equals(requestId)) {
+            throw new ValidationException("Donor match does not belong to the specified blood request.");
+        }
+
+        if (match.getResponseStatus() != MatchStatus.MATCHED) {
+            throw new ValidationException("Cannot decline donor offer with status: " + match.getResponseStatus());
+        }
+
+        match.decline(now);
+        DonorMatch savedMatch = donorMatchRepository.saveAndFlush(match);
+
+        auditService.logAuthEvent(
+                "DONOR_OFFER_DECLINED_BY_REQUESTER",
+                currentUserId,
+                clientIp,
+                userAgent,
+                String.format("{\"matchId\":\"%s\",\"bloodRequestId\":\"%s\",\"donorUserId\":\"%s\"}",
+                        matchId, requestId, match.getDonorUserId())
+        );
+
+        if (eventPublisher != null) {
+            eventPublisher.publishEvent(new MatchDeclinedEvent(
+                    matchId,
+                    requestId,
+                    match.getDonorUserId(),
+                    currentUserId
+            ));
+        }
+
+        User donorUser = userRepository.findById(match.getDonorUserId()).orElse(null);
+        DonorProfile donorProfile = donorProfileRepository.findByUserId(match.getDonorUserId()).orElse(null);
+        String maskedName = donorUser != null ? DonorMatchingService.maskDisplayName(donorUser.getFullName()) : "Anonymous Donor";
+
+        return new RequesterDonorMatchDto(
+                savedMatch.getId(),
+                requestId,
+                maskedName,
+                donorProfile != null ? donorProfile.getBloodGroup() : null,
+                donorProfile != null ? donorProfile.getBloodGroupVerificationStatus() : null,
+                donorProfile != null ? donorProfile.getAvailabilityStatus() : null,
+                null,
+                savedMatch.getResponseStatus(),
+                savedMatch.getCreatedAt(),
+                savedMatch.getUpdatedAt(),
+                savedMatch.getRespondedAt(),
+                savedMatch.getExpiresAt()
+        );
+    }
+
+    /**
+     * Authoritatively reveals direct coordination contact details strictly to authorized participants
+     * (the Requester, the confirmed Donor, or an Admin) once a match is in ACCEPTED or ARRIVED status.
+     */
+    @Transactional(readOnly = true)
+    public MatchContactDto getMatchContact(UUID matchId, UUID currentUserId, String clientIp, String userAgent) {
+        User user = authorizationService.verifyActiveUser(currentUserId);
+
+        DonorMatch match = donorMatchRepository.findById(matchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Donor match not found with id: " + matchId));
+
+        BloodRequest bloodRequest = bloodRequestRepository.findById(match.getBloodRequestId())
+                .orElseThrow(() -> new ResourceNotFoundException("Blood request not found with id: " + match.getBloodRequestId()));
+
+        boolean isDonor = match.getDonorUserId().equals(currentUserId);
+        boolean isRequester = bloodRequest.getRequesterUserId().equals(currentUserId);
+        boolean isAdmin = user.getRoles().contains(org.netra.features.user.entity.UserRole.ROLE_ADMIN);
+
+        if (!isDonor && !isRequester && !isAdmin) {
+            throw new UnauthorizedSessionAccessException("Access denied: You are not an authorized participant in this match.");
+        }
+
+        if (match.getResponseStatus() != MatchStatus.ACCEPTED && match.getResponseStatus() != MatchStatus.ARRIVED) {
+            throw new ValidationException("Contact details are only disclosed once a donation offer has been ACCEPTED.");
+        }
+
+        User donorUser = userRepository.findById(match.getDonorUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("Donor user account not found."));
+
+        User requesterUser = userRepository.findById(bloodRequest.getRequesterUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("Requester user account not found."));
+
+        Optional<DonorProfile> donorProfileOpt = donorProfileRepository.findByUserId(match.getDonorUserId());
+
+        auditService.logAuthEvent(
+                "MATCH_CONTACT_ACCESSED",
+                currentUserId,
+                clientIp,
+                userAgent,
+                String.format("{\"matchId\":\"%s\",\"bloodRequestId\":\"%s\",\"isRequester\":%b,\"isDonor\":%b}",
+                        matchId, bloodRequest.getId(), isRequester, isDonor)
+        );
+
+        return new MatchContactDto(
+                match.getId(),
+                bloodRequest.getId(),
+                match.getResponseStatus(),
+                donorUser.getId(),
+                donorUser.getFullName(),
+                donorUser.getPhone(),
+                donorProfileOpt.map(DonorProfile::getBloodGroup).orElse(null),
+                requesterUser.getId(),
+                requesterUser.getFullName(),
+                requesterUser.getPhone(),
+                bloodRequest.getHospitalName(),
+                bloodRequest.getHospitalAddress(),
+                bloodRequest.getCity(),
+                bloodRequest.getState()
+        );
     }
 }

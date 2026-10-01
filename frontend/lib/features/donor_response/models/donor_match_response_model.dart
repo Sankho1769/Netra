@@ -228,3 +228,74 @@ class RequesterDonorMatch {
     );
   }
 }
+
+/// Authoritative coordination contact details disclosed strictly upon acceptance.
+class MatchContactInfo {
+  final String matchId;
+  final String bloodRequestId;
+  final String matchStatus;
+  final String donorUserId;
+  final String donorName;
+  final String donorPhone;
+  final String? donorBloodGroup;
+  final String requesterUserId;
+  final String requesterName;
+  final String requesterPhone;
+  final String hospitalName;
+  final String hospitalAddress;
+  final String? city;
+  final String? state;
+  final String coordinationNotice;
+
+  const MatchContactInfo({
+    required this.matchId,
+    required this.bloodRequestId,
+    required this.matchStatus,
+    required this.donorUserId,
+    required this.donorName,
+    required this.donorPhone,
+    this.donorBloodGroup,
+    required this.requesterUserId,
+    required this.requesterName,
+    required this.requesterPhone,
+    required this.hospitalName,
+    required this.hospitalAddress,
+    this.city,
+    this.state,
+    required this.coordinationNotice,
+  });
+
+  factory MatchContactInfo.fromJson(Map<String, dynamic> json) {
+    return MatchContactInfo(
+      matchId: json['matchId'] as String? ?? '',
+      bloodRequestId: json['bloodRequestId'] as String? ?? '',
+      matchStatus: json['matchStatus'] as String? ?? 'ACCEPTED',
+      donorUserId: json['donorUserId'] as String? ?? '',
+      donorName: json['donorName'] as String? ?? '',
+      donorPhone: json['donorPhone'] as String? ?? '',
+      donorBloodGroup: json['donorBloodGroup'] as String?,
+      requesterUserId: json['requesterUserId'] as String? ?? '',
+      requesterName: json['requesterName'] as String? ?? '',
+      requesterPhone: json['requesterPhone'] as String? ?? '',
+      hospitalName: json['hospitalName'] as String? ?? '',
+      hospitalAddress: json['hospitalAddress'] as String? ?? '',
+      city: json['city'] as String?,
+      state: json['state'] as String?,
+      coordinationNotice: json['coordinationNotice'] as String? ??
+          'Contact details are shared strictly for blood donation coordination. Commercial transactions, harassment, or misuse are strictly prohibited.',
+    );
+  }
+
+  String get otherPartyName => requesterName.isNotEmpty ? requesterName : donorName;
+  String? get otherPartyPhone => requesterPhone.isNotEmpty ? requesterPhone : donorPhone;
+  String get otherPartyRole => requesterName.isNotEmpty ? 'Blood Requester' : 'Confirmed Blood Donor';
+  String get instructions => coordinationNotice;
+  String get bloodGroup => donorBloodGroup ?? '';
+
+  String getOtherPartyName(bool isRequester) =>
+      isRequester ? donorName : requesterName;
+  String getOtherPartyPhone(bool isRequester) =>
+      isRequester ? donorPhone : requesterPhone;
+  String getOtherPartyRole(bool isRequester) =>
+      isRequester ? 'Confirmed Blood Donor' : 'Blood Requester';
+}

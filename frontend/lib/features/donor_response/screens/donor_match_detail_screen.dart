@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/donor_match_response_model.dart';
 import '../services/donor_response_api_service.dart';
 import '../widgets/match_status_badge.dart';
@@ -401,6 +402,57 @@ class _DonorMatchDetailScreenState extends State<DonorMatchDetailScreen> {
                 ),
               ],
             )
+          else if (detail.responseStatus == DonorMatchStatus.accepted)
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFF86EFAC)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.check_circle,
+                          color: Color(0xFF16A34A), size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'Offer Accepted & Confirmed',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF15803D),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'The requester has accepted your offer! You can now view their direct contact information and coordinate arrival at the hospital blood bank.',
+                    style: TextStyle(
+                        fontSize: 12.5,
+                        color: Color(0xFF166534),
+                        height: 1.35),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF16A34A),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                    icon: const Icon(Icons.contact_phone, size: 18),
+                    label: const Text('View Requester Contact & Coordinate',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    onPressed: _showRequesterContact,
+                  ),
+                ],
+              ),
+            )
           else
             Container(
               padding: const EdgeInsets.all(14),
@@ -500,6 +552,207 @@ class _DonorMatchDetailScreenState extends State<DonorMatchDetailScreen> {
             ElevatedButton(
               onPressed: _fetchDetail,
               child: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showRequesterContact() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final contact = await _apiService.getMatchContact(widget.matchId);
+      if (mounted) {
+        Navigator.pop(context);
+        _showContactBottomSheet(contact);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        final msg = e
+            .toString()
+            .replaceFirst('ValidationException: ', '')
+            .replaceFirst('Exception: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Failed to load contact: $msg'),
+              backgroundColor: Colors.red.shade700),
+        );
+      }
+    }
+  }
+
+  void _showContactBottomSheet(MatchContactInfo contact) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 20,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.contact_phone,
+                    color: Color(0xFF16A34A), size: 28),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Requester Contact & Coordination',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+            const Divider(height: 24),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFF86EFAC)),
+              ),
+              child: Text(
+                contact.instructions,
+                style: const TextStyle(fontSize: 13, color: Color(0xFF166534)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: CircleAvatar(
+                backgroundColor: const Color(0xFFDCFCE7),
+                child: Text(
+                  contact.otherPartyName.isNotEmpty
+                      ? contact.otherPartyName[0].toUpperCase()
+                      : 'R',
+                  style: const TextStyle(
+                      color: Color(0xFF15803D), fontWeight: FontWeight.bold),
+                ),
+              ),
+              title: Text(
+                contact.otherPartyName,
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              subtitle: const Text(
+                'Blood Requester / Patient Coordinator',
+                style: TextStyle(color: Colors.grey, fontSize: 13),
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (contact.otherPartyPhone != null &&
+                contact.otherPartyPhone!.isNotEmpty)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.phone, color: Color(0xFF16A34A)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Requester Phone Number',
+                              style: TextStyle(
+                                  fontSize: 11, color: Colors.grey.shade600)),
+                          Text(
+                            contact.otherPartyPhone!,
+                            style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.copy,
+                          size: 20, color: Color(0xFF2563EB)),
+                      tooltip: 'Copy Number',
+                      onPressed: () {
+                        Clipboard.setData(
+                            ClipboardData(text: contact.otherPartyPhone!));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text(
+                                  'Requester phone number copied to clipboard.')),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.local_hospital,
+                      color: Color(0xFFDC2626), size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(contact.hospitalName,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 13)),
+                        if (contact.hospitalAddress.isNotEmpty)
+                          Text(contact.hospitalAddress,
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.grey.shade600)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF16A34A),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Close'),
+              ),
             ),
           ],
         ),

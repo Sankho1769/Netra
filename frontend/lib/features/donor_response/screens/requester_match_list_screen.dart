@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/donor_match_response_model.dart';
 import '../services/donor_response_api_service.dart';
 import '../widgets/match_status_badge.dart';
@@ -257,10 +258,13 @@ class _RequesterMatchListScreenState extends State<RequesterMatchListScreen> {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) =>
-                      RequesterMatchDetailScreen(match: match),
+                  builder: (context) => RequesterMatchDetailScreen(
+                    match: match,
+                    requestId: widget.requestId,
+                    apiService: _apiService,
+                  ),
                 ),
-              );
+              ).then((_) => _fetchMatches());
             },
             child: Padding(
               padding: const EdgeInsets.all(14),
@@ -333,6 +337,70 @@ class _RequesterMatchListScreenState extends State<RequesterMatchListScreen> {
                           fontSize: 11.5, color: Colors.grey.shade500),
                     ),
                   ],
+                  if (match.responseStatus == DonorMatchStatus.matched) ...[
+                    const Divider(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF16A34A),
+                              foregroundColor: Colors.white,
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8)),
+                            ),
+                            icon: const Icon(Icons.check, size: 18),
+                            label: const Text('Accept Helper',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 13)),
+                            onPressed: () => _acceptMatch(match.matchId),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFFDC2626),
+                              side:
+                                  const BorderSide(color: Color(0xFFDC2626)),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8)),
+                            ),
+                            icon: const Icon(Icons.close, size: 18),
+                            label: const Text('Decline',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 13)),
+                            onPressed: () => _declineMatch(match.matchId),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else if (match.responseStatus ==
+                      DonorMatchStatus.accepted) ...[
+                    const Divider(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF16A34A),
+                          foregroundColor: Colors.white,
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                        icon: const Icon(Icons.contact_phone, size: 18),
+                        label: const Text('View Contact & Coordinate',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 13)),
+                        onPressed: () => _viewContact(match.matchId),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -400,6 +468,311 @@ class _RequesterMatchListScreenState extends State<RequesterMatchListScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFDC2626),
                 foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _acceptMatch(String matchId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Accept Helper Offer?'),
+        content: const Text(
+          'Accepting this helper will confirm the match and share direct contact numbers so you can coordinate donation at the hospital.\n\n'
+          'Do you wish to proceed?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF16A34A),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Confirm Accept'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await _apiService.acceptHelper(widget.requestId, matchId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text('Helper accepted! Contact details are now available.'),
+            backgroundColor: Color(0xFF16A34A),
+          ),
+        );
+        _fetchMatches();
+      }
+    } catch (e) {
+      if (mounted) {
+        final msg = e
+            .toString()
+            .replaceFirst('ValidationException: ', '')
+            .replaceFirst('Exception: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Failed to accept: $msg'),
+              backgroundColor: Colors.red.shade700),
+        );
+      }
+    }
+  }
+
+  Future<void> _declineMatch(String matchId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Decline Helper Offer?'),
+        content: const Text(
+          'Are you sure you want to decline this offer? The helper will be notified and this request will remain open for other donors.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Keep Offer'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Decline Offer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await _apiService.declineHelper(widget.requestId, matchId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Offer declined.')),
+        );
+        _fetchMatches();
+      }
+    } catch (e) {
+      if (mounted) {
+        final msg = e
+            .toString()
+            .replaceFirst('ValidationException: ', '')
+            .replaceFirst('Exception: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Failed to decline: $msg'),
+              backgroundColor: Colors.red.shade700),
+        );
+      }
+    }
+  }
+
+  Future<void> _viewContact(String matchId) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final contact = await _apiService.getMatchContact(matchId);
+      if (mounted) {
+        Navigator.pop(context);
+        _showContactBottomSheet(contact);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        final msg = e
+            .toString()
+            .replaceFirst('ValidationException: ', '')
+            .replaceFirst('Exception: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Failed to load contact: $msg'),
+              backgroundColor: Colors.red.shade700),
+        );
+      }
+    }
+  }
+
+  void _showContactBottomSheet(MatchContactInfo contact) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 20,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.contact_phone,
+                    color: Color(0xFF16A34A), size: 28),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Donor Contact & Coordination',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+            const Divider(height: 24),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFF86EFAC)),
+              ),
+              child: Text(
+                contact.instructions,
+                style: const TextStyle(fontSize: 13, color: Color(0xFF166534)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: CircleAvatar(
+                backgroundColor: const Color(0xFFDCFCE7),
+                child: Text(
+                  contact.donorName.isNotEmpty
+                      ? contact.donorName[0].toUpperCase()
+                      : 'D',
+                  style: const TextStyle(
+                      color: Color(0xFF15803D), fontWeight: FontWeight.bold),
+                ),
+              ),
+              title: Text(
+                contact.donorName,
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              subtitle: Text(
+                'Accepted Blood Donor (${contact.bloodGroup})',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (contact.donorPhone.isNotEmpty)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.phone, color: Color(0xFF16A34A)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Donor Phone Number',
+                              style: TextStyle(
+                                  fontSize: 11, color: Colors.grey.shade600)),
+                          Text(
+                            contact.donorPhone,
+                            style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.copy,
+                          size: 20, color: Color(0xFF2563EB)),
+                      tooltip: 'Copy Number',
+                      onPressed: () {
+                        Clipboard.setData(
+                            ClipboardData(text: contact.donorPhone));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content:
+                                  Text('Donor phone number copied to clipboard.')),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.local_hospital,
+                      color: Color(0xFFDC2626), size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(contact.hospitalName,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 13)),
+                        if (contact.hospitalAddress.isNotEmpty)
+                          Text(contact.hospitalAddress,
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.grey.shade600)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF16A34A),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Close'),
               ),
             ),
           ],

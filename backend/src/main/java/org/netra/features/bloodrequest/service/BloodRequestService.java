@@ -56,6 +56,13 @@ public class BloodRequestService {
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private KarmaPolicy karmaPolicy;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.netra.features.matching.repository.DonorMatchRepository donorMatchRepository;
+
+    public void setDonorMatchRepository(org.netra.features.matching.repository.DonorMatchRepository donorMatchRepository) {
+        this.donorMatchRepository = donorMatchRepository;
+    }
+
     public void setHospitalVerificationService(HospitalVerificationService hospitalVerificationService) {
         this.hospitalVerificationService = hospitalVerificationService;
     }
@@ -687,6 +694,10 @@ public class BloodRequestService {
                 request.getVerificationStatus()
         );
         summary.setHospitalVerificationStatus(request.getHospitalVerificationStatus());
+        summary.setUnitsFulfilled(request.getUnitsFulfilled());
+        if (donorMatchRepository != null) {
+            summary.setHelperCount(donorMatchRepository.countByBloodRequestId(request.getId()));
+        }
         return summary;
     }
 
@@ -709,6 +720,10 @@ public class BloodRequestService {
         dto.setDistanceKm(distanceKm);
         dto.setIsOwner(false);
         dto.setCanManage(false);
+        dto.setUnitsFulfilled(request.getUnitsFulfilled());
+        if (donorMatchRepository != null) {
+            dto.setHelperCount(donorMatchRepository.countByBloodRequestId(request.getId()));
+        }
         return dto;
     }
 
@@ -731,6 +746,10 @@ public class BloodRequestService {
         dto.setDistanceKm(distanceKm);
         dto.setIsOwner(isOwner);
         dto.setCanManage(canManage);
+        dto.setUnitsFulfilled(request.getUnitsFulfilled());
+        if (donorMatchRepository != null) {
+            dto.setHelperCount(donorMatchRepository.countByBloodRequestId(request.getId()));
+        }
 
         // Privacy controls: only authorized managers (owner or admin) can view requesterUserId, exact coordinates, description, and terminal metadata
         if (canManage) {

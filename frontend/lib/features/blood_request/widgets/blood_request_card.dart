@@ -76,6 +76,24 @@ class BloodRequestCard extends StatelessWidget {
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
+                            if (request.unitsFulfilled > 0) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFDCFCE7),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  '${request.unitsFulfilled}/${request.unitsRequired} Fulfilled',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF16A34A),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                         const SizedBox(height: 4),
@@ -85,6 +103,24 @@ class BloodRequestCard extends StatelessWidget {
                             const SizedBox(width: 8),
                             if (request.status != BloodRequestStatus.open)
                               RequestStatusBadge(status: request.status),
+                            if (request.helperCount > 0) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEFF6FF),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  '${request.helperCount} ${request.helperCount == 1 ? "Offer" : "Offers"}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF1D4ED8),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ],
@@ -198,6 +234,50 @@ class BloodRequestCard extends StatelessWidget {
                     ),
                     const Icon(Icons.chevron_right,
                         size: 18, color: Color(0xFF9CA3AF)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                decoration: BoxDecoration(
+                  color: request.status == BloodRequestStatus.open
+                      ? const Color(0xFFFEF2F2)
+                      : Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: request.status == BloodRequestStatus.open
+                        ? const Color(0xFFFCA5A5)
+                        : Colors.grey.shade300,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      request.status == BloodRequestStatus.open
+                          ? Icons.volunteer_activism_outlined
+                          : Icons.visibility_outlined,
+                      size: 16,
+                      color: request.status == BloodRequestStatus.open
+                          ? const Color(0xFFDC2626)
+                          : Colors.grey.shade700,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      request.status == BloodRequestStatus.open
+                          ? 'RAISE HAND / OFFER HELP'
+                          : 'VIEW REQUEST DETAILS',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.3,
+                        color: request.status == BloodRequestStatus.open
+                            ? const Color(0xFFDC2626)
+                            : Colors.grey.shade700,
+                      ),
+                    ),
                   ],
                 ),
               ),

@@ -32,6 +32,12 @@ public interface DonorMatchRepository extends JpaRepository<DonorMatch, UUID> {
 
     int countByBloodRequestIdAndResponseStatus(UUID bloodRequestId, MatchStatus responseStatus);
 
+    int countByBloodRequestId(UUID bloodRequestId);
+
+    int countByBloodRequestIdAndResponseStatusIn(UUID bloodRequestId, java.util.Collection<MatchStatus> statuses);
+
+    Optional<DonorMatch> findByIdAndBloodRequestId(UUID id, UUID bloodRequestId);
+
     /**
      * Atomic compare-and-set query for donor accept/decline.
      * Prevents race conditions and lost updates without relying solely on application read-then-write.

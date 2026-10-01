@@ -6,7 +6,9 @@ import org.netra.core.exception.UnauthorizedSessionAccessException;
 import org.netra.core.security.ClientIpResolver;
 import org.netra.core.security.SecurityUtils;
 import org.netra.features.matching.dto.CreateDonorMatchRequest;
+import org.netra.features.matching.dto.DonorMatchDetailDto;
 import org.netra.features.matching.dto.DonorMatchResponse;
+import org.netra.features.matching.dto.MatchContactDto;
 import org.netra.features.matching.dto.RequesterDonorMatchDto;
 import org.netra.features.matching.service.DonorMatchingService;
 import org.netra.features.matching.service.DonorResponseService;
@@ -122,5 +124,110 @@ public class DonorMatchingController {
         );
 
         return ResponseEntity.ok(responses);
+    }
+
+    /**
+     * Authoritative donor action: Raise Hand / Offer Help for an open blood request.
+     */
+    @PostMapping("/{requestId}/raise-hand")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<DonorMatchDetailDto> raiseHand(
+            @PathVariable("requestId") UUID requestId,
+            HttpServletRequest request) {
+
+        UUID currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new UnauthorizedSessionAccessException("User is not authenticated."));
+
+        String clientIp = clientIpResolver.resolveClientIp(request);
+        String userAgent = request.getHeader("User-Agent");
+
+        DonorMatchDetailDto created = donorResponseService.raiseHand(
+                requestId,
+                currentUserId,
+                clientIp,
+                userAgent
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    /**
+     * Requester action: Accept an incoming donor helper offer.
+     */
+    @PostMapping("/{requestId}/matches/{matchId}/accept")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<RequesterDonorMatchDto> acceptHelper(
+            @PathVariable("requestId") UUID requestId,
+            @PathVariable("matchId") UUID matchId,
+            HttpServletRequest request) {
+
+        UUID currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new UnauthorizedSessionAccessException("User is not authenticated."));
+
+        String clientIp = clientIpResolver.resolveClientIp(request);
+        String userAgent = request.getHeader("User-Agent");
+
+        RequesterDonorMatchDto updated = donorResponseService.acceptMatchByRequester(
+                requestId,
+                matchId,
+                currentUserId,
+                clientIp,
+                userAgent
+        );
+
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Requester action: Decline an incoming donor helper offer.
+     */
+    @PostMapping("/{requestId}/matches/{matchId}/decline")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<RequesterDonorMatchDto> declineHelper(
+            @PathVariable("requestId") UUID requestId,
+            @PathVariable("matchId") UUID matchId,
+            HttpServletRequest request) {
+
+        UUID currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new UnauthorizedSessionAccessException("User is not authenticated."));
+
+        String clientIp = clientIpResolver.resolveClientIp(request);
+        String userAgent = request.getHeader("User-Agent");
+
+        RequesterDonorMatchDto updated = donorResponseService.declineMatchByRequester(
+                requestId,
+                matchId,
+                currentUserId,
+                clientIp,
+                userAgent
+        );
+
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Authorized coordination contact disclosure for accepted match participants.
+     */
+    @GetMapping("/{requestId}/matches/{matchId}/contact")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MatchContactDto> getMatchContact(
+            @PathVariable("requestId") UUID requestId,
+            @PathVariable("matchId") UUID matchId,
+            HttpServletRequest request) {
+
+        UUID currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new UnauthorizedSessionAccessException("User is not authenticated."));
+
+        String clientIp = clientIpResolver.resolveClientIp(request);
+        String userAgent = request.getHeader("User-Agent");
+
+        MatchContactDto contact = donorResponseService.getMatchContact(
+                matchId,
+                currentUserId,
+                clientIp,
+                userAgent
+        );
+
+        return ResponseEntity.ok(contact);
     }
 }

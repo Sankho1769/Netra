@@ -103,6 +103,8 @@ class BloodRequestSummary {
   final double? distanceKm;
   final DateTime createdAt;
   final String verificationStatus;
+  final int unitsFulfilled;
+  final int helperCount;
 
   const BloodRequestSummary({
     required this.id,
@@ -117,9 +119,13 @@ class BloodRequestSummary {
     this.distanceKm,
     required this.createdAt,
     this.verificationStatus = 'UNVERIFIED',
+    this.unitsFulfilled = 0,
+    this.helperCount = 0,
   });
 
   bool get isVerified => verificationStatus.toUpperCase() == 'VERIFIED';
+  int get unitsRemaining => (unitsRequired - unitsFulfilled).clamp(0, unitsRequired);
+  bool get isFullyFulfilled => unitsFulfilled >= unitsRequired;
 
   factory BloodRequestSummary.fromJson(Map<String, dynamic> json) {
     return BloodRequestSummary(
@@ -138,6 +144,8 @@ class BloodRequestSummary {
       createdAt: DateTime.parse(json['createdAt'] as String),
       verificationStatus:
           (json['verificationStatus'] as String?) ?? 'UNVERIFIED',
+      unitsFulfilled: (json['unitsFulfilled'] as num?)?.toInt() ?? 0,
+      helperCount: (json['helperCount'] as num?)?.toInt() ?? 0,
     );
   }
 }
@@ -172,6 +180,8 @@ class BloodRequestDetail extends BloodRequestSummary {
     super.distanceKm,
     required super.createdAt,
     super.verificationStatus = 'UNVERIFIED',
+    super.unitsFulfilled = 0,
+    super.helperCount = 0,
     this.requesterUserId,
     this.isOwner = false,
     this.canManage = false,
@@ -206,6 +216,8 @@ class BloodRequestDetail extends BloodRequestSummary {
       createdAt: DateTime.parse(json['createdAt'] as String),
       verificationStatus:
           (json['verificationStatus'] as String?) ?? 'UNVERIFIED',
+      unitsFulfilled: (json['unitsFulfilled'] as num?)?.toInt() ?? 0,
+      helperCount: (json['helperCount'] as num?)?.toInt() ?? 0,
       requesterUserId: json['requesterUserId'] as String?,
       isOwner: json['isOwner'] as bool? ?? false,
       canManage: json['canManage'] as bool? ?? false,

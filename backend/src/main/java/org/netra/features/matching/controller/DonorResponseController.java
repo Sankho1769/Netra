@@ -5,7 +5,9 @@ import org.netra.core.exception.UnauthorizedSessionAccessException;
 import org.netra.core.security.ClientIpResolver;
 import org.netra.core.security.SecurityUtils;
 import org.netra.features.matching.dto.DonorMatchDetailDto;
+import org.netra.features.matching.dto.MatchContactDto;
 import org.netra.features.matching.service.DonorResponseService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -149,5 +151,37 @@ public class DonorResponseController {
         DonorMatchDetailDto updated = donorResponseService.cancelCommitment(
                 matchId, reason, currentUserId, clientIp, userAgent);
         return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/raise-hand/{requestId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<DonorMatchDetailDto> raiseHand(
+            @PathVariable("requestId") UUID requestId,
+            HttpServletRequest request) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new UnauthorizedSessionAccessException("User is not authenticated."));
+
+        String clientIp = clientIpResolver.resolveClientIp(request);
+        String userAgent = request.getHeader("User-Agent");
+
+        DonorMatchDetailDto created = donorResponseService.raiseHand(
+                requestId, currentUserId, clientIp, userAgent);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @GetMapping("/{matchId}/contact")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MatchContactDto> getMatchContact(
+            @PathVariable("matchId") UUID matchId,
+            HttpServletRequest request) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new UnauthorizedSessionAccessException("User is not authenticated."));
+
+        String clientIp = clientIpResolver.resolveClientIp(request);
+        String userAgent = request.getHeader("User-Agent");
+
+        MatchContactDto contact = donorResponseService.getMatchContact(
+                matchId, currentUserId, clientIp, userAgent);
+        return ResponseEntity.ok(contact);
     }
 }
