@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/clay_glass_theme.dart';
 import '../models/blood_request.dart';
 import 'urgency_badge.dart';
 import 'request_status_badge.dart';
@@ -17,52 +18,70 @@ class BloodRequestCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final deadlineString = _formatDateTime(request.requiredBy);
+    final isCritical = request.urgency == BloodRequestUrgency.critical;
 
-    return Card(
-      elevation: 2,
+    return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: request.urgency == BloodRequestUrgency.critical
-              ? const Color(0xFFFCA5A5)
-              : Colors.grey.shade200,
-          width: request.urgency == BloodRequestUrgency.critical ? 1.5 : 1.0,
+      decoration: BoxDecoration(
+        color: ClayGlassTheme.claySurfaceLight,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isCritical ? const Color(0xFFFCA5A5) : const Color(0xFFF1F5F9),
+          width: isCritical ? 1.5 : 1.0,
+        ),
+        boxShadow: ClayGlassTheme.clayShadow(
+          depth: isCritical ? 7.0 : 5.0,
+          shadowColor: isCritical ? const Color(0xFFDC2626) : const Color(0xFF0F172A),
+          opacity: isCritical ? 0.08 : 0.06,
         ),
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header Row: Blood Group badge + Urgency & Status
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFDC2626).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0xFFDC2626).withValues(alpha: 0.3),
-                        width: 1.5,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(22),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(22),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Row: Blood Group badge + Urgency & Status
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFF5F5), Color(0xFFFEE2E2)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFFFCA5A5),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFDC2626).withValues(alpha: 0.15),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        request.bloodGroup,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFFDC2626),
+                        ),
                       ),
                     ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      request.bloodGroup,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFFDC2626),
-                      ),
-                    ),
-                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -240,16 +259,23 @@ class BloodRequestCard extends StatelessWidget {
               const SizedBox(height: 12),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
                 decoration: BoxDecoration(
+                  gradient: request.status == BloodRequestStatus.open
+                      ? const LinearGradient(
+                          colors: [Color(0xFFFFF1F2), Color(0xFFFEE2E2)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null,
                   color: request.status == BloodRequestStatus.open
-                      ? const Color(0xFFFEF2F2)
-                      : Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(8),
+                      ? null
+                      : const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: request.status == BloodRequestStatus.open
                         ? const Color(0xFFFCA5A5)
-                        : Colors.grey.shade300,
+                        : const Color(0xFFE2E8F0),
                   ),
                 ),
                 child: Row(
@@ -257,7 +283,7 @@ class BloodRequestCard extends StatelessWidget {
                   children: [
                     Icon(
                       request.status == BloodRequestStatus.open
-                          ? Icons.volunteer_activism_outlined
+                          ? Icons.volunteer_activism_rounded
                           : Icons.visibility_outlined,
                       size: 16,
                       color: request.status == BloodRequestStatus.open
@@ -271,7 +297,7 @@ class BloodRequestCard extends StatelessWidget {
                           : 'VIEW REQUEST DETAILS',
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w800,
                         letterSpacing: 0.3,
                         color: request.status == BloodRequestStatus.open
                             ? const Color(0xFFDC2626)
@@ -285,7 +311,8 @@ class BloodRequestCard extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   String _formatDateTime(DateTime dt) {

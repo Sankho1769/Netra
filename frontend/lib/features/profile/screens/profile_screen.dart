@@ -3,6 +3,7 @@ import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/netra_colors.dart';
 import '../../../core/theme/netra_spacing.dart';
 import '../../../core/theme/netra_typography.dart';
+import '../../../core/theme/clay_glass_theme.dart';
 import '../../../common/widgets/common_widgets.dart';
 import '../../auth/services/secure_token_storage.dart';
 import '../../auth/state/auth_scope.dart';
@@ -141,62 +142,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final initials =
         profile.fullName.isNotEmpty ? profile.fullName[0].toUpperCase() : 'U';
 
-    return Card(
-      elevation: context.isMobile ? 0 : 2,
-      color: NetraColors.surfaceWhite,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
-        side: BorderSide(
-          color: context.isMobile ? Colors.transparent : NetraColors.borderGray,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(NetraSpacing.xl),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 32,
-              backgroundColor: NetraColors.backgroundRed,
-              child: Text(
-                initials,
-                style: NetraTypography.headlineMedium.copyWith(
-                  color: NetraColors.primaryRed,
-                  fontWeight: FontWeight.bold,
+    return NetraCard.clay(
+      borderRadius: 22,
+      clayDepth: 5.0,
+      padding: const EdgeInsets.all(NetraSpacing.xl),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 32,
+            backgroundColor: NetraColors.backgroundRed,
+            child: Text(
+              initials,
+              style: NetraTypography.headlineMedium.copyWith(
+                color: NetraColors.primaryRed,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          NetraSpacing.gapW16,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(profile.fullName, style: NetraTypography.titleLarge),
+                NetraSpacing.gapH4,
+                Text(profile.email,
+                    style: NetraTypography.bodyMedium
+                        .copyWith(color: NetraColors.textSecondary)),
+                NetraSpacing.gapH8,
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    ...profile.roles.map((r) => NetraChip(
+                          label: r.replaceFirst('ROLE_', ''),
+                          type: NetraChipType.outline,
+                        )),
+                    NetraChip(
+                      label: profile.status,
+                      type: profile.status == 'ACTIVE'
+                          ? NetraChipType.statusSuccess
+                          : NetraChipType.neutral,
+                    ),
+                  ],
                 ),
-              ),
+              ],
             ),
-            NetraSpacing.gapW16,
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(profile.fullName, style: NetraTypography.titleLarge),
-                  NetraSpacing.gapH4,
-                  Text(profile.email,
-                      style: NetraTypography.bodyMedium
-                          .copyWith(color: NetraColors.textSecondary)),
-                  NetraSpacing.gapH8,
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: [
-                      ...profile.roles.map((r) => NetraChip(
-                            label: r.replaceFirst('ROLE_', ''),
-                            type: NetraChipType.outline,
-                          )),
-                      NetraChip(
-                        label: profile.status,
-                        type: profile.status == 'ACTIVE'
-                            ? NetraChipType.statusSuccess
-                            : NetraChipType.neutral,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -207,18 +200,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final tier = summary?.tier ?? 'Community Member';
     final transactions = _karmaController.transactions;
 
-    return Card(
-      elevation: 0,
-      color: NetraColors.surfaceWhite,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
-        side: const BorderSide(color: NetraColors.borderGray),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(NetraSpacing.xl),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return NetraCard.clay(
+      borderRadius: 22,
+      clayDepth: 5.0,
+      padding: const EdgeInsets.all(NetraSpacing.xl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -379,161 +367,157 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
           ],
         ),
-      ),
     );
   }
 
   Widget _buildPersonalInfoCard(BuildContext context, UserProfile profile) {
-    return Card(
-      elevation: 0,
-      color: NetraColors.surfaceWhite,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
-        side: const BorderSide(color: NetraColors.borderGray),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(NetraSpacing.xl),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Personal Details", style: NetraTypography.titleMedium),
-                TextButton.icon(
-                  onPressed: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => EditProfileScreen(
-                          currentProfile: profile,
-                          controller: _profileController,
-                        ),
+    return NetraCard.clay(
+      borderRadius: 22,
+      clayDepth: 5.0,
+      padding: const EdgeInsets.all(NetraSpacing.xl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Personal Details", style: NetraTypography.titleMedium),
+              TextButton.icon(
+                onPressed: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => EditProfileScreen(
+                        currentProfile: profile,
+                        controller: _profileController,
                       ),
-                    );
-                    _loadData();
-                  },
-                  icon: const Icon(Icons.edit_outlined, size: 16),
-                  label: const Text("Edit"),
-                ),
-              ],
-            ),
-            const Divider(height: 16),
-            _buildDetailRow("Full Name", profile.fullName),
-            _buildDetailRow("Email", profile.email, note: "Read-only"),
-            _buildDetailRow("Phone", profile.phone ?? "Not provided"),
-          ],
-        ),
+                    ),
+                  );
+                  _loadData();
+                },
+                icon: const Icon(Icons.edit_outlined, size: 16),
+                label: const Text("Edit"),
+              ),
+            ],
+          ),
+          const Divider(height: 16),
+          _buildDetailRow("Full Name", profile.fullName),
+          _buildDetailRow("Email", profile.email, note: "Read-only"),
+          _buildDetailRow("Phone", profile.phone ?? "Not provided"),
+        ],
       ),
     );
   }
 
   Widget _buildDonorCard(BuildContext context, DonorProfile? donorProfile) {
-    return Card(
-      elevation: 0,
-      color: NetraColors.surfaceWhite,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
-        side: const BorderSide(color: NetraColors.borderGray),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(NetraSpacing.xl),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return NetraCard.clay(
+      borderRadius: 22,
+      clayDepth: 5.0,
+      padding: const EdgeInsets.all(NetraSpacing.xl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.volunteer_activism_outlined,
+                      color: NetraColors.primaryRed, size: 20),
+                  NetraSpacing.gapW8,
+                  Text("Donor Profile", style: NetraTypography.titleMedium),
+                ],
+              ),
+              TextButton.icon(
+                onPressed: () async {
+                  if (donorProfile != null) {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => DonorProfileScreen(
+                          donorProfile: donorProfile,
+                          controller: _donorController,
+                        ),
+                      ),
+                    );
+                  } else {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => EditDonorProfileScreen(
+                          currentProfile: null,
+                          controller: _donorController,
+                        ),
+                      ),
+                    );
+                  }
+                  _loadData();
+                },
+                icon: Icon(
+                    donorProfile != null
+                        ? Icons.chevron_right_rounded
+                        : Icons.add_rounded,
+                    size: 18),
+                label: Text(donorProfile != null ? "View" : "Setup"),
+              ),
+            ],
+          ),
+          const Divider(height: 16),
+          if (donorProfile != null) ...[
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.volunteer_activism_outlined,
-                        color: NetraColors.primaryRed, size: 20),
-                    NetraSpacing.gapW8,
-                    Text("Donor Profile", style: NetraTypography.titleMedium),
-                  ],
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFFF5F5), Color(0xFFFEE2E2)],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFFCA5A5), width: 1.2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFDC2626).withValues(alpha: 0.15),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    donorProfile.bloodGroup,
+                    style: NetraTypography.titleMedium.copyWith(
+                      color: NetraColors.primaryRed,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                TextButton.icon(
-                  onPressed: () async {
-                    if (donorProfile != null) {
-                      await Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => DonorProfileScreen(
-                            donorProfile: donorProfile,
-                            controller: _donorController,
-                          ),
-                        ),
-                      );
-                    } else {
-                      await Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => EditDonorProfileScreen(
-                            currentProfile: null,
-                            controller: _donorController,
-                          ),
-                        ),
-                      );
-                    }
-                    _loadData();
-                  },
-                  icon: Icon(
-                      donorProfile != null
-                          ? Icons.chevron_right_rounded
-                          : Icons.add_rounded,
-                      size: 18),
-                  label: Text(donorProfile != null ? "View" : "Setup"),
+                NetraSpacing.gapW12,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        donorProfile.isVerified
+                            ? "Clinically Verified"
+                            : "Self-reported",
+                        style: NetraTypography.titleSmall,
+                      ),
+                      NetraSpacing.gapH2,
+                      Text(
+                        "Availability: ${donorProfile.availabilityStatus}",
+                        style: NetraTypography.bodySmall
+                            .copyWith(color: NetraColors.textSecondary),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-            const Divider(height: 16),
-            if (donorProfile != null) ...[
-              Row(
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: NetraColors.backgroundRed,
-                      borderRadius:
-                          BorderRadius.circular(NetraSpacing.radiusSm),
-                    ),
-                    child: Text(
-                      donorProfile.bloodGroup,
-                      style: NetraTypography.titleMedium.copyWith(
-                        color: NetraColors.primaryRed,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  NetraSpacing.gapW12,
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          donorProfile.isVerified
-                              ? "Clinically Verified"
-                              : "Self-reported",
-                          style: NetraTypography.titleSmall,
-                        ),
-                        NetraSpacing.gapH2,
-                        Text(
-                          "Availability: ${donorProfile.availabilityStatus}",
-                          style: NetraTypography.bodySmall
-                              .copyWith(color: NetraColors.textSecondary),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ] else ...[
-              Text(
-                "You have not set up a blood donor profile yet. Configure your blood group to help when urgent needs arise.",
-                style: NetraTypography.bodySmall
-                    .copyWith(color: NetraColors.textSecondary),
-              ),
-            ],
+          ] else ...[
+            Text(
+              "You have not set up a blood donor profile yet. Configure your blood group to help when urgent needs arise.",
+              style: NetraTypography.bodySmall
+                  .copyWith(color: NetraColors.textSecondary),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -542,9 +526,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(NetraSpacing.md),
       decoration: BoxDecoration(
-        color: NetraColors.backgroundGray,
-        borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
-        border: Border.all(color: NetraColors.borderGray),
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: ClayGlassTheme.clayShadow(depth: 3.0, opacity: 0.04),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

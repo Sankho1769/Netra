@@ -106,23 +106,14 @@ class _LoginScreenState extends State<LoginScreen> {
             padding: context.screenGutter,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 440),
-              child: Card(
-                elevation: context.isMobile ? 0 : 2,
-                color: NetraColors.surfaceWhite,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
-                  side: BorderSide(
-                    color: context.isMobile
-                        ? Colors.transparent
-                        : NetraColors.borderGray,
-                  ),
+              child: NetraCard.clay(
+                borderRadius: 24,
+                clayDepth: 6.0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: NetraSpacing.xl,
+                  vertical: NetraSpacing.xxl,
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: NetraSpacing.xl,
-                    vertical: NetraSpacing.xxl,
-                  ),
-                  child: Form(
+                child: Form(
                     key: _formKey,
                     child: AutofillGroup(
                       child: Column(
@@ -349,8 +340,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     ),
-  ),
-);
+  );
   }
 }
 

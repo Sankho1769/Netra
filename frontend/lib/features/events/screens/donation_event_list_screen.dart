@@ -77,6 +77,18 @@ class _DonationEventListScreenState extends State<DonationEventListScreen> {
               onPressed: () => Navigator.pop(ctx),
               child: const Text('Close'),
             ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CreateDonationEventScreen(),
+                  ),
+                );
+              },
+              child: const Text('Partner Drive Form'),
+            ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
               onPressed: () => Navigator.pop(ctx),

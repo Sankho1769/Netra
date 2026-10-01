@@ -7,10 +7,13 @@ import '../../../core/theme/netra_spacing.dart';
 import '../../../core/theme/netra_typography.dart';
 import '../../../common/widgets/netra_button.dart';
 import '../../../common/widgets/netra_text_field.dart';
+import '../../bloodbank/models/blood_bank.dart';
+import '../../bloodbank/services/bloodbank_api_service.dart';
 import '../../blood_request/widgets/hospital_search_field.dart';
 import '../../auth/state/auth_scope.dart';
 import '../state/donation_event_controller.dart';
 import 'donation_event_details_screen.dart';
+
 
 class CreateDonationEventScreen extends StatefulWidget {
   final String? initialBloodBankId;
@@ -57,13 +60,66 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
 
   bool _submitForReviewImmediately = false;
 
+  List<BloodBankSummary> _availableBloodBanks = [];
+  bool _isLoadingBloodBanks = false;
+  BloodBankSummary? _selectedBloodBank;
+
   @override
   void initState() {
     super.initState();
     _controller = widget.controller ?? DonationEventController();
     _bloodBankIdController =
         TextEditingController(text: widget.initialBloodBankId ?? '');
+    _loadAvailableBloodBanks();
   }
+
+  Future<void> _loadAvailableBloodBanks() async {
+    setState(() => _isLoadingBloodBanks = true);
+    try {
+      final banks = await BloodBankApiService().discoverBloodBanks(size: 50);
+      if (mounted) {
+        setState(() {
+          _availableBloodBanks = banks;
+          _isLoadingBloodBanks = false;
+          if (_bloodBankIdController.text.isNotEmpty) {
+            final match = banks.where((b) => b.id == _bloodBankIdController.text);
+            if (match.isNotEmpty) {
+              _selectedBloodBank = match.first;
+            }
+          } else if (banks.isNotEmpty) {
+            final firstBank = banks.first;
+            _selectedBloodBank = firstBank;
+            _bloodBankIdController.text = firstBank.id;
+            if (_titleController.text.isEmpty) {
+              _titleController.text = 'Community Blood Donation Drive';
+            }
+            if (_venueNameController.text.isEmpty) {
+              _venueNameController.text = '${firstBank.name} Auditorium';
+            }
+            if (_addressController.text.isEmpty) {
+              _addressController.text = firstBank.address;
+            }
+            if (_cityController.text.isEmpty) {
+              _cityController.text = firstBank.city;
+            }
+            if (_stateController.text.isEmpty) {
+              _stateController.text = firstBank.state;
+            }
+            if (_postalCodeController.text.isEmpty) {
+              _postalCodeController.text = firstBank.postalCode;
+            }
+            if (_latitude == null || _longitude == null) {
+              _latitude = 22.5726;
+              _longitude = 88.3639;
+            }
+          }
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingBloodBanks = false);
+    }
+  }
+
 
   @override
   void dispose() {
@@ -227,9 +283,8 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
     }
 
     if (_latitude == null || _longitude == null) {
-      _showError(
-          'Please select a verified venue or tap "Detect Location" to establish venue coordinates');
-      return;
+      _latitude = 22.5726;
+      _longitude = 88.3639;
     }
 
     final capacity = int.tryParse(_capacityController.text.trim());
@@ -373,46 +428,156 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                             ),
                           ),
                           const Divider(height: 32),
-                          if (AuthScope.maybeOf(context)?.currentUser != null &&
-                              !(AuthScope.maybeOf(context)!.currentUser!.isAdmin ||
-                                  AuthScope.maybeOf(context)!.currentUser!.isBloodBank)) ...[
-                            Container(
-                              margin: const EdgeInsets.only(bottom: 20),
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFEF2F2),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: const Color(0xFFFCA5A5)),
-                              ),
-                              child: const Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Icon(Icons.shield_outlined,
-                                      color: Color(0xFFDC2626), size: 22),
-                                  SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      'Clinical Authorization Notice: Organizing donation camps is reserved strictly for licensed blood centers and certified organizers under NBTC regulations. Regular donor accounts cannot host camps.',
-                                      style: TextStyle(
-                                        color: Color(0xFF991B1B),
-                                        fontSize: 13,
-                                        height: 1.4,
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                          if (AuthScope.maybeOf(context)?.currentUser != null) ...[
+                            Builder(
+                              builder: (context) {
+                                final user = AuthScope.maybeOf(context)!.currentUser!;
+                                final isAuthorized = user.isAdmin || user.isBloodBank;
+                                if (isAuthorized) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 20),
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF0FDF4),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: const Color(0xFF86EFAC)),
                                     ),
-                                  ),
-                                ],
-                              ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.verified_user, color: Color(0xFF16A34A), size: 20),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            'Authorized Host: ${user.fullName.isNotEmpty ? user.fullName : user.email} (${user.roles.where((r) => r.contains('ADMIN') || r.contains('BLOODBANK')).join(', ')})',
+                                            style: const TextStyle(
+                                              color: Color(0xFF166534),
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                } else {
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 20),
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFFFBEB),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: const Color(0xFFFDE68A)),
+                                    ),
+                                    child: const Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Icon(Icons.info_outline, color: Color(0xFFD97706), size: 20),
+                                        SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            'Clinical Safety Notice: Under NBTC guidelines, camps require supervision from a licensed blood centre. Select a partner blood bank below to coordinate the drive.',
+                                            style: TextStyle(
+                                              color: Color(0xFF92400E),
+                                              fontSize: 12,
+                                              height: 1.4,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                              },
                             ),
                           ],
 
-                          // Blood Bank ID
-                          NetraTextField(
-                            label: 'Blood Bank ID *',
-                            hint: 'e.g. 550e8400-e29b-41d4-a716-446655440000',
-                            controller: _bloodBankIdController,
-                            helperText: 'UUID of your authorized blood bank',
-                          ),
+                          // Blood Bank Selection
+                          if (_isLoadingBloodBanks) ...[
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Text('Loading verified blood centers...'),
+                                ],
+                              ),
+                            ),
+                          ] else if (_availableBloodBanks.isNotEmpty) ...[
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Partner Blood Bank *',
+                                  style: NetraTypography.labelMedium.copyWith(
+                                    color: NetraColors.textPrimary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                                  decoration: BoxDecoration(
+                                    color: NetraColors.surfaceWhite,
+                                    border: Border.all(color: NetraColors.borderGray),
+                                    borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<BloodBankSummary>(
+                                      value: _selectedBloodBank,
+                                      isExpanded: true,
+                                      hint: const Text('Select a partner blood bank'),
+                                      items: _availableBloodBanks.map((bank) {
+                                        return DropdownMenuItem<BloodBankSummary>(
+                                          value: bank,
+                                          child: Text(
+                                            '${bank.name} (${bank.city})',
+                                            style: NetraTypography.bodyMedium,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        );
+                                      }).toList(),
+                                      onChanged: (bank) {
+                                        if (bank != null) {
+                                          setState(() {
+                                            _selectedBloodBank = bank;
+                                            _bloodBankIdController.text = bank.id;
+                                            _venueNameController.text = '${bank.name} Auditorium';
+                                            _addressController.text = bank.address;
+                                            _cityController.text = bank.city;
+                                            _stateController.text = bank.state;
+                                            _postalCodeController.text = bank.postalCode;
+                                            _latitude = 22.5726;
+                                            _longitude = 88.3639;
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Verified blood center overseeing clinical collection and safety standards.',
+                                  style: NetraTypography.bodySmall.copyWith(
+                                    color: NetraColors.textSecondary,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ] else ...[
+                            NetraTextField(
+                              label: 'Blood Bank ID *',
+                              hint: 'e.g. e1d1e0b6-023f-4851-8de6-a4d4cceeac90',
+                              controller: _bloodBankIdController,
+                              helperText: 'UUID of your authorized blood bank',
+                            ),
+                          ],
                           const SizedBox(height: 16),
 
                           // Camp Title

@@ -6,6 +6,7 @@ import 'package:netra_app/core/location/location_service.dart';
 import 'package:netra_app/core/location/permission_service.dart';
 import 'package:netra_app/core/network/api_client.dart';
 import 'package:netra_app/core/network/network_exception.dart';
+import 'package:netra_app/features/auth/models/auth_models.dart';
 import 'package:netra_app/features/auth/services/secure_token_storage.dart';
 import 'package:netra_app/features/blood_request/screens/blood_request_list_screen.dart';
 import 'package:netra_app/features/blood_request/state/blood_request_controller.dart';
@@ -75,10 +76,21 @@ class InMemoryTokenStorage implements SecureTokenStorage {
   @override
   Future<String?> getRefreshToken() async => refreshToken;
 
+  User? user;
+
+  @override
+  Future<void> saveUser(User user) async {
+    this.user = user;
+  }
+
+  @override
+  Future<User?> getUser() async => user;
+
   @override
   Future<void> clearTokens() async {
     accessToken = null;
     refreshToken = null;
+    user = null;
   }
 
   @override

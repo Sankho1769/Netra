@@ -41,10 +41,12 @@ class ApiClient {
 
   bool _isPublicAuthPath(String path) {
     final clean = path.toLowerCase();
-    return clean.endsWith('/login') ||
-        clean.endsWith('/register') ||
-        clean.endsWith('/refresh');
+    final full = '$baseUrl/$clean'.toLowerCase();
+    return full.contains('/auth/login') ||
+        full.contains('/auth/register') ||
+        full.contains('/auth/refresh');
   }
+
 
   /// Execute HTTP request with optional token refresh retry on 401.
   Future<dynamic> _executeWithRetry(

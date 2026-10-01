@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../models/auth_models.dart';
 
 /// Custom exception thrown when secure storage operations fail.
 /// Sanitized to never expose sensitive token values in error messages.
@@ -21,6 +23,8 @@ abstract class SecureTokenStorage {
   Future<String?> getRefreshToken();
   Future<void> clearTokens();
   Future<bool> hasValidSession();
+  Future<void> saveUser(User user);
+  Future<User?> getUser();
 }
 
 /// Production-ready token storage backed by hardware-backed Keystore / Keychain.
@@ -28,18 +32,20 @@ abstract class SecureTokenStorage {
 class PlatformSecureTokenStorage implements SecureTokenStorage {
   static const String _keyAccessToken = 'netra_vault_access_token_v1';
   static const String _keyRefreshToken = 'netra_vault_refresh_token_v1';
+  static const String _keyUser = 'netra_vault_user_profile_v1';
 
   final FlutterSecureStorage _storage;
 
   // In-memory cache to prevent unnecessary disk queries
   String? _cachedAccessToken;
   String? _cachedRefreshToken;
+  User? _cachedUser;
 
   PlatformSecureTokenStorage({FlutterSecureStorage? storage})
       : _storage = storage ??
             const FlutterSecureStorage(
               aOptions: AndroidOptions(
-                resetOnError: true,
+                resetOnError: false,
                 keyCipherAlgorithm:
                     KeyCipherAlgorithm.RSA_ECB_OAEPwithSHA_256andMGF1Padding,
                 storageCipherAlgorithm:
@@ -61,10 +67,8 @@ class PlatformSecureTokenStorage implements SecureTokenStorage {
       _cachedAccessToken = accessToken;
       _cachedRefreshToken = refreshToken;
     } catch (e) {
-      // Invalidate memory cache on failure to avoid stale unpersisted credentials
       _cachedAccessToken = null;
       _cachedRefreshToken = null;
-      // Do NOT log tokens. Do NOT fallback to unencrypted plaintext storage.
       throw SecureStorageException(
           'Failed to securely persist authentication tokens: ${e.runtimeType}',
           e);
@@ -96,13 +100,42 @@ class PlatformSecureTokenStorage implements SecureTokenStorage {
   }
 
   @override
+  Future<void> saveUser(User user) async {
+    try {
+      final jsonStr = jsonEncode(user.toJson());
+      await _storage.write(key: _keyUser, value: jsonStr);
+      _cachedUser = user;
+    } catch (_) {
+      // Best-effort user cache
+    }
+  }
+
+  @override
+  Future<User?> getUser() async {
+    if (_cachedUser != null) return _cachedUser;
+    try {
+      final jsonStr = await _storage.read(key: _keyUser);
+      if (jsonStr != null && jsonStr.isNotEmpty) {
+        final decoded = jsonDecode(jsonStr) as Map<String, dynamic>;
+        _cachedUser = User.fromJson(decoded);
+        return _cachedUser;
+      }
+    } catch (_) {
+      _cachedUser = null;
+    }
+    return null;
+  }
+
+  @override
   Future<void> clearTokens() async {
     _cachedAccessToken = null;
     _cachedRefreshToken = null;
+    _cachedUser = null;
 
     try {
       await _storage.delete(key: _keyAccessToken);
       await _storage.delete(key: _keyRefreshToken);
+      await _storage.delete(key: _keyUser);
     } catch (_) {
       // Memory cache is already invalidated; swallow platform delete errors safely
     }
@@ -119,6 +152,7 @@ class PlatformSecureTokenStorage implements SecureTokenStorage {
 class InMemorySecureTokenStorage implements SecureTokenStorage {
   String? _accessToken;
   String? _refreshToken;
+  User? _user;
 
   @override
   Future<void> saveTokens({
@@ -136,9 +170,18 @@ class InMemorySecureTokenStorage implements SecureTokenStorage {
   Future<String?> getRefreshToken() async => _refreshToken;
 
   @override
+  Future<void> saveUser(User user) async {
+    _user = user;
+  }
+
+  @override
+  Future<User?> getUser() async => _user;
+
+  @override
   Future<void> clearTokens() async {
     _accessToken = null;
     _refreshToken = null;
+    _user = null;
   }
 
   @override

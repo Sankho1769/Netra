@@ -62,25 +62,61 @@ class AuthController extends ChangeNotifier {
 
     try {
       final refreshToken = await _tokenStorage.getRefreshToken();
+      final cachedUser = await _tokenStorage.getUser();
+
       if (refreshToken == null || refreshToken.isEmpty) {
+        _currentUser = null;
         _status = AuthStatus.unauthenticated;
         notifyListeners();
         return;
       }
 
-      // Refresh to verify session and retrieve latest active user state
-      final bundle = await _apiService.refresh(refreshToken);
-      await _tokenStorage.saveTokens(
-        accessToken: bundle.tokens.accessToken,
-        refreshToken: bundle.tokens.refreshToken,
-      );
+      // If we have a cached user, optimistically restore authenticated session
+      if (cachedUser != null) {
+        _currentUser = cachedUser;
+        _status = AuthStatus.authenticated;
+        notifyListeners();
+      }
 
-      _currentUser = bundle.user;
-      _status = AuthStatus.authenticated;
-      notifyListeners();
-    } catch (e) {
-      // Clear invalid credentials and fail gracefully to unauthenticated state
-      await _tokenStorage.clearTokens();
+      // Refresh to verify session and retrieve latest active user state
+      try {
+        final bundle = await _apiService.refresh(refreshToken);
+        await _tokenStorage.saveTokens(
+          accessToken: bundle.tokens.accessToken,
+          refreshToken: bundle.tokens.refreshToken,
+        );
+        await _tokenStorage.saveUser(bundle.user);
+
+        _currentUser = bundle.user;
+        _status = AuthStatus.authenticated;
+        notifyListeners();
+      } catch (e) {
+        final msg = e.toString().toLowerCase();
+        final isAuthFailure = e is UnauthorizedException ||
+            msg.contains('unauthorized') ||
+            msg.contains('401') ||
+            msg.contains('expired') ||
+            msg.contains('invalid token') ||
+            msg.contains('revoked');
+
+        if (isAuthFailure) {
+          // Token is explicitly revoked or invalid server-side; purge credentials safely
+          await _tokenStorage.clearTokens();
+          _currentUser = null;
+          _status = AuthStatus.unauthenticated;
+          notifyListeners();
+        } else {
+          // Network failure / timeout / backend temporarily restarting:
+          // Keep cached session if present, otherwise set unauthenticated without purging tokens!
+          if (_currentUser != null) {
+            _status = AuthStatus.authenticated;
+          } else {
+            _status = AuthStatus.unauthenticated;
+          }
+          notifyListeners();
+        }
+      }
+    } catch (_) {
       _currentUser = null;
       _status = AuthStatus.unauthenticated;
       notifyListeners();
@@ -101,6 +137,7 @@ class AuthController extends ChangeNotifier {
         accessToken: bundle.tokens.accessToken,
         refreshToken: bundle.tokens.refreshToken,
       );
+      await _tokenStorage.saveUser(bundle.user);
 
       _currentUser = bundle.user;
       _status = AuthStatus.authenticated;
@@ -145,6 +182,7 @@ class AuthController extends ChangeNotifier {
         accessToken: bundle.tokens.accessToken,
         refreshToken: bundle.tokens.refreshToken,
       );
+      await _tokenStorage.saveUser(bundle.user);
 
       _currentUser = bundle.user;
       _status = AuthStatus.authenticated;
@@ -162,6 +200,7 @@ class AuthController extends ChangeNotifier {
       return false;
     }
   }
+
 
   Future<void> logout() async {
     try {

@@ -4,6 +4,7 @@ import '../../core/responsive/responsive.dart';
 import '../../core/theme/netra_colors.dart';
 import '../../core/theme/netra_spacing.dart';
 import '../../core/theme/netra_typography.dart';
+import '../../core/theme/clay_glass_theme.dart';
 import '../../common/widgets/common_widgets.dart';
 import '../../common/widgets/netra_bottom_nav_bar.dart';
 import '../../common/widgets/blood_action_sheet.dart';
@@ -207,23 +208,17 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           NetraSpacing.gapH20,
 
-          // Primary Feature Banner Card: Donate Blood -> Check Eligibility
+          // Primary Feature Banner Card: Donate Blood -> Check Eligibility (Claymorphic Crimson Hero)
           Container(
             padding: NetraSpacing.cardPaddingSpacious,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [NetraColors.primaryRed, NetraColors.darkRed],
+                colors: [Color(0xFFEF4444), Color(0xFFDC2626), Color(0xFF991B1B)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
-              boxShadow: [
-                BoxShadow(
-                  color: NetraColors.primaryRed.withValues(alpha: 0.25),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: ClayGlassTheme.crimsonClayShadow(depth: 10),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,9 +228,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     Container(
                       padding: NetraSpacing.paddingSm,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: Colors.white.withValues(alpha: 0.22),
                         borderRadius:
                             BorderRadius.circular(NetraSpacing.radiusMd),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.45),
+                          width: 1.2,
+                        ),
                       ),
                       child: const Icon(Icons.volunteer_activism_rounded,
                           color: Colors.white, size: 24),
@@ -259,10 +258,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: NetraColors.surfaceWhite,
                     foregroundColor: NetraColors.primaryRed,
+                    elevation: 3,
+                    shadowColor: Colors.black.withValues(alpha: 0.25),
                     minimumSize: const Size(double.infinity, 48),
                     shape: RoundedRectangleBorder(
                       borderRadius:
-                          BorderRadius.circular(NetraSpacing.radiusMd),
+                          BorderRadius.circular(16),
                     ),
                   ),
                   onPressed: () {
@@ -277,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Text(
                         "Check Eligibility",
                         style: NetraTypography.labelLarge
-                            .copyWith(color: NetraColors.primaryRed),
+                            .copyWith(color: NetraColors.primaryRed, fontWeight: FontWeight.bold),
                       ),
                       NetraSpacing.gapW8,
                       const Icon(Icons.arrow_forward_rounded, size: 16),
@@ -289,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           NetraSpacing.gapH16,
 
-          // Emergency Mode Urgent Action Card
+          // Emergency Mode Urgent Action Card (Tactile Clay Alert)
           InkWell(
             onTap: () {
               Navigator.of(context).push(
@@ -297,29 +298,37 @@ class _HomeScreenState extends State<HomeScreen> {
                     builder: (context) => const EmergencyModeScreen()),
               );
             },
-            borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
+            borderRadius: BorderRadius.circular(22),
             child: Container(
               padding: NetraSpacing.cardPaddingStandard,
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF2F2),
-                borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
-                border: Border.all(color: const Color(0xFFFCA5A5), width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFDC2626).withValues(alpha: 0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                color: ClayGlassTheme.claySurfaceWarm,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: const Color(0xFFFCA5A5), width: 1.2),
+                boxShadow: ClayGlassTheme.clayShadow(
+                  depth: 6,
+                  shadowColor: const Color(0xFFDC2626),
+                  opacity: 0.08,
+                ),
               ),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFDC2626),
-                      borderRadius:
-                          BorderRadius.circular(NetraSpacing.radiusMd),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFDC2626).withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
                     child: const Icon(
                       Icons.emergency_outlined,
@@ -344,11 +353,21 @@ class _HomeScreenState extends State<HomeScreen> {
                             NetraSpacing.gapW8,
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
+                                  horizontal: 7, vertical: 2),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFDC2626),
-                                borderRadius: BorderRadius.circular(
-                                    NetraSpacing.radiusSm),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  width: 1,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFDC2626).withValues(alpha: 0.35),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
                               child: Text(
                                 "CRITICAL",
@@ -461,9 +480,10 @@ class _HomeScreenState extends State<HomeScreen> {
       return Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: NetraColors.surfaceWhite,
-          borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
+          color: ClayGlassTheme.claySurfaceLight,
+          borderRadius: BorderRadius.circular(22),
           border: Border.all(color: const Color(0xFFF1F5F9)),
+          boxShadow: ClayGlassTheme.clayShadow(depth: 5),
         ),
         child: const Center(
           child: Padding(
@@ -486,16 +506,10 @@ class _HomeScreenState extends State<HomeScreen> {
         width: double.infinity,
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: NetraColors.surfaceWhite,
-          borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
+          color: ClayGlassTheme.claySurfaceLight,
+          borderRadius: BorderRadius.circular(22),
           border: Border.all(color: const Color(0xFFF1F5F9)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: ClayGlassTheme.clayShadow(depth: 5),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -584,16 +598,10 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: NetraColors.surfaceWhite,
-        borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
+        color: ClayGlassTheme.claySurfaceLight,
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0xFFF1F5F9)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: ClayGlassTheme.clayShadow(depth: 6),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -603,12 +611,19 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFFDC2626), Color(0xFFDB2777)],
+                    colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
                   ),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFDC2626).withValues(alpha: 0.35),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: const Text(
                   "FEATURED DRIVE",
@@ -671,7 +686,7 @@ class _HomeScreenState extends State<HomeScreen> {
               side: const BorderSide(color: NetraColors.primaryRed),
               minimumSize: const Size(double.infinity, 38),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(NetraSpacing.radiusSm),
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
             onPressed: () {
@@ -710,7 +725,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Profile Summary Card
           if (user != null) ...[
-            NetraCard.outlined(
+            NetraCard.clay(
+              borderRadius: 22,
+              clayDepth: 5.0,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -782,7 +799,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ] else ...[
-            NetraCard.outlined(
+            NetraCard.clay(
+              borderRadius: 22,
+              clayDepth: 5.0,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -835,7 +854,9 @@ class _HomeScreenState extends State<HomeScreen> {
           NetraSpacing.gapH12,
 
           // Entry Point: Profile -> Eligibility Check
-          NetraCard.outlined(
+          NetraCard.clay(
+            borderRadius: 20,
+            clayDepth: 4.0,
             padding: EdgeInsets.zero,
             child: ListTile(
               leading: Container(
@@ -862,7 +883,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           NetraSpacing.gapH12,
-          NetraCard.outlined(
+          NetraCard.clay(
+            borderRadius: 20,
+            clayDepth: 4.0,
             padding: EdgeInsets.zero,
             child: ListTile(
               leading: Container(
@@ -963,18 +986,28 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color iconColor,
     required VoidCallback onTap,
   }) {
-    return NetraCard.outlined(
+    return NetraCard.clay(
       onTap: onTap,
+      borderRadius: 20,
+      clayDepth: 5.0,
       padding: NetraSpacing.cardPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: NetraSpacing.paddingSm,
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: BorderRadius.circular(NetraSpacing.radiusSm)),
-            child: Icon(icon, color: iconColor, size: 20),
+              color: bgColor,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: iconColor.withValues(alpha: 0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: iconColor, size: 22),
           ),
           NetraSpacing.gapH12,
           Text(title, style: NetraTypography.titleSmall),

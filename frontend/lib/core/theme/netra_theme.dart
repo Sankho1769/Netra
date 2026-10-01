@@ -6,6 +6,7 @@ import 'netra_spacing.dart';
 export 'netra_colors.dart';
 export 'netra_typography.dart';
 export 'netra_spacing.dart';
+export 'clay_glass_theme.dart';
 
 class NetraTheme {
   // Brand Colors (aliases for backward compatibility)

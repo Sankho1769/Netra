@@ -23,10 +23,21 @@ class _FakeTokenStorage implements SecureTokenStorage {
   @override
   Future<String?> getRefreshToken() async => refreshToken;
 
+  User? user;
+
+  @override
+  Future<void> saveUser(User user) async {
+    this.user = user;
+  }
+
+  @override
+  Future<User?> getUser() async => user;
+
   @override
   Future<void> clearTokens() async {
     accessToken = null;
     refreshToken = null;
+    user = null;
   }
 
   @override
