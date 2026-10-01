@@ -39,3 +39,10 @@ scratch/
 *service-account*.json
 *firebase*.json
 secrets/
+
+# Database file storage
+backend/data/
+**/data/*.db
+*.mv.db
+*.trace.db
+

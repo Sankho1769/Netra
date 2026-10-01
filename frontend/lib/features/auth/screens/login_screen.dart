@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/netra_colors.dart';
 import '../../../core/theme/netra_spacing.dart';
@@ -22,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  DateTime? _lastBackPressTime;
 
   @override
   void dispose() {
@@ -64,20 +66,40 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final authController = AuthScope.of(context);
     final isLoading = authController.status == AuthStatus.authenticating;
+    final canPop = Navigator.of(context).canPop();
 
-    return Scaffold(
-      backgroundColor: NetraColors.backgroundGray,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Navigator.of(context).canPop()
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_rounded,
-                    color: NetraColors.textPrimary),
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            : null,
-      ),
+    return PopScope(
+      canPop: canPop,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        final now = DateTime.now();
+        if (_lastBackPressTime == null ||
+            now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+          _lastBackPressTime = now;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Press back again to exit"),
+              duration: Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } else {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: NetraColors.backgroundGray,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: canPop
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back_rounded,
+                      color: NetraColors.textPrimary),
+                  onPressed: () => Navigator.of(context).maybePop(),
+                )
+              : null,
+        ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -102,9 +124,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: Form(
                     key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisSize: MainAxisSize.min,
+                    child: AutofillGroup(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisSize: MainAxisSize.min,
                       children: [
                         // App Brand Header
                         Center(
@@ -192,6 +215,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           hint: "name@example.com",
                           controller: _emailController,
                           autofocus: true,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          autofillHints: const [
+                            AutofillHints.email,
+                            AutofillHints.username,
+                          ],
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           prefixIcon:
@@ -216,6 +244,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           hint: "Enter your password",
                           controller: _passwordController,
                           isPassword: true,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          autofillHints: const [AutofillHints.password],
                           textInputAction: TextInputAction.done,
                           prefixIcon:
                               const Icon(Icons.lock_outline_rounded, size: 20),
@@ -240,11 +270,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         NetraSpacing.gapH16,
 
                         // Register Link
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Text(
-                              "Don't have an account?",
+                              "Don't have an account? ",
                               style: NetraTypography.bodyMedium
                                   .copyWith(color: NetraColors.textSecondary),
                             ),
@@ -317,7 +348,9 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }
 

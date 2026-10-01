@@ -19,6 +19,8 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _passwordKey = GlobalKey<FormFieldState<String>>();
+  final _confirmPasswordKey = GlobalKey<FormFieldState<String>>();
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -33,18 +35,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void initState() {
     super.initState();
-    _passwordController.addListener(_updatePasswordStrength);
+    _passwordController.addListener(_onPasswordChanged);
+    _confirmPasswordController.addListener(_onConfirmPasswordChanged);
   }
 
   @override
   void dispose() {
-    _passwordController.removeListener(_updatePasswordStrength);
+    _passwordController.removeListener(_onPasswordChanged);
+    _confirmPasswordController.removeListener(_onConfirmPasswordChanged);
     _fullNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  void _onPasswordChanged() {
+    _updatePasswordStrength();
+    // Dynamically validate confirm password when password changes if user has started typing confirm password
+    if (_confirmPasswordController.text.isNotEmpty) {
+      _confirmPasswordKey.currentState?.validate();
+    }
+  }
+
+  void _onConfirmPasswordChanged() {
+    // Dynamically validate confirm password whenever confirm password text changes
+    if (_confirmPasswordController.text.isNotEmpty) {
+      _confirmPasswordKey.currentState?.validate();
+    }
   }
 
   void _updatePasswordStrength() {
@@ -113,7 +132,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded,
               color: NetraColors.textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
       body: SafeArea(
@@ -140,292 +159,314 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   child: Form(
                     key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Header
-                        Center(
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: NetraColors.backgroundRed,
-                              borderRadius:
-                                  BorderRadius.circular(NetraSpacing.radiusMd),
-                            ),
-                            child: const Icon(
-                              Icons.person_add_outlined,
-                              color: NetraColors.primaryRed,
-                              size: 32,
+                    child: AutofillGroup(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Header
+                          Center(
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: NetraColors.backgroundRed,
+                                borderRadius:
+                                    BorderRadius.circular(NetraSpacing.radiusMd),
+                              ),
+                              child: const Icon(
+                                Icons.person_add_outlined,
+                                color: NetraColors.primaryRed,
+                                size: 32,
+                              ),
                             ),
                           ),
-                        ),
-                        NetraSpacing.gapH16,
-                        Text(
-                          "Create Account",
-                          textAlign: TextAlign.center,
-                          style: NetraTypography.headlineMedium,
-                        ),
-                        NetraSpacing.gapH4,
-                        Text(
-                          "Join the NETRA lifesaving network",
-                          textAlign: TextAlign.center,
-                          style: NetraTypography.bodyMedium.copyWith(
-                            color: NetraColors.textSecondary,
+                          NetraSpacing.gapH16,
+                          Text(
+                            "Create Account",
+                            textAlign: TextAlign.center,
+                            style: NetraTypography.headlineMedium,
                           ),
-                        ),
-                        NetraSpacing.gapH24,
+                          NetraSpacing.gapH4,
+                          Text(
+                            "Join the NETRA lifesaving network",
+                            textAlign: TextAlign.center,
+                            style: NetraTypography.bodyMedium.copyWith(
+                              color: NetraColors.textSecondary,
+                            ),
+                          ),
+                          NetraSpacing.gapH24,
 
-                        // Error Banner
-                        if (authController.errorMessage != null) ...[
+                          // Error Banner
+                          if (authController.errorMessage != null) ...[
+                            Container(
+                              padding: const EdgeInsets.all(NetraSpacing.md),
+                              decoration: BoxDecoration(
+                                color: NetraColors.backgroundRed,
+                                borderRadius:
+                                    BorderRadius.circular(NetraSpacing.radiusSm),
+                                border: Border.all(
+                                    color: NetraColors.errorRed
+                                        .withValues(alpha: 0.4)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.error_outline_rounded,
+                                      color: NetraColors.errorRed, size: 20),
+                                  NetraSpacing.gapW12,
+                                  Expanded(
+                                    child: Text(
+                                      authController.errorMessage!,
+                                      style: NetraTypography.bodySmall
+                                          .copyWith(color: NetraColors.errorRed),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.close,
+                                        size: 16, color: NetraColors.errorRed),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () => authController.clearError(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            NetraSpacing.gapH16,
+                          ],
+
+                          // Full Name
+                          AuthTextField(
+                            label: "Full Name",
+                            hint: "Jolly Banerjee",
+                            controller: _fullNameController,
+                            autofocus: true,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
+                            autofillHints: const [AutofillHints.name],
+                            textInputAction: TextInputAction.next,
+                            prefixIcon:
+                                const Icon(Icons.badge_outlined, size: 20),
+                            validator: (val) {
+                              if (val == null || val.trim().isEmpty) {
+                                return "Full name is required";
+                              }
+                              if (val.trim().length < 2) {
+                                return "Name must be at least 2 characters";
+                              }
+                              return null;
+                            },
+                          ),
+                          NetraSpacing.gapH16,
+
+                          // Email
+                          AuthTextField(
+                            label: "Email Address",
+                            hint: "name@example.com",
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
+                            autofillHints: const [AutofillHints.email],
+                            textInputAction: TextInputAction.next,
+                            prefixIcon:
+                                const Icon(Icons.email_outlined, size: 20),
+                            validator: (val) {
+                              if (val == null || val.trim().isEmpty) {
+                                return "Email is required";
+                              }
+                              final emailRegex =
+                                  RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+                              if (!emailRegex.hasMatch(val.trim())) {
+                                return "Enter a valid email address";
+                              }
+                              return null;
+                            },
+                          ),
+                          NetraSpacing.gapH16,
+
+                          // Mobile Number
+                          AuthTextField(
+                            label: "Mobile Number *",
+                            hint: "e.g. +91 90000 00000",
+                            controller: _phoneController,
+                            keyboardType: TextInputType.phone,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
+                            autofillHints: const [
+                              AutofillHints.telephoneNumber
+                            ],
+                            textInputAction: TextInputAction.next,
+                            prefixIcon:
+                                const Icon(Icons.phone_outlined, size: 20),
+                            validator: (val) {
+                              if (val == null || val.trim().isEmpty) {
+                                return "Mobile number is required";
+                              }
+                              final clean =
+                                  val.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+                              final phoneRegex =
+                                  RegExp(r'^(?:\+91|91)?[6-9]\d{9}$');
+                              if (!phoneRegex.hasMatch(clean)) {
+                                return "Enter a valid 10-digit Indian mobile number";
+                              }
+                              return null;
+                            },
+                          ),
+                          NetraSpacing.gapH16,
+
+                          // Password
+                          AuthTextField(
+                            formFieldKey: _passwordKey,
+                            label: "Password",
+                            hint: "Create a secure password",
+                            controller: _passwordController,
+                            isPassword: true,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
+                            autofillHints: const [AutofillHints.newPassword],
+                            textInputAction: TextInputAction.next,
+                            prefixIcon:
+                                const Icon(Icons.lock_outline_rounded, size: 20),
+                            validator: (val) {
+                              if (val == null || val.isEmpty) {
+                                return "Password is required";
+                              }
+                              if (val.length < 8) {
+                                return "Password must be at least 8 characters";
+                              }
+                              if (!RegExp(r'[A-Z]').hasMatch(val)) {
+                                return "Password must include at least one uppercase letter";
+                              }
+                              if (!RegExp(r'[a-z]').hasMatch(val)) {
+                                return "Password must include at least one lowercase letter";
+                              }
+                              if (!RegExp(r'[0-9]').hasMatch(val)) {
+                                return "Password must include at least one digit";
+                              }
+                              return null;
+                            },
+                          ),
+                          NetraSpacing.gapH12,
+
+                          // Password Checklist UI
                           Container(
                             padding: const EdgeInsets.all(NetraSpacing.md),
                             decoration: BoxDecoration(
-                              color: NetraColors.backgroundRed,
+                              color: NetraColors.backgroundGray,
                               borderRadius:
                                   BorderRadius.circular(NetraSpacing.radiusSm),
-                              border: Border.all(
-                                  color: NetraColors.errorRed
-                                      .withValues(alpha: 0.4)),
                             ),
-                            child: Row(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.error_outline_rounded,
-                                    color: NetraColors.errorRed, size: 20),
-                                NetraSpacing.gapW12,
-                                Expanded(
-                                  child: Text(
-                                    authController.errorMessage!,
-                                    style: NetraTypography.bodySmall
-                                        .copyWith(color: NetraColors.errorRed),
+                                Text(
+                                  "Password requirements:",
+                                  style: NetraTypography.labelSmall.copyWith(
+                                    color: NetraColors.textSecondary,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.close,
-                                      size: 16, color: NetraColors.errorRed),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                  onPressed: () => authController.clearError(),
-                                ),
+                                NetraSpacing.gapH8,
+                                _buildRuleItem("8+ characters", _hasMinLength),
+                                _buildRuleItem("At least one uppercase letter",
+                                    _hasUpperCase),
+                                _buildRuleItem("At least one lowercase letter",
+                                    _hasLowerCase),
+                                _buildRuleItem(
+                                    "At least one number (0-9)", _hasDigit),
                               ],
                             ),
                           ),
                           NetraSpacing.gapH16,
-                        ],
 
-                        // Full Name
-                        AuthTextField(
-                          label: "Full Name",
-                          hint: "Jolly Banerjee",
-                          controller: _fullNameController,
-                          autofocus: true,
-                          textInputAction: TextInputAction.next,
-                          prefixIcon:
-                              const Icon(Icons.badge_outlined, size: 20),
-                          validator: (val) {
-                            if (val == null || val.trim().isEmpty) {
-                              return "Full name is required";
-                            }
-                            if (val.trim().length < 2) {
-                              return "Name must be at least 2 characters";
-                            }
-                            return null;
-                          },
-                        ),
-                        NetraSpacing.gapH16,
-
-                        // Email
-                        AuthTextField(
-                          label: "Email Address",
-                          hint: "name@example.com",
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          prefixIcon:
-                              const Icon(Icons.email_outlined, size: 20),
-                          validator: (val) {
-                            if (val == null || val.trim().isEmpty) {
-                              return "Email is required";
-                            }
-                            final emailRegex =
-                                RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-                            if (!emailRegex.hasMatch(val.trim())) {
-                              return "Enter a valid email address";
-                            }
-                            return null;
-                          },
-                        ),
-                        NetraSpacing.gapH16,
-
-                        // Mobile Number
-                        AuthTextField(
-                          label: "Mobile Number *",
-                          hint: "e.g. +91 90000 00000",
-                          controller: _phoneController,
-                          keyboardType: TextInputType.phone,
-                          textInputAction: TextInputAction.next,
-                          prefixIcon:
-                              const Icon(Icons.phone_outlined, size: 20),
-                          validator: (val) {
-                            if (val == null || val.trim().isEmpty) {
-                              return "Mobile number is required";
-                            }
-                            final clean =
-                                val.replaceAll(RegExp(r'[\s\-\(\)]'), '');
-                            final phoneRegex =
-                                RegExp(r'^(?:\+91|91)?[6-9]\d{9}$');
-                            if (!phoneRegex.hasMatch(clean)) {
-                              return "Enter a valid 10-digit Indian mobile number";
-                            }
-                            return null;
-                          },
-                        ),
-                        NetraSpacing.gapH16,
-
-                        // Password
-                        AuthTextField(
-                          label: "Password",
-                          hint: "Create a secure password",
-                          controller: _passwordController,
-                          isPassword: true,
-                          textInputAction: TextInputAction.next,
-                          prefixIcon:
-                              const Icon(Icons.lock_outline_rounded, size: 20),
-                          validator: (val) {
-                            if (val == null || val.isEmpty) {
-                              return "Password is required";
-                            }
-                            if (val.length < 8) {
-                              return "Password must be at least 8 characters";
-                            }
-                            if (!RegExp(r'[A-Z]').hasMatch(val)) {
-                              return "Password must include at least one uppercase letter";
-                            }
-                            if (!RegExp(r'[a-z]').hasMatch(val)) {
-                              return "Password must include at least one lowercase letter";
-                            }
-                            if (!RegExp(r'[0-9]').hasMatch(val)) {
-                              return "Password must include at least one digit";
-                            }
-                            return null;
-                          },
-                        ),
-                        NetraSpacing.gapH12,
-
-                        // Password Checklist UI
-                        Container(
-                          padding: const EdgeInsets.all(NetraSpacing.md),
-                          decoration: BoxDecoration(
-                            color: NetraColors.backgroundGray,
-                            borderRadius:
-                                BorderRadius.circular(NetraSpacing.radiusSm),
+                          // Confirm Password
+                          AuthTextField(
+                            formFieldKey: _confirmPasswordKey,
+                            label: "Confirm Password *",
+                            hint: "Re-enter your password",
+                            controller: _confirmPasswordController,
+                            isPassword: true,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
+                            autofillHints: const [AutofillHints.newPassword],
+                            textInputAction: TextInputAction.done,
+                            prefixIcon:
+                                const Icon(Icons.lock_outline_rounded, size: 20),
+                            onFieldSubmitted: (_) =>
+                                _handleRegister(authController),
+                            validator: (val) {
+                              if (val == null || val.isEmpty) {
+                                return "Please confirm your password";
+                              }
+                              if (val != _passwordController.text) {
+                                return "Passwords do not match";
+                              }
+                              return null;
+                            },
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          NetraSpacing.gapH16,
+
+                          // Clinical Privacy Note (Zero medical data at registration)
+                          Container(
+                            padding: const EdgeInsets.all(NetraSpacing.md),
+                            decoration: BoxDecoration(
+                              color: NetraColors.backgroundGreen,
+                              borderRadius:
+                                  BorderRadius.circular(NetraSpacing.radiusSm),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.verified_user_outlined,
+                                    color: NetraColors.successGreen, size: 20),
+                                NetraSpacing.gapW12,
+                                Expanded(
+                                  child: Text(
+                                    "Zero medical data collected at registration. Clinical suitability is assessed separately and confidentially.",
+                                    style: NetraTypography.bodySmall.copyWith(
+                                        color: NetraColors.successGreen),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          NetraSpacing.gapH24,
+
+                          // Submit Button
+                          NetraButton(
+                            text: "Create Account",
+                            isLoading: isLoading,
+                            onPressed: isLoading
+                                ? null
+                                : () => _handleRegister(authController),
+                          ),
+                          NetraSpacing.gapH16,
+
+                          // Login Link
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Text(
-                                "Password requirements:",
-                                style: NetraTypography.labelSmall.copyWith(
-                                  color: NetraColors.textSecondary,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                "Already have an account? ",
+                                style: NetraTypography.bodyMedium
+                                    .copyWith(color: NetraColors.textSecondary),
                               ),
-                              NetraSpacing.gapH8,
-                              _buildRuleItem("8+ characters", _hasMinLength),
-                              _buildRuleItem("At least one uppercase letter",
-                                  _hasUpperCase),
-                              _buildRuleItem("At least one lowercase letter",
-                                  _hasLowerCase),
-                              _buildRuleItem(
-                                  "At least one number (0-9)", _hasDigit),
-                            ],
-                          ),
-                        ),
-                        NetraSpacing.gapH16,
-
-                        // Confirm Password
-                        AuthTextField(
-                          label: "Confirm Password *",
-                          hint: "Re-enter your password",
-                          controller: _confirmPasswordController,
-                          isPassword: true,
-                          textInputAction: TextInputAction.done,
-                          prefixIcon:
-                              const Icon(Icons.lock_outline_rounded, size: 20),
-                          onFieldSubmitted: (_) =>
-                              _handleRegister(authController),
-                          validator: (val) {
-                            if (val == null || val.isEmpty) {
-                              return "Please confirm your password";
-                            }
-                            if (val != _passwordController.text) {
-                              return "Passwords do not match";
-                            }
-                            return null;
-                          },
-                        ),
-                        NetraSpacing.gapH16,
-
-                        // Clinical Privacy Note (Zero medical data at registration)
-                        Container(
-                          padding: const EdgeInsets.all(NetraSpacing.md),
-                          decoration: BoxDecoration(
-                            color: NetraColors.backgroundGreen,
-                            borderRadius:
-                                BorderRadius.circular(NetraSpacing.radiusSm),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.verified_user_outlined,
-                                  color: NetraColors.successGreen, size: 20),
-                              NetraSpacing.gapW12,
-                              Expanded(
+                              TextButton(
+                                onPressed: () {
+                                  authController.clearError();
+                                  Navigator.of(context).maybePop();
+                                },
                                 child: Text(
-                                  "Zero medical data collected at registration. Clinical suitability is assessed separately and confidentially.",
-                                  style: NetraTypography.bodySmall.copyWith(
-                                      color: NetraColors.successGreen),
+                                  "Sign In",
+                                  style: NetraTypography.titleSmall.copyWith(
+                                    color: NetraColors.primaryRed,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                        NetraSpacing.gapH24,
-
-                        // Submit Button
-                        NetraButton(
-                          text: "Create Account",
-                          isLoading: isLoading,
-                          onPressed: isLoading
-                              ? null
-                              : () => _handleRegister(authController),
-                        ),
-                        NetraSpacing.gapH16,
-
-                        // Login Link
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Already have an account?",
-                              style: NetraTypography.bodyMedium
-                                  .copyWith(color: NetraColors.textSecondary),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                authController.clearError();
-                                Navigator.of(context).pop();
-                              },
-                              child: Text(
-                                "Sign In",
-                                style: NetraTypography.titleSmall.copyWith(
-                                  color: NetraColors.primaryRed,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),

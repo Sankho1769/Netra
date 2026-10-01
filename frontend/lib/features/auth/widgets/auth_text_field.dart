@@ -22,6 +22,9 @@ class AuthTextField extends StatefulWidget {
   final bool? autocorrect;
   final bool? enableSuggestions;
   final TextCapitalization? textCapitalization;
+  final AutovalidateMode? autovalidateMode;
+  final Key? formFieldKey;
+  final Iterable<String>? autofillHints;
 
   const AuthTextField({
     super.key,
@@ -43,6 +46,9 @@ class AuthTextField extends StatefulWidget {
     this.autocorrect,
     this.enableSuggestions,
     this.textCapitalization,
+    this.autovalidateMode,
+    this.formFieldKey,
+    this.autofillHints,
   });
 
   @override
@@ -94,8 +100,11 @@ class _AuthTextFieldState extends State<AuthTextField> {
         ),
         NetraSpacing.gapH8,
         TextFormField(
+          key: widget.formFieldKey,
           controller: widget.controller,
           validator: widget.validator,
+          autovalidateMode: widget.autovalidateMode,
+          autofillHints: widget.autofillHints,
           keyboardType: widget.keyboardType,
           textInputAction: widget.textInputAction,
           onFieldSubmitted: widget.onFieldSubmitted,
