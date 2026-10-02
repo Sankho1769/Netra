@@ -161,9 +161,15 @@ class DonationEventApiService {
     }
   }
 
-  Future<EventRegistration> registerForEvent(String eventId) async {
+  Future<EventRegistration> registerForEvent(
+    String eventId, [
+    ParticipantRegistrationData? participantData,
+  ]) async {
     try {
-      final response = await _client.post('/$eventId/register');
+      final response = await _client.post(
+        '/$eventId/register',
+        body: participantData?.toJson(),
+      );
       return EventRegistration.fromJson(response as Map<String, dynamic>);
     } catch (e) {
       if (e is NetworkException) rethrow;

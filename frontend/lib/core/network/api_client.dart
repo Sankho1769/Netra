@@ -244,6 +244,22 @@ class ApiClient {
       case 401:
         throw UnauthorizedException(message, correlationId);
       case 403:
+        if (responseBody is Map &&
+            (responseBody['code'] == 'ACCOUNT_NOT_VERIFIED' ||
+                (responseBody['message'] is String &&
+                    (responseBody['message'] as String)
+                        .contains('Verify your email')))) {
+          final errors = responseBody['errors'];
+          String? email;
+          if (errors is List && errors.isNotEmpty) {
+            email = errors.first.toString();
+          }
+          throw AccountNotVerifiedException(
+            message,
+            email: email,
+            correlationId: correlationId,
+          );
+        }
         throw ForbiddenException(message, correlationId);
       case 404:
         throw NotFoundException(message, correlationId);

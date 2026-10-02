@@ -76,6 +76,8 @@ class BloodBankSummary {
   final BloodBankVerificationStatus verificationStatus;
   final BloodBankOperatingStatus operatingStatus;
   final double? distanceKm;
+  final double? latitude;
+  final double? longitude;
 
   BloodBankSummary({
     required this.id,
@@ -90,6 +92,8 @@ class BloodBankSummary {
     required this.verificationStatus,
     required this.operatingStatus,
     this.distanceKm,
+    this.latitude,
+    this.longitude,
   });
 
   factory BloodBankSummary.fromJson(Map<String, dynamic> json) {
@@ -109,6 +113,12 @@ class BloodBankSummary {
           json['operatingStatus'] as String?),
       distanceKm: json['distanceKm'] != null
           ? (json['distanceKm'] as num).toDouble()
+          : null,
+      latitude: json['latitude'] != null
+          ? (json['latitude'] as num).toDouble()
+          : null,
+      longitude: json['longitude'] != null
+          ? (json['longitude'] as num).toDouble()
           : null,
     );
   }

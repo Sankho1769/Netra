@@ -136,6 +136,55 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
+    @ExceptionHandler(AccountNotVerifiedException.class)
+    public ResponseEntity<ErrorResponse> handleAccountNotVerified(AccountNotVerifiedException ex, HttpServletRequest request) {
+        log.warn("Account not verified for email {}: {}", ex.getEmail(), ex.getMessage());
+        ErrorResponse error = createErrorResponse(
+                HttpStatus.FORBIDDEN.value(),
+                "ACCOUNT_NOT_VERIFIED",
+                ex.getMessage(),
+                request.getRequestURI(),
+                ex.getEmail() != null ? List.of(ex.getEmail()) : List.of()
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
+    @ExceptionHandler(VerificationExpiredException.class)
+    public ResponseEntity<ErrorResponse> handleVerificationExpired(VerificationExpiredException ex, HttpServletRequest request) {
+        log.warn("Verification challenge expired: {}", ex.getMessage());
+        ErrorResponse error = createErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "VERIFICATION_EXPIRED",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(VerificationFailedException.class)
+    public ResponseEntity<ErrorResponse> handleVerificationFailed(VerificationFailedException ex, HttpServletRequest request) {
+        log.warn("Verification failed: {}", ex.getMessage());
+        ErrorResponse error = createErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "VERIFICATION_FAILED",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(VerificationLockedException.class)
+    public ResponseEntity<ErrorResponse> handleVerificationLocked(VerificationLockedException ex, HttpServletRequest request) {
+        log.warn("Verification locked out: {}", ex.getMessage());
+        ErrorResponse error = createErrorResponse(
+                HttpStatus.TOO_MANY_REQUESTS.value(),
+                "VERIFICATION_LOCKED",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error);
+    }
+
     @ExceptionHandler(PasswordPolicyException.class)
     public ResponseEntity<ErrorResponse> handlePasswordPolicy(PasswordPolicyException ex, HttpServletRequest request) {
         log.warn("Password policy violation: {}", ex.getMessage());

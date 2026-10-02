@@ -546,7 +546,9 @@ public class BloodBankService {
                 bank.getEmail(),
                 bank.getVerificationStatus(),
                 bank.getOperatingStatus(),
-                distanceKm
+                distanceKm,
+                bank.getLatitude(),
+                bank.getLongitude()
         );
     }
 

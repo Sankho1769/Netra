@@ -105,14 +105,17 @@ class DonationEventController extends ChangeNotifier {
     }
   }
 
-  Future<bool> registerForEvent(String eventId) async {
+  Future<bool> registerForEvent(
+    String eventId, [
+    ParticipantRegistrationData? participantData,
+  ]) async {
     _isActionLoading = true;
     _errorMessage = null;
     _actionSuccessMessage = null;
     notifyListeners();
 
     try {
-      final reg = await _apiService.registerForEvent(eventId);
+      final reg = await _apiService.registerForEvent(eventId, participantData);
       _currentRegistration = reg;
       _actionSuccessMessage =
           "You're registered! Please remember to bring government ID on the day of the camp.";

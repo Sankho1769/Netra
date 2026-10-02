@@ -11,6 +11,7 @@ import '../state/auth_scope.dart';
 import '../widgets/auth_text_field.dart';
 import '../../home/home_screen.dart';
 import 'register_screen.dart';
+import 'verify_email_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -46,6 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (success && mounted) {
+      ScaffoldMessenger.of(context).clearSnackBars();
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -54,11 +56,14 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       await Future.delayed(const Duration(milliseconds: 1400));
       if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const HomeScreen()),
           (route) => false,
         );
       }
+    } else if (!success && mounted && authController.isUnverified) {
+      ScaffoldMessenger.of(context).clearSnackBars();
     }
   }
 
@@ -163,37 +168,98 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         NetraSpacing.gapH24,
 
-                        // Error Banner
+                        // Error / Verification Banner
                         if (authController.errorMessage != null) ...[
                           Container(
                             padding: const EdgeInsets.all(NetraSpacing.md),
                             decoration: BoxDecoration(
-                              color: NetraColors.backgroundRed,
+                              color: authController.isUnverified
+                                  ? const Color(0xFFFFFBEB)
+                                  : NetraColors.backgroundRed,
                               borderRadius:
                                   BorderRadius.circular(NetraSpacing.radiusSm),
                               border: Border.all(
-                                  color: NetraColors.errorRed
-                                      .withValues(alpha: 0.4)),
+                                color: authController.isUnverified
+                                    ? const Color(0xFFF59E0B)
+                                    : NetraColors.errorRed.withValues(alpha: 0.4),
+                              ),
                             ),
-                            child: Row(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                const Icon(Icons.error_outline_rounded,
-                                    color: NetraColors.errorRed, size: 20),
-                                NetraSpacing.gapW12,
-                                Expanded(
-                                  child: Text(
-                                    authController.errorMessage!,
-                                    style: NetraTypography.bodySmall
-                                        .copyWith(color: NetraColors.errorRed),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      authController.isUnverified
+                                          ? Icons.mark_email_unread_rounded
+                                          : Icons.error_outline_rounded,
+                                      color: authController.isUnverified
+                                          ? const Color(0xFFB45309)
+                                          : NetraColors.errorRed,
+                                      size: 20,
+                                    ),
+                                    NetraSpacing.gapW12,
+                                    Expanded(
+                                      child: Text(
+                                        authController.errorMessage!,
+                                        style: NetraTypography.bodySmall.copyWith(
+                                          color: authController.isUnverified
+                                              ? const Color(0xFF92400E)
+                                              : NetraColors.errorRed,
+                                          fontWeight: authController.isUnverified
+                                              ? FontWeight.w600
+                                              : FontWeight.normal,
+                                        ),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.close,
+                                        size: 16,
+                                        color: authController.isUnverified
+                                            ? const Color(0xFFB45309)
+                                            : NetraColors.errorRed,
+                                      ),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      onPressed: () => authController.clearError(),
+                                    ),
+                                  ],
+                                ),
+                                if (authController.isUnverified) ...[
+                                  NetraSpacing.gapH8,
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 38,
+                                    child: ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFFD97706),
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        elevation: 0,
+                                      ),
+                                      onPressed: () {
+                                        final targetEmail = authController.unverifiedEmail ??
+                                            _emailController.text.trim();
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) => VerifyEmailScreen(email: targetEmail),
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.verified_rounded, size: 16),
+                                      label: const Text(
+                                        "Verify Email Now",
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.close,
-                                      size: 16, color: NetraColors.errorRed),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                  onPressed: () => authController.clearError(),
-                                ),
+                                ],
                               ],
                             ),
                           ),
@@ -205,7 +271,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           label: "Email Address",
                           hint: "name@example.com",
                           controller: _emailController,
-                          autofocus: true,
+                          autofocus: false,
                           autovalidateMode: AutovalidateMode.onUserInteraction,
                           autofillHints: const [
                             AutofillHints.email,

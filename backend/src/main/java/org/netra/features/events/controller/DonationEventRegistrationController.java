@@ -1,9 +1,11 @@
 package org.netra.features.events.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.netra.core.security.ClientIpResolver;
 import org.netra.features.events.dto.DonationEventRegistrationDto;
 import org.netra.features.events.dto.EventAttendeeDto;
+import org.netra.features.events.dto.RegisterParticipantRequest;
 import org.netra.features.events.service.DonationEventRegistrationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,12 +33,14 @@ public class DonationEventRegistrationController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<DonationEventRegistrationDto> registerForEvent(
             @PathVariable UUID id,
+            @Valid @RequestBody(required = false) RegisterParticipantRequest participantRequest,
             HttpServletRequest servletRequest) {
 
         String clientIp = clientIpResolver.resolveClientIp(servletRequest);
         String userAgent = servletRequest.getHeader("User-Agent");
 
-        DonationEventRegistrationDto registration = registrationService.registerForEvent(id, clientIp, userAgent);
+        DonationEventRegistrationDto registration = registrationService.registerForEvent(
+                id, participantRequest, clientIp, userAgent);
         return ResponseEntity.status(HttpStatus.CREATED).body(registration);
     }
 

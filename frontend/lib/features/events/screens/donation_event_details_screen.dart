@@ -8,6 +8,8 @@ import '../models/event_registration.dart';
 import '../state/donation_event_controller.dart';
 import '../widgets/event_capacity_indicator.dart';
 import '../widgets/event_status_badge.dart';
+import '../widgets/participant_registration_dialog.dart';
+import '../../auth/state/auth_scope.dart';
 
 class DonationEventDetailsScreen extends StatefulWidget {
   final String eventId;
@@ -66,16 +68,111 @@ class _DonationEventDetailsScreenState
   }
 
   void _handleRegister() async {
-    final success = await _controller.registerForEvent(widget.eventId);
+    final authController = AuthScope.of(context);
+    final user = authController.currentUser;
+
+    final participantData = await showDialog<ParticipantRegistrationData>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => ParticipantRegistrationDialog(
+        eventTitle: _controller.currentEvent?.title ?? 'Donation Camp',
+        venueName: _controller.currentEvent?.venueName ?? 'Blood Centre',
+        initialFullName: user?.fullName,
+        initialEmail: user?.email,
+        initialPhone: user?.phone,
+      ),
+    );
+
+    if (participantData == null) return;
+
+    final success =
+        await _controller.registerForEvent(widget.eventId, participantData);
     if (!mounted) return;
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_controller.actionSuccessMessage ??
-              "You're registered for this camp!"),
-          backgroundColor: Colors.green.shade800,
-          behavior: SnackBarBehavior.floating,
+      final reg = _controller.currentRegistration;
+      await showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFDCFCE7),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_circle_rounded,
+                    color: Color(0xFF16A34A), size: 24),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(child: Text('Registration Confirmed!')),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "You are registered for ${_controller.currentEvent?.title ?? 'this donation camp'}.",
+                style:
+                    const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              ),
+              const SizedBox(height: 12),
+              if (reg != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Registration ID: ${reg.id}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontFamily: 'monospace',
+                          color: Colors.blueGrey,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Participant: ${participantData.fullName} (${participantData.bloodGroup})',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Venue: ${_controller.currentEvent?.venueName ?? ""}',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+              const Text(
+                'Please bring government-issued photo ID on the day of the camp. Final medical screening is conducted on-site by clinical staff.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.black87,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('OK'),
+            ),
+          ],
         ),
       );
     } else if (_controller.errorMessage != null) {
@@ -227,35 +324,57 @@ class _DonationEventDetailsScreenState
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.green.shade200),
+                      color: const Color(0xFFF0FDF4),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFF86EFAC)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.check_circle,
-                                color: Colors.green.shade800),
+                            const Icon(Icons.check_circle_rounded,
+                                color: Color(0xFF16A34A), size: 22),
                             const SizedBox(width: 8),
-                            Text(
-                              "You're Registered for this Camp",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green.shade900,
+                            const Expanded(
+                              child: Text(
+                                "You're Registered for this Camp",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF14532D),
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Registration ID: ${reg.id}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontFamily: 'monospace',
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        if (reg.participantName != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Participant: ${reg.participantName}${reg.participantBloodGroup != null ? " (${reg.participantBloodGroup})" : ""}',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF166534),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 4),
                         Text(
                           'Registered on: ${_formatDateTime(reg.registeredAt.toLocal())}',
                           style: TextStyle(
-                              fontSize: 13, color: Colors.green.shade800),
+                              fontSize: 12, color: Colors.green.shade800),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 12),
                         OutlinedButton.icon(
                           onPressed: _controller.isActionLoading
                               ? null
@@ -339,8 +458,38 @@ class _DonationEventDetailsScreenState
 
                 const SizedBox(height: 24),
 
-                // Register CTA button (if not already registered)
-                if (!isRegistered) ...[
+                // Register CTA button / Registered status
+                if (isRegistered) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: null,
+                      icon: const Icon(
+                        Icons.check_circle_rounded,
+                        color: Color(0xFF16A34A),
+                      ),
+                      label: const Text(
+                        'Registered for Camp',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF16A34A),
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(
+                          color: Color(0xFF86EFAC),
+                          width: 1.5,
+                        ),
+                        backgroundColor: const Color(0xFFF0FDF4),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ] else ...[
                   SizedBox(
                     width: double.infinity,
                     height: 48,

@@ -45,6 +45,39 @@ public class DonationEventRegistration {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt = Instant.now();
 
+    @Column(name = "participant_name", length = 128)
+    private String participantName;
+
+    @Column(name = "participant_dob")
+    private java.time.LocalDate participantDob;
+
+    @Column(name = "participant_phone", length = 32)
+    private String participantPhone;
+
+    @Column(name = "participant_email", length = 255)
+    private String participantEmail;
+
+    @Column(name = "participant_blood_group", length = 16)
+    private String participantBloodGroup;
+
+    @Column(name = "participant_address", length = 255)
+    private String participantAddress;
+
+    @Column(name = "participant_city", length = 100)
+    private String participantCity;
+
+    @Column(name = "emergency_contact_name", length = 128)
+    private String emergencyContactName;
+
+    @Column(name = "emergency_contact_phone", length = 32)
+    private String emergencyContactPhone;
+
+    @Column(name = "consent_confirmed", nullable = false)
+    private boolean consentConfirmed = false;
+
+    @Column(name = "consent_timestamp")
+    private Instant consentTimestamp;
+
     public DonationEventRegistration() {
     }
 
@@ -135,5 +168,93 @@ public class DonationEventRegistration {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getParticipantName() {
+        return participantName;
+    }
+
+    public void setParticipantName(String participantName) {
+        this.participantName = participantName;
+    }
+
+    public java.time.LocalDate getParticipantDob() {
+        return participantDob;
+    }
+
+    public void setParticipantDob(java.time.LocalDate participantDob) {
+        this.participantDob = participantDob;
+    }
+
+    public String getParticipantPhone() {
+        return participantPhone;
+    }
+
+    public void setParticipantPhone(String participantPhone) {
+        this.participantPhone = participantPhone;
+    }
+
+    public String getParticipantEmail() {
+        return participantEmail;
+    }
+
+    public void setParticipantEmail(String participantEmail) {
+        this.participantEmail = participantEmail;
+    }
+
+    public String getParticipantBloodGroup() {
+        return participantBloodGroup;
+    }
+
+    public void setParticipantBloodGroup(String participantBloodGroup) {
+        this.participantBloodGroup = participantBloodGroup;
+    }
+
+    public String getParticipantAddress() {
+        return participantAddress;
+    }
+
+    public void setParticipantAddress(String participantAddress) {
+        this.participantAddress = participantAddress;
+    }
+
+    public String getParticipantCity() {
+        return participantCity;
+    }
+
+    public void setParticipantCity(String participantCity) {
+        this.participantCity = participantCity;
+    }
+
+    public String getEmergencyContactName() {
+        return emergencyContactName;
+    }
+
+    public void setEmergencyContactName(String emergencyContactName) {
+        this.emergencyContactName = emergencyContactName;
+    }
+
+    public String getEmergencyContactPhone() {
+        return emergencyContactPhone;
+    }
+
+    public void setEmergencyContactPhone(String emergencyContactPhone) {
+        this.emergencyContactPhone = emergencyContactPhone;
+    }
+
+    public boolean isConsentConfirmed() {
+        return consentConfirmed;
+    }
+
+    public void setConsentConfirmed(boolean consentConfirmed) {
+        this.consentConfirmed = consentConfirmed;
+    }
+
+    public Instant getConsentTimestamp() {
+        return consentTimestamp;
+    }
+
+    public void setConsentTimestamp(Instant consentTimestamp) {
+        this.consentTimestamp = consentTimestamp;
     }
 }

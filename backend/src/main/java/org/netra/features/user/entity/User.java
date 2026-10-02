@@ -45,6 +45,9 @@ public class User {
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
 
+    @Column(name = "email_verified_at")
+    private Instant emailVerifiedAt;
+
     public User() {
     }
 
@@ -145,5 +148,17 @@ public class User {
 
     public void setLastLoginAt(Instant lastLoginAt) {
         this.lastLoginAt = lastLoginAt;
+    }
+
+    public Instant getEmailVerifiedAt() {
+        return emailVerifiedAt;
+    }
+
+    public void setEmailVerifiedAt(Instant emailVerifiedAt) {
+        this.emailVerifiedAt = emailVerifiedAt;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerifiedAt != null;
     }
 }

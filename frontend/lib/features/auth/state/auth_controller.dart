@@ -14,6 +14,8 @@ class AuthController extends ChangeNotifier {
   AuthStatus _status = AuthStatus.unknown;
   User? _currentUser;
   String? _errorMessage;
+  bool _isUnverified = false;
+  String? _unverifiedEmail;
 
   AuthController({
     AuthApiService? apiService,
@@ -34,11 +36,15 @@ class AuthController extends ChangeNotifier {
           }
           try {
             final bundle = await _apiService.refresh(currentRefresh);
-            await _tokenStorage.saveTokens(
-              accessToken: bundle.tokens.accessToken,
-              refreshToken: bundle.tokens.refreshToken,
-            );
-            return true;
+            if (bundle.tokens != null) {
+              await _tokenStorage.saveTokens(
+                accessToken: bundle.tokens!.accessToken,
+                refreshToken: bundle.tokens!.refreshToken,
+              );
+              return true;
+            }
+            await _tokenStorage.clearTokens();
+            return false;
           } catch (_) {
             await _tokenStorage.clearTokens();
             return false;
@@ -51,6 +57,8 @@ class AuthController extends ChangeNotifier {
   AuthStatus get status => _status;
   User? get currentUser => _currentUser;
   String? get errorMessage => _errorMessage;
+  bool get isUnverified => _isUnverified;
+  String? get unverifiedEmail => _unverifiedEmail;
   bool get isAuthenticated =>
       _status == AuthStatus.authenticated && _currentUser != null;
 
@@ -81,14 +89,18 @@ class AuthController extends ChangeNotifier {
       // Refresh to verify session and retrieve latest active user state
       try {
         final bundle = await _apiService.refresh(refreshToken);
-        await _tokenStorage.saveTokens(
-          accessToken: bundle.tokens.accessToken,
-          refreshToken: bundle.tokens.refreshToken,
-        );
+        if (bundle.tokens != null) {
+          await _tokenStorage.saveTokens(
+            accessToken: bundle.tokens!.accessToken,
+            refreshToken: bundle.tokens!.refreshToken,
+          );
+        }
         await _tokenStorage.saveUser(bundle.user);
 
         _currentUser = bundle.user;
         _status = AuthStatus.authenticated;
+        _isUnverified = false;
+        _unverifiedEmail = null;
         notifyListeners();
       } catch (e) {
         final msg = e.toString().toLowerCase();
@@ -126,6 +138,8 @@ class AuthController extends ChangeNotifier {
   Future<bool> login(String email, String password) async {
     _status = AuthStatus.authenticating;
     _errorMessage = null;
+    _isUnverified = false;
+    _unverifiedEmail = null;
     notifyListeners();
 
     final normalizedEmail = email.trim().toLowerCase();
@@ -133,18 +147,31 @@ class AuthController extends ChangeNotifier {
     try {
       final bundle = await _apiService
           .login(LoginRequest(email: normalizedEmail, password: password));
-      await _tokenStorage.saveTokens(
-        accessToken: bundle.tokens.accessToken,
-        refreshToken: bundle.tokens.refreshToken,
-      );
+      if (bundle.tokens != null) {
+        await _tokenStorage.saveTokens(
+          accessToken: bundle.tokens!.accessToken,
+          refreshToken: bundle.tokens!.refreshToken,
+        );
+      }
       await _tokenStorage.saveUser(bundle.user);
 
       _currentUser = bundle.user;
       _status = AuthStatus.authenticated;
+      _isUnverified = false;
+      _unverifiedEmail = null;
       _errorMessage = null;
       notifyListeners();
       return true;
+    } on AccountNotVerifiedException catch (e) {
+      _isUnverified = true;
+      _unverifiedEmail = e.email ?? normalizedEmail;
+      _errorMessage = e.message;
+      _status = AuthStatus.unauthenticated;
+      notifyListeners();
+      return false;
     } catch (e) {
+      _isUnverified = false;
+      _unverifiedEmail = null;
       if (e is NetworkException) {
         _errorMessage = e.message;
       } else {
@@ -164,6 +191,8 @@ class AuthController extends ChangeNotifier {
   }) async {
     _status = AuthStatus.authenticating;
     _errorMessage = null;
+    _isUnverified = false;
+    _unverifiedEmail = null;
     notifyListeners();
 
     final normalizedEmail = email.trim().toLowerCase();
@@ -178,14 +207,70 @@ class AuthController extends ChangeNotifier {
           password: password,
         ),
       );
-      await _tokenStorage.saveTokens(
-        accessToken: bundle.tokens.accessToken,
-        refreshToken: bundle.tokens.refreshToken,
+
+      if (bundle.tokens != null) {
+        await _tokenStorage.saveTokens(
+          accessToken: bundle.tokens!.accessToken,
+          refreshToken: bundle.tokens!.refreshToken,
+        );
+        await _tokenStorage.saveUser(bundle.user);
+        _currentUser = bundle.user;
+        _status = AuthStatus.authenticated;
+        _isUnverified = false;
+        _unverifiedEmail = null;
+      } else {
+        // Real-world healthcare flow: unverified account created
+        _currentUser = bundle.user;
+        _status = AuthStatus.unauthenticated;
+        _isUnverified = true;
+        _unverifiedEmail = normalizedEmail;
+      }
+
+      _errorMessage = null;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isUnverified = false;
+      _unverifiedEmail = null;
+      if (e is NetworkException) {
+        _errorMessage = e.message;
+      } else {
+        _errorMessage = 'Unable to complete registration. Please try again.';
+      }
+      _status = AuthStatus.unauthenticated;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> verifyEmail({
+    required String email,
+    required String code,
+  }) async {
+    _status = AuthStatus.authenticating;
+    _errorMessage = null;
+    notifyListeners();
+
+    final normalizedEmail = email.trim().toLowerCase();
+
+    try {
+      final bundle = await _apiService.verifyEmail(
+        email: normalizedEmail,
+        code: code.trim(),
       );
+
+      if (bundle.tokens != null) {
+        await _tokenStorage.saveTokens(
+          accessToken: bundle.tokens!.accessToken,
+          refreshToken: bundle.tokens!.refreshToken,
+        );
+      }
       await _tokenStorage.saveUser(bundle.user);
 
       _currentUser = bundle.user;
       _status = AuthStatus.authenticated;
+      _isUnverified = false;
+      _unverifiedEmail = null;
       _errorMessage = null;
       notifyListeners();
       return true;
@@ -193,9 +278,25 @@ class AuthController extends ChangeNotifier {
       if (e is NetworkException) {
         _errorMessage = e.message;
       } else {
-        _errorMessage = 'Unable to complete registration. Please try again.';
+        _errorMessage = 'Invalid or expired verification code. Please try again.';
       }
       _status = AuthStatus.unauthenticated;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> resendVerification({required String email}) async {
+    final normalizedEmail = email.trim().toLowerCase();
+    try {
+      await _apiService.resendVerification(email: normalizedEmail);
+      return true;
+    } catch (e) {
+      if (e is NetworkException) {
+        _errorMessage = e.message;
+      } else {
+        _errorMessage = 'Could not resend verification code. Please wait.';
+      }
       notifyListeners();
       return false;
     }

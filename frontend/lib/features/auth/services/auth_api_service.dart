@@ -5,9 +5,9 @@ import '../models/auth_models.dart';
 
 class AuthResponseBundle {
   final User user;
-  final AuthTokens tokens;
+  final AuthTokens? tokens;
 
-  const AuthResponseBundle({required this.user, required this.tokens});
+  const AuthResponseBundle({required this.user, this.tokens});
 }
 
 class AuthApiService {
@@ -26,12 +26,50 @@ class AuthApiService {
       );
       final data = response as Map<String, dynamic>;
       final user = User.fromJson(data['user'] as Map<String, dynamic>);
-      final tokens = AuthTokens.fromJson(data);
+      AuthTokens? tokens;
+      if (data['accessToken'] != null &&
+          (data['accessToken'] as String).isNotEmpty) {
+        tokens = AuthTokens.fromJson(data);
+      }
       return AuthResponseBundle(user: user, tokens: tokens);
     } catch (e) {
       if (e is NetworkException) rethrow;
       throw ValidationException(
           'Unable to complete registration. Please try again.');
+    }
+  }
+
+  Future<AuthResponseBundle> verifyEmail({
+    required String email,
+    required String code,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/verify-email',
+        body: {'email': email.trim().toLowerCase(), 'code': code.trim()},
+        requiresAuth: false,
+      );
+      final data = response as Map<String, dynamic>;
+      final user = User.fromJson(data['user'] as Map<String, dynamic>);
+      final tokens = AuthTokens.fromJson(data);
+      return AuthResponseBundle(user: user, tokens: tokens);
+    } catch (e) {
+      if (e is NetworkException) rethrow;
+      throw ValidationException('Invalid or expired verification code.');
+    }
+  }
+
+  Future<void> resendVerification({required String email}) async {
+    try {
+      await _client.post(
+        '/resend-verification',
+        body: {'email': email.trim().toLowerCase()},
+        requiresAuth: false,
+      );
+    } catch (e) {
+      if (e is NetworkException) rethrow;
+      throw ValidationException(
+          'Could not resend verification code. Please wait.');
     }
   }
 

@@ -108,9 +108,9 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
             if (_postalCodeController.text.isEmpty) {
               _postalCodeController.text = firstBank.postalCode;
             }
-            if (_latitude == null || _longitude == null) {
-              _latitude = 22.5726;
-              _longitude = 88.3639;
+            if (firstBank.latitude != null && firstBank.longitude != null) {
+              _latitude = firstBank.latitude;
+              _longitude = firstBank.longitude;
             }
           }
         });
@@ -283,8 +283,8 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
     }
 
     if (_latitude == null || _longitude == null) {
-      _latitude = 22.5726;
-      _longitude = 88.3639;
+      _showError('Venue coordinates are required. Please tap "Detect Location" or select a verified blood centre.');
+      return;
     }
 
     final capacity = int.tryParse(_capacityController.text.trim());
@@ -552,8 +552,10 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                                             _cityController.text = bank.city;
                                             _stateController.text = bank.state;
                                             _postalCodeController.text = bank.postalCode;
-                                            _latitude = 22.5726;
-                                            _longitude = 88.3639;
+                                            if (bank.latitude != null && bank.longitude != null) {
+                                              _latitude = bank.latitude;
+                                              _longitude = bank.longitude;
+                                            }
                                           });
                                         }
                                       },

@@ -17,6 +17,12 @@ public class DonationEventRegistrationDto {
     private Instant checkedInAt;
     private Instant completedAt;
 
+    private String participantName;
+    private String participantBloodGroup;
+    private String participantCity;
+    private Boolean consentConfirmed;
+    private Instant consentTimestamp;
+
     public DonationEventRegistrationDto() {
     }
 
@@ -30,6 +36,25 @@ public class DonationEventRegistrationDto {
             Instant cancelledAt,
             Instant checkedInAt,
             Instant completedAt) {
+        this(id, eventId, eventTitle, donorUserId, status, registeredAt, cancelledAt, checkedInAt, completedAt,
+                null, null, null, null, null);
+    }
+
+    public DonationEventRegistrationDto(
+            UUID id,
+            UUID eventId,
+            String eventTitle,
+            UUID donorUserId,
+            DonationEventRegistrationStatus status,
+            Instant registeredAt,
+            Instant cancelledAt,
+            Instant checkedInAt,
+            Instant completedAt,
+            String participantName,
+            String participantBloodGroup,
+            String participantCity,
+            Boolean consentConfirmed,
+            Instant consentTimestamp) {
         this.id = id;
         this.eventId = eventId;
         this.eventTitle = eventTitle;
@@ -39,6 +64,11 @@ public class DonationEventRegistrationDto {
         this.cancelledAt = cancelledAt;
         this.checkedInAt = checkedInAt;
         this.completedAt = completedAt;
+        this.participantName = participantName;
+        this.participantBloodGroup = participantBloodGroup;
+        this.participantCity = participantCity;
+        this.consentConfirmed = consentConfirmed;
+        this.consentTimestamp = consentTimestamp;
     }
 
     public UUID getId() {
@@ -111,5 +141,45 @@ public class DonationEventRegistrationDto {
 
     public void setCompletedAt(Instant completedAt) {
         this.completedAt = completedAt;
+    }
+
+    public String getParticipantName() {
+        return participantName;
+    }
+
+    public void setParticipantName(String participantName) {
+        this.participantName = participantName;
+    }
+
+    public String getParticipantBloodGroup() {
+        return participantBloodGroup;
+    }
+
+    public void setParticipantBloodGroup(String participantBloodGroup) {
+        this.participantBloodGroup = participantBloodGroup;
+    }
+
+    public String getParticipantCity() {
+        return participantCity;
+    }
+
+    public void setParticipantCity(String participantCity) {
+        this.participantCity = participantCity;
+    }
+
+    public Boolean getConsentConfirmed() {
+        return consentConfirmed;
+    }
+
+    public void setConsentConfirmed(Boolean consentConfirmed) {
+        this.consentConfirmed = consentConfirmed;
+    }
+
+    public Instant getConsentTimestamp() {
+        return consentTimestamp;
+    }
+
+    public void setConsentTimestamp(Instant consentTimestamp) {
+        this.consentTimestamp = consentTimestamp;
     }
 }

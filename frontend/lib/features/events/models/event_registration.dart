@@ -49,6 +49,48 @@ enum EventRegistrationStatus {
   bool get isActiveSlot => this == registered || this == checkedIn;
 }
 
+class ParticipantRegistrationData {
+  final String fullName;
+  final DateTime dateOfBirth;
+  final String phone;
+  final String email;
+  final String bloodGroup;
+  final String address;
+  final String city;
+  final String emergencyContactName;
+  final String emergencyContactPhone;
+  final bool consentConfirmed;
+
+  const ParticipantRegistrationData({
+    required this.fullName,
+    required this.dateOfBirth,
+    required this.phone,
+    required this.email,
+    required this.bloodGroup,
+    required this.address,
+    required this.city,
+    required this.emergencyContactName,
+    required this.emergencyContactPhone,
+    required this.consentConfirmed,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'fullName': fullName,
+      'dateOfBirth':
+          '${dateOfBirth.year.toString().padLeft(4, '0')}-${dateOfBirth.month.toString().padLeft(2, '0')}-${dateOfBirth.day.toString().padLeft(2, '0')}',
+      'phone': phone,
+      'email': email,
+      'bloodGroup': bloodGroup,
+      'address': address,
+      'city': city,
+      'emergencyContactName': emergencyContactName,
+      'emergencyContactPhone': emergencyContactPhone,
+      'consentConfirmed': consentConfirmed,
+    };
+  }
+}
+
 class EventRegistration {
   final String id;
   final String eventId;
@@ -59,6 +101,11 @@ class EventRegistration {
   final DateTime? cancelledAt;
   final DateTime? checkedInAt;
   final DateTime? completedAt;
+  final String? participantName;
+  final String? participantBloodGroup;
+  final String? participantCity;
+  final bool? consentConfirmed;
+  final DateTime? consentTimestamp;
 
   const EventRegistration({
     required this.id,
@@ -70,6 +117,11 @@ class EventRegistration {
     this.cancelledAt,
     this.checkedInAt,
     this.completedAt,
+    this.participantName,
+    this.participantBloodGroup,
+    this.participantCity,
+    this.consentConfirmed,
+    this.consentTimestamp,
   });
 
   factory EventRegistration.fromJson(Map<String, dynamic> json) {
@@ -88,6 +140,13 @@ class EventRegistration {
           : null,
       completedAt: json['completedAt'] != null
           ? DateTime.parse(json['completedAt'] as String)
+          : null,
+      participantName: json['participantName'] as String?,
+      participantBloodGroup: json['participantBloodGroup'] as String?,
+      participantCity: json['participantCity'] as String?,
+      consentConfirmed: json['consentConfirmed'] as bool?,
+      consentTimestamp: json['consentTimestamp'] != null
+          ? DateTime.parse(json['consentTimestamp'] as String)
           : null,
     );
   }

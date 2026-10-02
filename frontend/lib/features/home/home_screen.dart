@@ -41,6 +41,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+      }
+    });
     _eventApiService = widget.eventApiService ?? DonationEventApiService();
     _loadFeaturedEvent();
   }
@@ -99,6 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: ResponsiveScaffold(
         selectedIndex: _selectedTab,
         onDestinationSelected: (idx) {
+          ScaffoldMessenger.of(context).clearSnackBars();
           if (idx == 2) {
             BloodActionSheet.show(context);
           } else {

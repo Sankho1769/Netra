@@ -99,14 +99,23 @@ class DefaultLocationService implements LocationService {
     }
 
     // Real device GPS via Geolocator
+    Position? position;
     try {
-      final position = await Geolocator.getCurrentPosition(
+      position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 10),
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 8),
         ),
       );
+    } catch (_) {
+      try {
+        position = await Geolocator.getLastKnownPosition();
+      } catch (_) {
+        position = null;
+      }
+    }
 
+    if (position != null) {
       final double rawLat = position.latitude;
       final double rawLng = position.longitude;
       final double lat =
@@ -124,17 +133,12 @@ class DefaultLocationService implements LocationService {
           isApproximate: approximateOnly,
         ),
       );
-    } on TimeoutException {
-      return const LocationResult.failure(
-        LocationFailureReason.timeout,
-        'GPS location request timed out. Please try again or select a verified hospital.',
-      );
-    } catch (_) {
-      return const LocationResult.failure(
-        LocationFailureReason.unavailable,
-        'Could not obtain location from device GPS. Please select a verified hospital.',
-      );
     }
+
+    return const LocationResult.failure(
+      LocationFailureReason.unavailable,
+      'Could not obtain location from device GPS. Please enable GPS or select a verified healthcare centre.',
+    );
   }
 
   @override

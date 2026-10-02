@@ -8,7 +8,7 @@ import '../models/auth_models.dart';
 import '../state/auth_controller.dart';
 import '../state/auth_scope.dart';
 import '../widgets/auth_text_field.dart';
-import '../../home/home_screen.dart';
+import 'verify_email_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -100,18 +100,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
 
     if (success && mounted) {
+      final email = _emailController.text.trim().toLowerCase();
       await showDialog(
         context: context,
         barrierDismissible: false,
         barrierColor: Colors.black.withValues(alpha: 0.65),
         builder: (_) => _RegisterSuccessDialog(
           fullName: _fullNameController.text.trim(),
-          email: _emailController.text.trim().toLowerCase(),
+          email: email,
           phone: rawPhone,
           onProceed: () {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const HomeScreen()),
-              (route) => false,
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => VerifyEmailScreen(
+                  email: email,
+                  fromRegistration: true,
+                ),
+              ),
             );
           },
         ),
@@ -582,7 +587,7 @@ class _RegisterSuccessDialogState extends State<_RegisterSuccessDialog>
 
               // Title
               const Text(
-                "Registration Successful!",
+                "Account Created!",
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -594,7 +599,7 @@ class _RegisterSuccessDialogState extends State<_RegisterSuccessDialog>
 
               // Description
               Text(
-                "Welcome to NETRA. Your profile has been created securely. You are now part of our lifesaver network.",
+                "Step 1 of 2 Complete\nYour account has been created. Verify your email to continue and activate your account.",
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.grey.shade600,
@@ -679,8 +684,8 @@ class _RegisterSuccessDialogState extends State<_RegisterSuccessDialog>
               ),
               const SizedBox(height: 24),
 
-              // Go to Dashboard Button
-              ElevatedButton(
+              // Verify Email Now Button
+              ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: NetraColors.primaryRed,
                   foregroundColor: Colors.white,
@@ -691,8 +696,9 @@ class _RegisterSuccessDialogState extends State<_RegisterSuccessDialog>
                   elevation: 2,
                 ),
                 onPressed: widget.onProceed,
-                child: const Text(
-                  "Go to Dashboard",
+                icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                label: const Text(
+                  "Verify Email Now",
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,

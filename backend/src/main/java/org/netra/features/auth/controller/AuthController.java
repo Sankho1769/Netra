@@ -48,6 +48,38 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PostMapping("/verify-email")
+    public ResponseEntity<AuthResponse> verifyEmail(
+            @Valid @RequestBody VerifyEmailRequest request,
+            HttpServletRequest servletRequest) {
+
+        String clientIp = clientIpResolver.resolveClientIp(servletRequest);
+        rateLimitingService.checkRateLimit(clientIp);
+
+        AuthResponse response = authService.verifyEmail(
+                request,
+                clientIp,
+                servletRequest.getHeader("User-Agent")
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<Map<String, String>> resendVerification(
+            @Valid @RequestBody ResendVerificationRequest request,
+            HttpServletRequest servletRequest) {
+
+        String clientIp = clientIpResolver.resolveClientIp(servletRequest);
+        rateLimitingService.checkRateLimit(clientIp);
+
+        authService.resendVerification(
+                request,
+                clientIp,
+                servletRequest.getHeader("User-Agent")
+        );
+        return ResponseEntity.ok(Map.of("status", "SUCCESS", "message", "Verification code resent successfully."));
+    }
+
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody LoginRequest request,

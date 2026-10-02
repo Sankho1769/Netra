@@ -19,6 +19,8 @@ public class BloodBankSummaryDto {
     private BloodBankVerificationStatus verificationStatus;
     private BloodBankOperatingStatus operatingStatus;
     private Double distanceKm;
+    private Double latitude;
+    private Double longitude;
 
     public BloodBankSummaryDto() {
     }
@@ -36,6 +38,25 @@ public class BloodBankSummaryDto {
             BloodBankVerificationStatus verificationStatus,
             BloodBankOperatingStatus operatingStatus,
             Double distanceKm) {
+        this(id, name, registrationNumber, address, city, state, postalCode, phone, email,
+                verificationStatus, operatingStatus, distanceKm, null, null);
+    }
+
+    public BloodBankSummaryDto(
+            UUID id,
+            String name,
+            String registrationNumber,
+            String address,
+            String city,
+            String state,
+            String postalCode,
+            String phone,
+            String email,
+            BloodBankVerificationStatus verificationStatus,
+            BloodBankOperatingStatus operatingStatus,
+            Double distanceKm,
+            Double latitude,
+            Double longitude) {
         this.id = id;
         this.name = name;
         this.registrationNumber = registrationNumber;
@@ -48,6 +69,8 @@ public class BloodBankSummaryDto {
         this.verificationStatus = verificationStatus;
         this.operatingStatus = operatingStatus;
         this.distanceKm = distanceKm;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     public UUID getId() {
@@ -144,5 +167,21 @@ public class BloodBankSummaryDto {
 
     public void setDistanceKm(Double distanceKm) {
         this.distanceKm = distanceKm;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
     }
 }

@@ -5,6 +5,7 @@ import org.netra.core.exception.*;
 import org.netra.core.security.SecurityUtils;
 import org.netra.features.events.dto.DonationEventRegistrationDto;
 import org.netra.features.events.dto.EventAttendeeDto;
+import org.netra.features.events.dto.RegisterParticipantRequest;
 import org.netra.features.events.entity.DonationEvent;
 import org.netra.features.events.entity.DonationEventRegistration;
 import org.netra.features.events.entity.DonationEventRegistrationStatus;
@@ -50,6 +51,16 @@ public class DonationEventRegistrationService {
 
     @Transactional
     public DonationEventRegistrationDto registerForEvent(UUID eventId, String clientIp, String userAgent) {
+        return registerForEvent(eventId, null, clientIp, userAgent);
+    }
+
+    @Transactional
+    public DonationEventRegistrationDto registerForEvent(
+            UUID eventId,
+            RegisterParticipantRequest participantRequest,
+            String clientIp,
+            String userAgent) {
+
         UUID currentUserId = SecurityUtils.getCurrentUserId()
                 .orElseThrow(() -> new UnauthorizedSessionAccessException("Authentication is required to register for an event."));
 
@@ -73,6 +84,19 @@ public class DonationEventRegistrationService {
         }
         if (now.isAfter(event.getRegistrationCloseAt())) {
             throw new EventRegistrationClosedException("Registration for this donation camp is closed.");
+        }
+
+        // Validate participant criteria if form provided
+        if (participantRequest != null) {
+            if (participantRequest.getDateOfBirth() != null) {
+                int age = java.time.Period.between(participantRequest.getDateOfBirth(), java.time.LocalDate.now()).getYears();
+                if (age < 18) {
+                    throw new ValidationException("Participant must be at least 18 years old to register for a donation camp.");
+                }
+            }
+            if (!Boolean.TRUE.equals(participantRequest.getConsentConfirmed())) {
+                throw new ValidationException("Participant consent confirmation is required to register.");
+            }
         }
 
         Optional<DonationEventRegistration> existingOpt = registrationRepository.findByEventIdAndDonorUserId(eventId, currentUserId);
@@ -102,6 +126,8 @@ public class DonationEventRegistrationService {
                 existing.setRegisteredAt(now);
                 existing.setCancelledAt(null);
                 existing.setUpdatedAt(now);
+                populateParticipantDetails(existing, participantRequest, user);
+
                 DonationEventRegistration reactivated = registrationRepository.saveAndFlush(existing);
 
                 auditService.logAuthEvent(
@@ -131,6 +157,7 @@ public class DonationEventRegistrationService {
 
         DonationEventRegistration registration = new DonationEventRegistration(
                 eventId, currentUserId, DonationEventRegistrationStatus.REGISTERED);
+        populateParticipantDetails(registration, participantRequest, user);
 
         try {
             DonationEventRegistration saved = registrationRepository.saveAndFlush(registration);
@@ -152,6 +179,28 @@ public class DonationEventRegistrationService {
             }
             log.error("Data integrity violation during registration for event {} by user {}: {}", eventId, currentUserId, ex.getMessage());
             throw ex;
+        }
+    }
+
+    private void populateParticipantDetails(DonationEventRegistration reg, RegisterParticipantRequest req, User user) {
+        if (req != null) {
+            reg.setParticipantName(req.getFullName().trim());
+            reg.setParticipantDob(req.getDateOfBirth());
+            reg.setParticipantPhone(req.getPhone().trim());
+            reg.setParticipantEmail(req.getEmail().trim().toLowerCase());
+            reg.setParticipantBloodGroup(req.getBloodGroup().trim());
+            reg.setParticipantAddress(req.getAddress().trim());
+            reg.setParticipantCity(req.getCity().trim());
+            reg.setEmergencyContactName(req.getEmergencyContactName().trim());
+            reg.setEmergencyContactPhone(req.getEmergencyContactPhone().trim());
+            reg.setConsentConfirmed(Boolean.TRUE.equals(req.getConsentConfirmed()));
+            reg.setConsentTimestamp(Instant.now());
+        } else {
+            reg.setParticipantName(user.getFullName());
+            reg.setParticipantEmail(user.getEmail());
+            reg.setParticipantPhone(user.getPhone());
+            reg.setConsentConfirmed(true);
+            reg.setConsentTimestamp(Instant.now());
         }
     }
 
@@ -305,7 +354,12 @@ public class DonationEventRegistrationService {
                 r.getRegisteredAt(),
                 r.getCancelledAt(),
                 r.getCheckedInAt(),
-                r.getCompletedAt()
+                r.getCompletedAt(),
+                r.getParticipantName(),
+                r.getParticipantBloodGroup(),
+                r.getParticipantCity(),
+                r.isConsentConfirmed(),
+                r.getConsentTimestamp()
         );
     }
 }

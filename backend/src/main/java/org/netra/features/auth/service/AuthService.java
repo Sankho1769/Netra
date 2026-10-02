@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -41,6 +42,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuditService auditService;
+    private final EmailVerificationService emailVerificationService;
+    private final boolean requireEmailVerification;
     private final long refreshTokenValidityDays;
     private final long accessTokenValiditySeconds;
 
@@ -50,6 +53,8 @@ public class AuthService {
             PasswordEncoder passwordEncoder,
             JwtTokenProvider jwtTokenProvider,
             AuditService auditService,
+            EmailVerificationService emailVerificationService,
+            @Value("${netra.security.auth.require-email-verification:true}") boolean requireEmailVerification,
             @Value("${netra.security.jwt.refresh-token-validity-days:7}") long refreshTokenValidityDays,
             @Value("${netra.security.jwt.access-token-validity-seconds:900}") long accessTokenValiditySeconds) {
         this.userRepository = userRepository;
@@ -57,6 +62,8 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
         this.auditService = auditService;
+        this.emailVerificationService = emailVerificationService;
+        this.requireEmailVerification = requireEmailVerification;
         this.refreshTokenValidityDays = refreshTokenValidityDays;
         this.accessTokenValiditySeconds = accessTokenValiditySeconds;
     }
@@ -66,7 +73,24 @@ public class AuthService {
         validatePasswordPolicy(request.getPassword());
 
         String normalizedEmail = request.getEmail().trim().toLowerCase();
-        if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
+        Optional<User> existingUserOpt = userRepository.findByEmailIgnoreCase(normalizedEmail);
+        if (existingUserOpt.isPresent()) {
+            User existing = existingUserOpt.get();
+            if (existing.getStatus() == UserStatus.UNVERIFIED) {
+                if (requireEmailVerification) {
+                    emailVerificationService.sendVerificationChallenge(existing);
+                }
+                Set<String> roleNames = existing.getRoles().stream().map(Enum::name).collect(Collectors.toSet());
+                UserSummaryDto summary = new UserSummaryDto(
+                        existing.getId(),
+                        existing.getFullName(),
+                        existing.getEmail(),
+                        existing.getPhone(),
+                        roleNames,
+                        existing.getStatus().name()
+                );
+                return new AuthResponse(null, null, 0, summary);
+            }
             // Generic failure to prevent account enumeration
             throw new DuplicateEmailException("An account with this email address already exists.");
         }
@@ -97,7 +121,30 @@ public class AuthService {
                 Set.of(UserRole.ROLE_DONOR)
         );
 
+        if (requireEmailVerification) {
+            user.setStatus(UserStatus.UNVERIFIED);
+        } else {
+            user.setStatus(UserStatus.ACTIVE);
+            user.setEmailVerifiedAt(Instant.now());
+        }
+
         user = userRepository.save(user);
+
+        if (requireEmailVerification) {
+            emailVerificationService.sendVerificationChallenge(user);
+            auditService.logAuthEvent("REGISTER", user.getId(), clientIp, userAgent, "Status=UNVERIFIED");
+
+            Set<String> roleNames = user.getRoles().stream().map(Enum::name).collect(Collectors.toSet());
+            UserSummaryDto summary = new UserSummaryDto(
+                    user.getId(),
+                    user.getFullName(),
+                    user.getEmail(),
+                    user.getPhone(),
+                    roleNames,
+                    user.getStatus().name()
+            );
+            return new AuthResponse(null, null, 0, summary);
+        }
 
         // Create initial refresh session family
         String rawRefreshToken = SecurityUtils.generateSecureToken();
@@ -146,6 +193,11 @@ public class AuthService {
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             auditService.logAuthEvent("LOGIN_FAILURE", user.getId(), clientIp, userAgent, "BadPassword");
             throw new InvalidCredentialsException();
+        }
+
+        if (user.getStatus() == UserStatus.UNVERIFIED) {
+            auditService.logAuthEvent("LOGIN_BLOCKED", user.getId(), clientIp, userAgent, "Status=UNVERIFIED");
+            throw new AccountNotVerifiedException(user.getEmail(), "Account created. Verify your email to continue.");
         }
 
         if (user.getStatus() == UserStatus.SUSPENDED) {
@@ -299,6 +351,59 @@ public class AuthService {
     public void logoutAll(UUID currentUserId, String clientIp, String userAgent) {
         refreshSessionRepository.revokeAllForUser(currentUserId, Instant.now());
         auditService.logAuthEvent("LOGOUT_ALL", currentUserId, clientIp, userAgent, null);
+    }
+
+    @Transactional
+    public AuthResponse verifyEmail(VerifyEmailRequest request, String clientIp, String userAgent) {
+        User user = emailVerificationService.verifyCode(request.getEmail(), request.getCode());
+
+        // Create initial refresh session family
+        String rawRefreshToken = SecurityUtils.generateSecureToken();
+        String tokenHash = SecurityUtils.sha256Hex(rawRefreshToken);
+        UUID familyId = UUID.randomUUID();
+        Instant expiresAt = Instant.now().plus(refreshTokenValidityDays, ChronoUnit.DAYS);
+
+        RefreshSession session = new RefreshSession(
+                user,
+                tokenHash,
+                familyId,
+                null,
+                expiresAt,
+                auditService.hashIp(clientIp),
+                userAgent,
+                null
+        );
+        refreshSessionRepository.save(session);
+
+        auditService.logAuthEvent("EMAIL_VERIFIED_LOGIN", user.getId(), clientIp, userAgent, "FamilyId=" + familyId);
+
+        Set<String> roleNames = user.getRoles().stream().map(Enum::name).collect(Collectors.toSet());
+        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), roleNames);
+
+        UserSummaryDto summary = new UserSummaryDto(
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getPhone(),
+                roleNames,
+                user.getStatus().name()
+        );
+
+        return new AuthResponse(accessToken, rawRefreshToken, accessTokenValiditySeconds, summary);
+    }
+
+    @Transactional
+    public void resendVerification(ResendVerificationRequest request, String clientIp, String userAgent) {
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
+        User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("No account found for email: " + normalizedEmail));
+
+        if (user.getStatus() == UserStatus.ACTIVE) {
+            throw new ValidationException("This account is already verified. Please sign in.");
+        }
+
+        emailVerificationService.sendVerificationChallenge(user);
+        auditService.logAuthEvent("VERIFICATION_RESENT", user.getId(), clientIp, userAgent, "Email=" + normalizedEmail);
     }
 
     @Transactional(readOnly = true)

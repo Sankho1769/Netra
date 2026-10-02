@@ -67,6 +67,17 @@ class ForbiddenException extends UnauthorizedException {
   ]) : super(message, correlationId, 403);
 }
 
+/// Thrown on HTTP 403 when user account email has not yet been verified.
+class AccountNotVerifiedException extends NetworkException {
+  final String? email;
+
+  const AccountNotVerifiedException(
+    String message, {
+    this.email,
+    String? correlationId,
+  }) : super(message, statusCode: 403, correlationId: correlationId);
+}
+
 /// Thrown on HTTP 404 Not Found.
 class NotFoundException extends NetworkException {
   const NotFoundException([
