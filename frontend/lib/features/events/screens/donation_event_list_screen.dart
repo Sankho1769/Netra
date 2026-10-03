@@ -68,26 +68,17 @@ class _DonationEventListScreenState extends State<DonationEventListScreen> {
           ),
           content: const Text(
             'Under National Blood Transfusion Council (NBTC) safety regulations, donation camps must be organized by licensed blood banks or certified administrative authorities.\n\n'
-            'If you represent an accredited blood center, please log in with your Blood Bank account.\n\n'
+            'Only authorized blood-bank organizations and approved administrators can create donation camps.\n\n'
             'Donors can discover and register for any upcoming camp across all verified centers.',
             style: TextStyle(fontSize: 13, height: 1.4),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Close'),
-            ),
-            TextButton(
               onPressed: () {
                 Navigator.pop(ctx);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const CreateDonationEventScreen(),
-                  ),
-                );
+                _showSupportInfo(context);
               },
-              child: const Text('Partner Drive Form'),
+              child: const Text('Contact Support'),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
@@ -103,6 +94,47 @@ class _DonationEventListScreenState extends State<DonationEventListScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const CreateDonationEventScreen()),
+    );
+  }
+
+  void _showSupportInfo(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.support_agent, color: Color(0xFFDC2626)),
+            SizedBox(width: 8),
+            Text('Organizer Support', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Are you a licensed blood bank representative or looking to partner on a donation drive?',
+              style: TextStyle(fontSize: 13, height: 1.4),
+            ),
+            SizedBox(height: 12),
+            Text('• Email: support@netra.org', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            SizedBox(height: 4),
+            Text('• Verification Desk: 1800-NETRA-HELP', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            SizedBox(height: 8),
+            Text(
+              'Our medical council team verifies clinical accreditation within 24 business hours.',
+              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
     );
   }
 

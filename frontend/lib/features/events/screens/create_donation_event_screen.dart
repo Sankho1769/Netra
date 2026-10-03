@@ -9,11 +9,16 @@ import '../../../common/widgets/netra_button.dart';
 import '../../../common/widgets/netra_text_field.dart';
 import '../../bloodbank/models/blood_bank.dart';
 import '../../bloodbank/services/bloodbank_api_service.dart';
-import '../../blood_request/widgets/hospital_search_field.dart';
 import '../../auth/state/auth_scope.dart';
 import '../state/donation_event_controller.dart';
 import 'donation_event_details_screen.dart';
 
+enum LocationSource {
+  none,
+  deviceGps,
+  verifiedBloodCenter,
+  manual,
+}
 
 class CreateDonationEventScreen extends StatefulWidget {
   final String? initialBloodBankId;
@@ -34,7 +39,7 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
   final _formKey = GlobalKey<FormState>();
   late final DonationEventController _controller;
 
-  // Form field controllers
+  // Form field controllers - Start completely empty (No fake/default business data)
   late final TextEditingController _bloodBankIdController;
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -43,25 +48,25 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _stateController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
-  final TextEditingController _capacityController =
-      TextEditingController(text: '50');
+  final TextEditingController _capacityController = TextEditingController();
 
   // Coordinated venue location
   double? _latitude;
   double? _longitude;
+  LocationSource _locationSource = LocationSource.none;
   bool _isLocating = false;
   final LocationService _locationService = DefaultLocationService();
 
-  // Date and time state
-  DateTime _startAt = DateTime.now().add(const Duration(days: 7, hours: 9));
-  DateTime _endAt = DateTime.now().add(const Duration(days: 7, hours: 17));
-  DateTime _regOpenAt = DateTime.now();
-  DateTime _regCloseAt = DateTime.now().add(const Duration(days: 7, hours: 8));
+  // Date and time state - Explicitly chosen by user (starts null)
+  DateTime? _startAt;
+  DateTime? _endAt;
+  DateTime? _regOpenAt;
+  DateTime? _regCloseAt;
 
   bool _submitForReviewImmediately = false;
 
   List<BloodBankSummary> _availableBloodBanks = [];
-  bool _isLoadingBloodBanks = false;
+  bool _isLoadingBloodBanks = true;
   BloodBankSummary? _selectedBloodBank;
 
   @override
@@ -70,49 +75,48 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
     _controller = widget.controller ?? DonationEventController();
     _bloodBankIdController =
         TextEditingController(text: widget.initialBloodBankId ?? '');
+    _titleController.addListener(_onFormFieldChanged);
+    _venueNameController.addListener(_onFormFieldChanged);
+    _addressController.addListener(_onFormFieldChanged);
+    _cityController.addListener(_onFormFieldChanged);
+    _stateController.addListener(_onFormFieldChanged);
+    _postalCodeController.addListener(_onFormFieldChanged);
+    _capacityController.addListener(_onFormFieldChanged);
     _loadAvailableBloodBanks();
   }
 
+  void _onFormFieldChanged() {
+    if (mounted) setState(() {});
+  }
+
   Future<void> _loadAvailableBloodBanks() async {
-    setState(() => _isLoadingBloodBanks = true);
     try {
-      final banks = await BloodBankApiService().discoverBloodBanks(size: 50);
+      final api = BloodBankApiService();
+      List<BloodBankSummary> banks = [];
+      try {
+        banks = await api.getManagedBloodBanks();
+      } catch (_) {
+        // Fallback for admin or unlinked
+      }
+      if (banks.isEmpty) {
+        try {
+          banks = await api.discoverBloodBanks(size: 50);
+        } catch (_) {}
+      }
+
       if (mounted) {
+        final uniqueBanks = {for (final b in banks) b.id: b}.values.toList();
         setState(() {
-          _availableBloodBanks = banks;
+          _availableBloodBanks = uniqueBanks;
           _isLoadingBloodBanks = false;
           if (_bloodBankIdController.text.isNotEmpty) {
-            final match = banks.where((b) => b.id == _bloodBankIdController.text);
+            final match = uniqueBanks.where((b) => b.id == _bloodBankIdController.text);
             if (match.isNotEmpty) {
               _selectedBloodBank = match.first;
             }
-          } else if (banks.isNotEmpty) {
-            final firstBank = banks.first;
-            _selectedBloodBank = firstBank;
-            _bloodBankIdController.text = firstBank.id;
-            if (_titleController.text.isEmpty) {
-              _titleController.text = 'Community Blood Donation Drive';
-            }
-            if (_venueNameController.text.isEmpty) {
-              _venueNameController.text = '${firstBank.name} Auditorium';
-            }
-            if (_addressController.text.isEmpty) {
-              _addressController.text = firstBank.address;
-            }
-            if (_cityController.text.isEmpty) {
-              _cityController.text = firstBank.city;
-            }
-            if (_stateController.text.isEmpty) {
-              _stateController.text = firstBank.state;
-            }
-            if (_postalCodeController.text.isEmpty) {
-              _postalCodeController.text = firstBank.postalCode;
-            }
-            if (firstBank.latitude != null && firstBank.longitude != null) {
-              _latitude = firstBank.latitude;
-              _longitude = firstBank.longitude;
-            }
           }
+          // Intentionally DO NOT auto-fill title, venue, address, or dates!
+          // Fresh form starts completely clean.
         });
       }
     } catch (_) {
@@ -120,9 +124,15 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
     }
   }
 
-
   @override
   void dispose() {
+    _titleController.removeListener(_onFormFieldChanged);
+    _venueNameController.removeListener(_onFormFieldChanged);
+    _addressController.removeListener(_onFormFieldChanged);
+    _cityController.removeListener(_onFormFieldChanged);
+    _stateController.removeListener(_onFormFieldChanged);
+    _postalCodeController.removeListener(_onFormFieldChanged);
+    _capacityController.removeListener(_onFormFieldChanged);
     _bloodBankIdController.dispose();
     _titleController.dispose();
     _descriptionController.dispose();
@@ -138,18 +148,24 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
     super.dispose();
   }
 
-  Future<DateTime?> _pickDateTime(DateTime initialDate) async {
+  Future<DateTime?> _pickDateTime(DateTime? currentValue) async {
+    final now = DateTime.now();
+    final initialDate = currentValue ?? now;
     final date = await showDatePicker(
       context: context,
-      initialDate: initialDate,
-      firstDate: DateTime.now().subtract(const Duration(days: 1)),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDate: initialDate.isBefore(now) ? now : initialDate,
+      firstDate: now.subtract(const Duration(days: 1)),
+      lastDate: now.add(const Duration(days: 365)),
     );
     if (date == null || !mounted) return null;
 
+    final initialTime = currentValue != null
+        ? TimeOfDay.fromDateTime(currentValue)
+        : const TimeOfDay(hour: 9, minute: 0);
+
     final time = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(initialDate),
+      initialTime: initialTime,
     );
     if (time == null) return null;
 
@@ -164,23 +180,32 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
       if (result.isSuccess && result.location != null && mounted) {
         final loc = result.location!;
         setState(() {
-          if (loc.city != null && _cityController.text.trim().isEmpty) {
-            _cityController.text = loc.city!;
+          if (loc.address != null && loc.address!.trim().isNotEmpty) {
+            _addressController.text = loc.address!.trim();
           }
-          if (loc.state != null && _stateController.text.trim().isEmpty) {
-            _stateController.text = loc.state!;
+          if (loc.city != null && loc.city!.trim().isNotEmpty) {
+            _cityController.text = loc.city!.trim();
           }
-          if (loc.postalCode != null &&
-              _postalCodeController.text.trim().isEmpty) {
-            _postalCodeController.text = loc.postalCode!;
+          if (loc.state != null && loc.state!.trim().isNotEmpty) {
+            _stateController.text = loc.state!.trim();
           }
-          if (loc.latitude != null) _latitude = loc.latitude;
-          if (loc.longitude != null) _longitude = loc.longitude;
+          if (loc.postalCode != null && loc.postalCode!.trim().isNotEmpty) {
+            _postalCodeController.text = loc.postalCode!.trim();
+          }
+          _latitude = loc.latitude;
+          _longitude = loc.longitude;
+          _locationSource = LocationSource.deviceGps;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Venue location coordinates detected successfully.'),
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white, size: 18),
+                SizedBox(width: 8),
+                Text('Location detected from device GPS.'),
+              ],
+            ),
             backgroundColor: Color(0xFF16A34A),
           ),
         );
@@ -202,7 +227,7 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text(
-                  'Device location is turned off. Please enable GPS in device settings.'),
+                  'Device GPS is turned off. Please enable location services in device settings.'),
               backgroundColor: const Color(0xFFD97706),
               action: SnackBarAction(
                 label: 'Turn On',
@@ -228,7 +253,7 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(result.errorMessage ??
-                  'Location unavailable. Please select a verified venue.'),
+                  'Location unavailable. Please enter address manually.'),
               backgroundColor: const Color(0xFFD97706),
               action: SnackBarAction(
                 label: 'Retry',
@@ -244,67 +269,113 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
     }
   }
 
+  void _applyVerifiedBloodCenterLocation(BloodBankSummary bank) {
+    setState(() {
+      _selectedBloodBank = bank;
+      _bloodBankIdController.text = bank.id;
+      _venueNameController.text = bank.name;
+      _addressController.text = bank.address;
+      _cityController.text = bank.city;
+      _stateController.text = bank.state;
+      _postalCodeController.text = bank.postalCode;
+      _latitude = bank.latitude;
+      _longitude = bank.longitude;
+      _locationSource = LocationSource.verifiedBloodCenter;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Applied verified address and coordinates for ${bank.name}.'),
+        backgroundColor: const Color(0xFF2563EB),
+      ),
+    );
+  }
+
   Future<void> _handleCreate() async {
     _controller.clearMessages();
 
     final user = AuthScope.maybeOf(context)?.currentUser;
     if (user != null && !user.isAdmin && !user.isBloodBank) {
-      _showError('Permission Denied (403): Only authorized Blood Bank or Administrator accounts can host donation camps.');
+      _showError('Only authorized blood-bank organizations and approved administrators can create donation camps.');
       return;
     }
 
     if (_bloodBankIdController.text.trim().isEmpty) {
-      _showError('Blood Bank ID is required');
+      _showError('Please select an authorized partner blood centre.');
       return;
     }
     if (_titleController.text.trim().isEmpty) {
-      _showError('Camp Title is required');
+      _showError('Camp title is required.');
       return;
     }
     if (_venueNameController.text.trim().isEmpty) {
-      _showError('Venue Name is required');
+      _showError('Venue name is required.');
       return;
     }
     if (_addressController.text.trim().isEmpty) {
-      _showError('Address is required');
+      _showError('Street address is required.');
       return;
     }
     if (_cityController.text.trim().isEmpty) {
-      _showError('City is required');
+      _showError('City is required.');
       return;
     }
     if (_stateController.text.trim().isEmpty) {
-      _showError('State is required');
+      _showError('State is required.');
       return;
     }
     if (_postalCodeController.text.trim().isEmpty) {
-      _showError('Postal code is required');
+      _showError('Postal code (PIN) is required.');
       return;
     }
 
     if (_latitude == null || _longitude == null) {
-      _showError('Venue coordinates are required. Please tap "Detect Location" or select a verified blood centre.');
+      _showError('Venue coordinates are required. Tap "Detect Location" to attach GPS or select a verified blood centre.');
       return;
     }
 
+    if (_capacityController.text.trim().isEmpty) {
+      _showError('Please enter maximum donor capacity.');
+      return;
+    }
     final capacity = int.tryParse(_capacityController.text.trim());
     if (capacity == null || capacity < 1) {
-      _showError('Capacity must be at least 1');
+      _showError('Donor capacity must be a positive number of at least 1.');
       return;
     }
 
-    // Time validation
-    if (!_startAt.isBefore(_endAt)) {
-      _showError('Event start time must be before event end time');
+    // Explicit date selection validations
+    if (_regOpenAt == null) {
+      _showError('Please select Registration Open date and time.');
       return;
     }
-    if (!_regOpenAt.isBefore(_regCloseAt)) {
-      _showError(
-          'Registration open time must be before registration close time');
+    if (_regCloseAt == null) {
+      _showError('Please select Registration Close date and time.');
       return;
     }
-    if (_regCloseAt.isAfter(_endAt)) {
-      _showError('Registration cannot close after the event ends');
+    if (_startAt == null) {
+      _showError('Please select Camp Start date and time.');
+      return;
+    }
+    if (_endAt == null) {
+      _showError('Please select Camp End date and time.');
+      return;
+    }
+
+    if (!_regOpenAt!.isBefore(_regCloseAt!)) {
+      _showError('Registration open time must be before registration close time.');
+      return;
+    }
+    if (_regCloseAt!.isAfter(_startAt!)) {
+      _showError('Registration must close before or when the camp starts.');
+      return;
+    }
+    if (!_startAt!.isBefore(_endAt!)) {
+      _showError('Camp start time must be before camp end time.');
+      return;
+    }
+    if (_endAt!.isBefore(DateTime.now())) {
+      _showError('Camp end time cannot be in the past.');
       return;
     }
 
@@ -321,10 +392,10 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
       'postalCode': _postalCodeController.text.trim(),
       'latitude': _latitude!,
       'longitude': _longitude!,
-      'startAt': _startAt.toUtc().toIso8601String(),
-      'endAt': _endAt.toUtc().toIso8601String(),
-      'registrationOpenAt': _regOpenAt.toUtc().toIso8601String(),
-      'registrationCloseAt': _regCloseAt.toUtc().toIso8601String(),
+      'startAt': _startAt!.toUtc().toIso8601String(),
+      'endAt': _endAt!.toUtc().toIso8601String(),
+      'registrationOpenAt': _regOpenAt!.toUtc().toIso8601String(),
+      'registrationCloseAt': _regCloseAt!.toUtc().toIso8601String(),
       'donorCapacity': capacity,
     };
 
@@ -381,37 +452,71 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
         '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
+  void _showSupportInfo(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.support_agent, color: NetraColors.primaryRed),
+            SizedBox(width: 8),
+            Text('Organizer Support', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Are you a licensed blood bank representative or organizing an institutional blood drive?',
+              style: TextStyle(fontSize: 13, height: 1.4),
+            ),
+            SizedBox(height: 12),
+            Text('• Email: support@netra.org', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            SizedBox(height: 4),
+            Text('• Verification Desk: 1800-NETRA-HELP', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            SizedBox(height: 8),
+            Text(
+              'Under NBTC clinical standards, all drives require accredited oversight before scheduling.',
+              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: NetraColors.primaryRed),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        final screenWidth = MediaQuery.of(context).size.width;
-        final isDesktop = screenWidth >= ResponsiveBreakpoints.tablet;
+    final user = AuthScope.maybeOf(context)?.currentUser;
+    final bool isAuthorized = user != null && (user.isAdmin || user.isBloodBank);
 
-        return ResponsiveScaffold(
-          title: 'Create Donation Camp',
-          body: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(
-              horizontal: isDesktop ? 48.0 : 16.0,
-              vertical: 24.0,
-            ),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 720),
-                child: Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
-                    side: const BorderSide(color: NetraColors.borderGray),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
+    if (!isAuthorized) {
+      return _buildUnauthorizedScreen(context);
+    }
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= ResponsiveBreakpoints.tablet;
+
+    return ResponsiveScaffold(
+      title: 'Create Donation Camp',
+      body: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(
+          horizontal: isDesktop ? 48.0 : 16.0,
+          vertical: 20.0,
+        ),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
                           Text(
                             'Organize a Blood Donation Camp',
                             style: NetraTypography.headlineSmall.copyWith(
@@ -428,71 +533,35 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                             ),
                           ),
                           const Divider(height: 32),
-                          if (AuthScope.maybeOf(context)?.currentUser != null) ...[
-                            Builder(
-                              builder: (context) {
-                                final user = AuthScope.maybeOf(context)!.currentUser!;
-                                final isAuthorized = user.isAdmin || user.isBloodBank;
-                                if (isAuthorized) {
-                                  return Container(
-                                    margin: const EdgeInsets.only(bottom: 20),
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF0FDF4),
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(color: const Color(0xFF86EFAC)),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.verified_user, color: Color(0xFF16A34A), size: 20),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Text(
-                                            'Authorized Host: ${user.fullName.isNotEmpty ? user.fullName : user.email} (${user.roles.where((r) => r.contains('ADMIN') || r.contains('BLOODBANK')).join(', ')})',
-                                            style: const TextStyle(
-                                              color: Color(0xFF166534),
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                } else {
-                                  return Container(
-                                    margin: const EdgeInsets.only(bottom: 20),
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFFFBEB),
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(color: const Color(0xFFFDE68A)),
-                                    ),
-                                    child: const Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Icon(Icons.info_outline, color: Color(0xFFD97706), size: 20),
-                                        SizedBox(width: 10),
-                                        Expanded(
-                                          child: Text(
-                                            'Clinical Safety Notice: Under NBTC guidelines, camps require supervision from a licensed blood centre. Select a partner blood bank below to coordinate the drive.',
-                                            style: TextStyle(
-                                              color: Color(0xFF92400E),
-                                              fontSize: 12,
-                                              height: 1.4,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
-                          ],
 
-                          // Blood Bank Selection
+                          // Authorization Badge
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFF86EFAC)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.verified_user, color: Color(0xFF16A34A), size: 20),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Authorized Host: ${user.fullName.isNotEmpty ? user.fullName : user.email} (${user.roles.where((r) => r.contains('ADMIN') || r.contains('BLOODBANK')).join(', ')})',
+                                    style: const TextStyle(
+                                      color: Color(0xFF166534),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // 1. Blood Center Selection
                           if (_isLoadingBloodBanks) ...[
                             const Padding(
                               padding: EdgeInsets.symmetric(vertical: 12),
@@ -504,7 +573,7 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                                     child: CircularProgressIndicator(strokeWidth: 2),
                                   ),
                                   SizedBox(width: 12),
-                                  Text('Loading verified blood centers...'),
+                                  Text('Loading verified blood centres...'),
                                 ],
                               ),
                             ),
@@ -513,7 +582,7 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Partner Blood Bank *',
+                                  'Partner Blood Centre *',
                                   style: NetraTypography.labelMedium.copyWith(
                                     color: NetraColors.textPrimary,
                                     fontWeight: FontWeight.w600,
@@ -528,13 +597,15 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                                     borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
                                   ),
                                   child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<BloodBankSummary>(
-                                      value: _selectedBloodBank,
+                                    child: DropdownButton<String>(
+                                      value: _availableBloodBanks.any((b) => b.id == _selectedBloodBank?.id)
+                                          ? _selectedBloodBank?.id
+                                          : null,
                                       isExpanded: true,
-                                      hint: const Text('Select a partner blood bank'),
+                                      hint: const Text('Select verified partner blood centre'),
                                       items: _availableBloodBanks.map((bank) {
-                                        return DropdownMenuItem<BloodBankSummary>(
-                                          value: bank,
+                                        return DropdownMenuItem<String>(
+                                          value: bank.id,
                                           child: Text(
                                             '${bank.name} (${bank.city})',
                                             style: NetraTypography.bodyMedium,
@@ -542,29 +613,41 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                                           ),
                                         );
                                       }).toList(),
-                                      onChanged: (bank) {
-                                        if (bank != null) {
+                                      onChanged: (selectedId) {
+                                        if (selectedId != null) {
+                                          final bank = _availableBloodBanks.firstWhere(
+                                            (b) => b.id == selectedId,
+                                            orElse: () => _availableBloodBanks.first,
+                                          );
                                           setState(() {
                                             _selectedBloodBank = bank;
                                             _bloodBankIdController.text = bank.id;
-                                            _venueNameController.text = '${bank.name} Auditorium';
-                                            _addressController.text = bank.address;
-                                            _cityController.text = bank.city;
-                                            _stateController.text = bank.state;
-                                            _postalCodeController.text = bank.postalCode;
-                                            if (bank.latitude != null && bank.longitude != null) {
-                                              _latitude = bank.latitude;
-                                              _longitude = bank.longitude;
-                                            }
                                           });
                                         }
                                       },
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 6),
+                                if (_selectedBloodBank != null) ...[
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: TextButton.icon(
+                                      style: TextButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                      icon: const Icon(Icons.location_city, size: 16, color: Color(0xFF2563EB)),
+                                      label: const Text(
+                                        'Use Blood Center Location & Venue',
+                                        style: TextStyle(fontSize: 12, color: Color(0xFF2563EB), fontWeight: FontWeight.w600),
+                                      ),
+                                      onPressed: () => _applyVerifiedBloodCenterLocation(_selectedBloodBank!),
+                                    ),
+                                  ),
+                                ],
                                 Text(
-                                  'Verified blood center overseeing clinical collection and safety standards.',
+                                  'Licensed centre overseeing clinical collection and safety standards.',
                                   style: NetraTypography.bodySmall.copyWith(
                                     color: NetraColors.textSecondary,
                                     fontSize: 11,
@@ -575,32 +658,31 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                           ] else ...[
                             NetraTextField(
                               label: 'Blood Bank ID *',
-                              hint: 'e.g. e1d1e0b6-023f-4851-8de6-a4d4cceeac90',
+                              hint: 'Enter authorized blood bank UUID',
                               controller: _bloodBankIdController,
                               helperText: 'UUID of your authorized blood bank',
                             ),
                           ],
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 18),
 
-                          // Camp Title
+                          // 2. Camp Title
                           NetraTextField(
                             label: 'Camp Title *',
-                            hint: 'e.g. Annual Community Blood Donation Drive',
+                            hint: 'Enter camp name (e.g. Annual Community Blood Drive)',
                             controller: _titleController,
                           ),
                           const SizedBox(height: 16),
 
-                          // Description
+                          // 3. Description
                           NetraTextField(
                             label: 'Description',
-                            hint:
-                                'Information about the drive, partners, amenities provided...',
+                            hint: 'Information about the drive, facilities, special instructions...',
                             controller: _descriptionController,
                             maxLines: 3,
                           ),
                           const SizedBox(height: 24),
 
-                          // Venue Details
+                          // 4. Venue & Location
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -611,51 +693,49 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                                   color: NetraColors.primaryRed,
                                 ),
                               ),
-                              TextButton.icon(
+                              OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size(0, 36),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  visualDensity: VisualDensity.compact,
+                                  side: const BorderSide(color: Color(0xFF16A34A)),
+                                  foregroundColor: const Color(0xFF16A34A),
+                                ),
                                 onPressed: _isLocating ? null : _detectLocation,
                                 icon: _isLocating
                                     ? const SizedBox(
                                         width: 14,
                                         height: 14,
                                         child: CircularProgressIndicator(
-                                            strokeWidth: 2),
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF16A34A)),
+                                        ),
                                       )
-                                    : const Icon(Icons.my_location_rounded,
-                                        size: 16),
-                                label: const Text('Detect Location',
-                                    style: TextStyle(fontSize: 12)),
+                                    : const Icon(Icons.my_location_rounded, size: 16),
+                                label: Text(
+                                  _isLocating ? 'Detecting...' : 'Detect Location',
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                ),
                               ),
                             ],
                           ),
+                          const SizedBox(height: 8),
+
+                          // Location Source Indicator Banner
+                          _buildLocationSourceBanner(),
                           const SizedBox(height: 12),
 
-                          HospitalSearchField(
+                          NetraTextField(
+                            label: 'Venue Name *',
+                            hint: 'Enter venue name (e.g. Community Centre / Town Hall)',
                             controller: _venueNameController,
-                            onHospitalSelected: (hospital) {
-                              setState(() {
-                                if (hospital != null) {
-                                  _venueNameController.text = hospital.name;
-                                  _addressController.text = hospital.address;
-                                  _cityController.text = hospital.city;
-                                  _stateController.text = hospital.state;
-                                  if (hospital.postalCode != null) {
-                                    _postalCodeController.text =
-                                        hospital.postalCode!;
-                                  }
-                                  _latitude = hospital.latitude;
-                                  _longitude = hospital.longitude;
-                                } else {
-                                  _latitude = null;
-                                  _longitude = null;
-                                }
-                              });
-                            },
+                            helperText: 'GPS detects coordinates; organizer enters exact venue name',
                           ),
                           const SizedBox(height: 16),
 
                           NetraTextField(
                             label: 'Street Address *',
-                            hint: 'e.g. 102 Sector 4, Hospital Road',
+                            hint: 'Enter street address',
                             controller: _addressController,
                           ),
                           const SizedBox(height: 16),
@@ -666,7 +746,7 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                                 flex: 2,
                                 child: NetraTextField(
                                   label: 'City *',
-                                  hint: 'e.g. Kolkata, Delhi',
+                                  hint: 'Enter city',
                                   controller: _cityController,
                                 ),
                               ),
@@ -675,7 +755,7 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                                 flex: 2,
                                 child: NetraTextField(
                                   label: 'State *',
-                                  hint: 'e.g. West Bengal',
+                                  hint: 'Enter state',
                                   controller: _stateController,
                                 ),
                               ),
@@ -684,76 +764,29 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                                 flex: 1,
                                 child: NetraTextField(
                                   label: 'PIN *',
-                                  hint: 'e.g. 700020',
+                                  hint: 'Postal code',
                                   controller: _postalCodeController,
                                   keyboardType: TextInputType.number,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
-
-                          // Verified Coordinates Status Badge (Zero manual typing)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: _latitude != null && _longitude != null
-                                  ? const Color(0xFFF0FDF4)
-                                  : const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: _latitude != null && _longitude != null
-                                    ? const Color(0xFF86EFAC)
-                                    : const Color(0xFFCBD5E1),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _latitude != null && _longitude != null
-                                      ? Icons.check_circle_outline
-                                      : Icons.info_outline,
-                                  size: 16,
-                                  color: _latitude != null && _longitude != null
-                                      ? const Color(0xFF16A34A)
-                                      : const Color(0xFF64748B),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    _latitude != null && _longitude != null
-                                        ? 'Verified coordinates attached (${_latitude!.toStringAsFixed(3)}, ${_longitude!.toStringAsFixed(3)})'
-                                        : 'Search a verified venue above or tap "Detect Location" to attach GPS coordinates.',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: _latitude != null &&
-                                              _longitude != null
-                                          ? const Color(0xFF16A34A)
-                                          : const Color(0xFF64748B),
-                                    ),
-                                  ),
-                                ),
-                                if (_latitude != null && _longitude != null)
-                                  GestureDetector(
-                                    onTap: () => setState(() {
-                                      _latitude = null;
-                                      _longitude = null;
-                                    }),
-                                    child: const Icon(Icons.close,
-                                        size: 14, color: Color(0xFF64748B)),
-                                  ),
-                              ],
-                            ),
-                          ),
                           const SizedBox(height: 24),
 
-                          // Schedule & Capacity
+                          // 5. Schedule & Capacity
                           Text(
                             'Schedule & Capacity',
                             style: NetraTypography.titleMedium.copyWith(
                               fontWeight: FontWeight.bold,
                               color: NetraColors.primaryRed,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Under NBTC rules: Registration Open < Registration Close ≤ Camp Start < Camp End.',
+                            style: NetraTypography.bodySmall.copyWith(
+                              color: NetraColors.textSecondary,
+                              fontSize: 11,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -763,25 +796,28 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                             children: [
                               Expanded(
                                 child: _buildDateTimePickerTile(
-                                  label: 'Camp Starts',
+                                  label: 'Camp Starts *',
                                   value: _startAt,
+                                  placeholder: 'Select camp start',
                                   onTap: () async {
-                                    final picked =
-                                        await _pickDateTime(_startAt);
-                                    if (picked != null)
+                                    final picked = await _pickDateTime(_startAt);
+                                    if (picked != null) {
                                       setState(() => _startAt = picked);
+                                    }
                                   },
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: _buildDateTimePickerTile(
-                                  label: 'Camp Ends',
+                                  label: 'Camp Ends *',
                                   value: _endAt,
+                                  placeholder: 'Select camp end',
                                   onTap: () async {
                                     final picked = await _pickDateTime(_endAt);
-                                    if (picked != null)
+                                    if (picked != null) {
                                       setState(() => _endAt = picked);
+                                    }
                                   },
                                 ),
                               ),
@@ -794,26 +830,28 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                             children: [
                               Expanded(
                                 child: _buildDateTimePickerTile(
-                                  label: 'Registration Opens',
+                                  label: 'Registration Opens *',
                                   value: _regOpenAt,
+                                  placeholder: 'Select registration open',
                                   onTap: () async {
-                                    final picked =
-                                        await _pickDateTime(_regOpenAt);
-                                    if (picked != null)
+                                    final picked = await _pickDateTime(_regOpenAt);
+                                    if (picked != null) {
                                       setState(() => _regOpenAt = picked);
+                                    }
                                   },
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: _buildDateTimePickerTile(
-                                  label: 'Registration Closes',
+                                  label: 'Registration Closes *',
                                   value: _regCloseAt,
+                                  placeholder: 'Select registration close',
                                   onTap: () async {
-                                    final picked =
-                                        await _pickDateTime(_regCloseAt);
-                                    if (picked != null)
+                                    final picked = await _pickDateTime(_regCloseAt);
+                                    if (picked != null) {
                                       setState(() => _regCloseAt = picked);
+                                    }
                                   },
                                 ),
                               ),
@@ -823,10 +861,11 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
 
                           NetraTextField(
                             label: 'Donor Capacity (Max Slots) *',
+                            hint: 'Enter maximum donor capacity (e.g. 50, 100)',
                             controller: _capacityController,
                             keyboardType: TextInputType.number,
                             helperText:
-                                'Registration stops automatically when capacity is reached',
+                                'Registration stops automatically when capacity is reached.',
                           ),
                           const SizedBox(height: 16),
 
@@ -834,9 +873,13 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                           CheckboxListTile(
                             contentPadding: EdgeInsets.zero,
                             title: const Text(
-                                'Submit for admin review immediately after creation'),
+                              'Submit for admin review immediately after creation',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                            ),
                             subtitle: const Text(
-                                'If unchecked, camp remains in DRAFT state'),
+                              'If unchecked, camp remains in DRAFT state.',
+                              style: TextStyle(fontSize: 12),
+                            ),
                             value: _submitForReviewImmediately,
                             onChanged: (val) {
                               setState(() =>
@@ -845,32 +888,320 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
                           ),
                           const SizedBox(height: 24),
 
-                          NetraButton(
-                            text: 'Create Camp',
-                            isLoading: _controller.isActionLoading,
-                            icon: Icons.add_circle_outline,
-                            onPressed: _controller.isActionLoading
-                                ? null
-                                : _handleCreate,
+                          // 6. Review Summary Card Before Submit
+                          _buildReviewSummaryCard(),
+                          const SizedBox(height: 24),
+
+                          AnimatedBuilder(
+                            animation: _controller,
+                            builder: (context, _) => NetraButton(
+                              text: 'Create Camp',
+                              isLoading: _controller.isActionLoading,
+                              icon: Icons.add_circle_outline,
+                              onPressed: _controller.isActionLoading
+                                  ? null
+                                  : _handleCreate,
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
+        );
+  }
+
+  Widget _buildUnauthorizedScreen(BuildContext context) {
+    return ResponsiveScaffold(
+      title: 'Create Donation Camp',
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 580),
+            child: Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(NetraSpacing.radiusLg),
+                side: const BorderSide(color: NetraColors.borderGray),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFEF2F2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.admin_panel_settings_outlined,
+                        color: NetraColors.primaryRed,
+                        size: 48,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Create Donation Camp',
+                      style: NetraTypography.headlineSmall.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: NetraColors.textPrimary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Only authorized blood-bank organizations and approved administrators can create donation camps.',
+                      style: NetraTypography.bodyLarge.copyWith(
+                        color: NetraColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Under National Blood Transfusion Council (NBTC) regulations, blood donation drives require licensed clinical supervision and certified equipment. Regular donors and volunteer organizers cannot create camps directly.',
+                      style: NetraTypography.bodyMedium.copyWith(
+                        color: NetraColors.textSecondary,
+                        height: 1.4,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 28),
+                    NetraButton(
+                      text: 'Find Active Camps',
+                      icon: Icons.event_available,
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    NetraButton.outlined(
+                      text: 'Contact Support',
+                      icon: Icons.help_outline,
+                      onPressed: () => _showSupportInfo(context),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
-        );
-      },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationSourceBanner() {
+    final hasCoords = _latitude != null && _longitude != null;
+    Color bgColor;
+    Color borderColor;
+    Color textColor;
+    IconData icon;
+    String label;
+
+    switch (_locationSource) {
+      case LocationSource.deviceGps:
+        bgColor = const Color(0xFFF0FDF4);
+        borderColor = const Color(0xFF86EFAC);
+        textColor = const Color(0xFF16A34A);
+        icon = Icons.my_location_rounded;
+        label = 'Location detected from device (${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)})';
+        break;
+      case LocationSource.verifiedBloodCenter:
+        bgColor = const Color(0xFFEFF6FF);
+        borderColor = const Color(0xFF93C5FD);
+        textColor = const Color(0xFF2563EB);
+        icon = Icons.verified_rounded;
+        label = 'Verified Blood Center location attached (${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)})';
+        break;
+      default:
+        if (hasCoords) {
+          bgColor = const Color(0xFFF0FDF4);
+          borderColor = const Color(0xFF86EFAC);
+          textColor = const Color(0xFF16A34A);
+          icon = Icons.pin_drop_outlined;
+          label = 'Coordinates attached (${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)})';
+        } else {
+          bgColor = const Color(0xFFFFFBEB);
+          borderColor = const Color(0xFFFDE68A);
+          textColor = const Color(0xFFD97706);
+          icon = Icons.location_off_outlined;
+          label = 'No GPS coordinates attached. Tap "Detect Location" or choose a verified centre.';
+        }
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: borderColor),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: textColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: textColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          if (hasCoords)
+            GestureDetector(
+              onTap: () => setState(() {
+                _latitude = null;
+                _longitude = null;
+                _locationSource = LocationSource.none;
+              }),
+              child: const Icon(Icons.close, size: 14, color: Color(0xFF64748B)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewSummaryCard() {
+    final title = _titleController.text.trim();
+    final venue = _venueNameController.text.trim();
+    final address = _addressController.text.trim();
+    final city = _cityController.text.trim();
+    final state = _stateController.text.trim();
+    final pin = _postalCodeController.text.trim();
+    final capacity = _capacityController.text.trim();
+
+    String sourceLabel = 'Not Attached';
+    Color sourceColor = const Color(0xFFD97706);
+    if (_locationSource == LocationSource.deviceGps) {
+      sourceLabel = 'Device GPS';
+      sourceColor = const Color(0xFF16A34A);
+    } else if (_locationSource == LocationSource.verifiedBloodCenter) {
+      sourceLabel = 'Verified Blood Center';
+      sourceColor = const Color(0xFF2563EB);
+    } else if (_latitude != null && _longitude != null) {
+      sourceLabel = 'Custom Coordinates';
+      sourceColor = const Color(0xFF64748B);
+    }
+
+    final fullAddress = [
+      if (address.isNotEmpty) address,
+      if (city.isNotEmpty) city,
+      if (state.isNotEmpty) state,
+      if (pin.isNotEmpty) pin,
+    ].join(', ');
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.rate_review_outlined, color: NetraColors.primaryRed, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'Camp Summary Review',
+                style: NetraTypography.titleMedium.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: NetraColors.textPrimary,
+                  fontSize: 14,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: sourceColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: sourceColor.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  sourceLabel,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: sourceColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 20),
+          _buildReviewRow('Camp Title', title.isNotEmpty ? title : '—'),
+          _buildReviewRow('Partner Centre', _selectedBloodBank?.name ?? (_bloodBankIdController.text.isNotEmpty ? _bloodBankIdController.text : '—')),
+          _buildReviewRow('Venue', venue.isNotEmpty ? venue : '—'),
+          _buildReviewRow('Address', fullAddress.isNotEmpty ? fullAddress : '—'),
+          _buildReviewRow(
+            'Schedule',
+            _startAt != null && _endAt != null
+                ? '${_formatDateTime(_startAt!)} → ${_formatDateTime(_endAt!)}'
+                : 'Not selected',
+          ),
+          _buildReviewRow(
+            'Registration',
+            _regOpenAt != null && _regCloseAt != null
+                ? '${_formatDateTime(_regOpenAt!)} → ${_formatDateTime(_regCloseAt!)}'
+                : 'Not selected',
+          ),
+          _buildReviewRow(
+            'Donor Capacity',
+            capacity.isNotEmpty ? '$capacity slots' : '—',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF1E293B),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildDateTimePickerTile({
     required String label,
-    required DateTime value,
+    required DateTime? value,
+    required String placeholder,
     required VoidCallback onTap,
   }) {
+    final hasValue = value != null;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
@@ -878,7 +1209,9 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: NetraColors.surfaceWhite,
-          border: Border.all(color: NetraColors.borderGray),
+          border: Border.all(
+            color: hasValue ? NetraColors.primaryRed.withValues(alpha: 0.5) : NetraColors.borderGray,
+          ),
           borderRadius: BorderRadius.circular(NetraSpacing.radiusMd),
         ),
         child: Column(
@@ -886,20 +1219,27 @@ class _CreateDonationEventScreenState extends State<CreateDonationEventScreen> {
           children: [
             Text(
               label,
-              style: NetraTypography.labelSmall
-                  .copyWith(color: NetraColors.textSecondary),
+              style: NetraTypography.labelSmall.copyWith(
+                color: hasValue ? NetraColors.textPrimary : NetraColors.textSecondary,
+                fontWeight: hasValue ? FontWeight.w600 : FontWeight.normal,
+              ),
             ),
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(Icons.calendar_today,
-                    size: 16, color: NetraColors.primaryRed),
+                Icon(
+                  Icons.calendar_today,
+                  size: 16,
+                  color: hasValue ? NetraColors.primaryRed : const Color(0xFF94A3B8),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    _formatDateTime(value),
-                    style: NetraTypography.bodyMedium
-                        .copyWith(fontWeight: FontWeight.w600),
+                    hasValue ? _formatDateTime(value) : placeholder,
+                    style: NetraTypography.bodyMedium.copyWith(
+                      fontWeight: hasValue ? FontWeight.w600 : FontWeight.normal,
+                      color: hasValue ? NetraColors.textPrimary : const Color(0xFF94A3B8),
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),

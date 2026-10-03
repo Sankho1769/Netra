@@ -53,6 +53,22 @@ class BloodBankApiService {
     }
   }
 
+  Future<List<BloodBankSummary>> getManagedBloodBanks() async {
+    try {
+      final response = await _client.get('/managed');
+      if (response is List<dynamic>) {
+        return response
+            .map((e) => BloodBankSummary.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      if (e is NetworkException) rethrow;
+      throw const ValidationException(
+          'Failed to load authorized blood centres. Please try again.');
+    }
+  }
+
   Future<List<BloodBankSummary>> getNearbyBloodBanks({
     required double latitude,
     required double longitude,

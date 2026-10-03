@@ -149,6 +149,38 @@ public class BloodBankService {
     }
 
     @Transactional(readOnly = true)
+    public List<BloodBankSummaryDto> getManagedBloodBanks() {
+        UUID currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new UnauthorizedSessionAccessException("Authentication is required to view managed blood centres."));
+
+        if (SecurityUtils.hasRole("ROLE_ADMIN")) {
+            return bloodBankRepository.findAll().stream()
+                    .filter(b -> b.getVerificationStatus() == BloodBankVerificationStatus.VERIFIED)
+                    .map(b -> mapToSummaryDto(b, null))
+                    .collect(Collectors.toList());
+        }
+
+        if (SecurityUtils.hasRole("ROLE_BLOODBANK")) {
+            List<BloodBankAccount> accounts = bloodBankAccountRepository.findByUserId(currentUserId);
+            List<UUID> bankIds = accounts.stream()
+                    .filter(a -> a.getStatus() == BloodBankAccountStatus.ACTIVE)
+                    .map(BloodBankAccount::getBloodBankId)
+                    .collect(Collectors.toList());
+
+            if (bankIds.isEmpty()) {
+                return List.of();
+            }
+
+            return bloodBankRepository.findAllById(bankIds).stream()
+                    .filter(b -> b.getVerificationStatus() == BloodBankVerificationStatus.VERIFIED)
+                    .map(b -> mapToSummaryDto(b, null))
+                    .collect(Collectors.toList());
+        }
+
+        return List.of();
+    }
+
+    @Transactional(readOnly = true)
     public BloodBankDetailDto getBloodBankById(UUID id, Double userLat, Double userLon) {
         BloodBank bank = bloodBankRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Blood bank not found with id: " + id));

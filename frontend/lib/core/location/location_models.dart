@@ -38,6 +38,7 @@ enum LocationPermissionStatus {
 }
 
 class ApproximateLocation {
+  final String? address;
   final String? city;
   final String? district;
   final String? state;
@@ -46,6 +47,7 @@ class ApproximateLocation {
   final bool isApproximate;
 
   const ApproximateLocation({
+    this.address,
     this.city,
     this.district,
     this.state,
@@ -68,6 +70,7 @@ class ApproximateLocation {
   }
 
   Map<String, dynamic> toJson() => {
+        if (address != null) 'address': address,
         if (city != null) 'city': city,
         if (district != null) 'district': district,
         if (state != null) 'state': state,

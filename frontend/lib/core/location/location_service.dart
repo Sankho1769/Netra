@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 import 'location_models.dart';
 import 'permission_service.dart';
@@ -86,8 +88,15 @@ class DefaultLocationService implements LocationService {
       final double lng =
           approximateOnly ? (rawLng * 100).round() / 100 : rawLng;
 
+      final geocoded = await _reverseGeocode(rawLat, rawLng);
+
       return LocationResult.success(
         ApproximateLocation(
+          address: geocoded['address'],
+          city: geocoded['city'],
+          district: geocoded['district'],
+          state: geocoded['state'],
+          postalCode: geocoded['postalCode'],
           coordinates: Coordinates(
             latitude: lat,
             longitude: lng,
@@ -123,8 +132,15 @@ class DefaultLocationService implements LocationService {
       final double lng =
           approximateOnly ? (rawLng * 100).round() / 100 : rawLng;
 
+      final geocoded = await _reverseGeocode(rawLat, rawLng);
+
       return LocationResult.success(
         ApproximateLocation(
+          address: geocoded['address'],
+          city: geocoded['city'],
+          district: geocoded['district'],
+          state: geocoded['state'],
+          postalCode: geocoded['postalCode'],
           coordinates: Coordinates(
             latitude: lat,
             longitude: lng,
@@ -139,6 +155,55 @@ class DefaultLocationService implements LocationService {
       LocationFailureReason.unavailable,
       'Could not obtain location from device GPS. Please enable GPS or select a verified healthcare centre.',
     );
+  }
+
+  Future<Map<String, String?>> _reverseGeocode(double rawLat, double rawLng) async {
+    try {
+      final uri = Uri.parse(
+          'https://nominatim.openstreetmap.org/reverse?lat=$rawLat&lon=$rawLng&format=json&addressdetails=1');
+      final res = await http.get(uri, headers: {
+        'User-Agent': 'NetraBloodApp/1.0 (contact@netra.org)',
+        'Accept': 'application/json',
+      }).timeout(const Duration(seconds: 4));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        final addr = data['address'] as Map<String, dynamic>?;
+        if (addr != null) {
+          final road = addr['road'] ?? addr['pedestrian'] ?? addr['street'];
+          final suburb = addr['suburb'] ?? addr['neighbourhood'] ?? addr['residential'];
+          final houseNumber = addr['house_number'];
+
+          final addressParts = [
+            if (houseNumber != null) houseNumber,
+            if (road != null) road,
+            if (suburb != null) suburb,
+          ];
+          final address = addressParts.isNotEmpty
+              ? addressParts.join(', ')
+              : data['display_name'] as String?;
+          final city = (addr['city'] ??
+              addr['town'] ??
+              addr['village'] ??
+              addr['municipality'] ??
+              addr['county']) as String?;
+          final district = (addr['state_district'] ?? addr['district']) as String?;
+          final state = addr['state'] as String?;
+          final postalCode = addr['postcode'] as String?;
+
+          return {
+            'address': address,
+            'city': city,
+            'district': district,
+            'state': state,
+            'postalCode': postalCode,
+          };
+        }
+      }
+    } catch (_) {
+      // Non-blocking fallback
+    }
+    return {};
   }
 
   @override

@@ -59,6 +59,13 @@ public class BloodBankController {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("/managed")
+    @PreAuthorize("hasAnyRole('ADMIN', 'BLOODBANK')")
+    public ResponseEntity<List<BloodBankSummaryDto>> getManagedBloodBanks() {
+        List<BloodBankSummaryDto> result = bloodBankService.getManagedBloodBanks();
+        return ResponseEntity.ok(result);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<BloodBankDetailDto> getBloodBankById(
             @PathVariable UUID id,

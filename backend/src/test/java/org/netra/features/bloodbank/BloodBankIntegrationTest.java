@@ -804,5 +804,58 @@ class BloodBankIntegrationTest {
                 .andExpect(jsonPath("$.id", is(bank.getId().toString())))
                 .andExpect(jsonPath("$.distanceKm", notNullValue()));
     }
+
+    @Test
+    @DisplayName("Managed Banks 1: GET /api/v1/bloodbanks/managed returns 403 for unauthenticated user")
+    void testGetManagedBloodBanks_Unauthenticated() throws Exception {
+        mockMvc.perform(get("/api/v1/bloodbanks/managed"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Managed Banks 2: GET /api/v1/bloodbanks/managed returns 403 for standard DONOR role")
+    void testGetManagedBloodBanks_ForbiddenForDonor() throws Exception {
+        User donor = createTestUser("DonorManaged", UserStatus.ACTIVE, Set.of(UserRole.ROLE_DONOR));
+        String donorToken = getAccessToken(donor);
+
+        mockMvc.perform(get("/api/v1/bloodbanks/managed")
+                .header("Authorization", "Bearer " + donorToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Managed Banks 3: GET /api/v1/bloodbanks/managed returns all verified blood banks for ADMIN")
+    void testGetManagedBloodBanks_ReturnsAllVerifiedForAdmin() throws Exception {
+        User admin = createTestUser("AdminManaged", UserStatus.ACTIVE, Set.of(UserRole.ROLE_ADMIN));
+        String adminToken = getAccessToken(admin);
+
+        BloodBank verifiedBank = createPersistedBloodBank("Admin Visible Bank", "Mumbai", 18.9401, 72.8347, BloodBankVerificationStatus.VERIFIED);
+
+        mockMvc.perform(get("/api/v1/bloodbanks/managed")
+                .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", isA(List.class)))
+                .andExpect(jsonPath("$[*].id", hasItem(verifiedBank.getId().toString())));
+    }
+
+    @Test
+    @DisplayName("Managed Banks 4: GET /api/v1/bloodbanks/managed returns only active linked blood banks for BLOODBANK staff")
+    void testGetManagedBloodBanks_ReturnsOnlyLinkedActiveForBloodBankStaff() throws Exception {
+        User staff = createTestUser("StaffLinkedBank", UserStatus.ACTIVE, Set.of(UserRole.ROLE_BLOODBANK));
+        String staffToken = getAccessToken(staff);
+
+        BloodBank linkedBank = createPersistedBloodBank("Linked Staff Bank", "Mumbai", 18.9401, 72.8347, BloodBankVerificationStatus.VERIFIED);
+        BloodBank unlinkedBank = createPersistedBloodBank("Unlinked Other Bank", "Pune", 18.5204, 73.8567, BloodBankVerificationStatus.VERIFIED);
+
+        // Link staff to linkedBank only with ACTIVE status
+        bloodBankAccountRepository.save(new BloodBankAccount(staff.getId(), linkedBank.getId(), BloodBankAccountStatus.ACTIVE));
+
+        mockMvc.perform(get("/api/v1/bloodbanks/managed")
+                .header("Authorization", "Bearer " + staffToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id", is(linkedBank.getId().toString())))
+                .andExpect(jsonPath("$[0].name", is("Linked Staff Bank")));
+    }
 }
 
